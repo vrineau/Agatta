@@ -1,5 +1,7 @@
 # AGATTA - Three-item analysis python package
 
+![alt text](https://github.com/VRineau/agatta/blob/main/agatta/agatta.png?raw=true)
+
 Three-item analysis python package. 3is matrix computation.
 
 ## Installation:
