@@ -163,6 +163,8 @@ describetree show various informations on trees
 
 This code is under licence *GNU GPLv3*
 
+Graphic chart by Malcolm T. Sanders
+
 
 
 
