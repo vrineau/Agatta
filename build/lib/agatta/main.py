@@ -3,7 +3,7 @@
 """
 agatta: Three-item analysis Python package
 
-agatta is a set of tools to to manipulate hierarchical characters and to 
+agatta is a set of tools to to manipulate hierarchical characters and to
 perform three-item analysis and associated operations in python.
 
 Usage:
@@ -34,7 +34,7 @@ Options:
     --software=<str>     Software used for the pipeline [default: tnt]
     --softpath=<path>    Path of the software used
     --weighting=<str>    Specify the type of triplet weighting [default: FW]
-    --method=<str>       Specify the method to handle repetitions [default: VR]
+    --method=<str>       Specify how to remove repetitions [default: Rineau]
     --consensus=<str>    Specify type of consensus [default: strict]
     --index=<str>        Specify type of index to use [default: ri]
     --chardec            Decompose trees into components
@@ -55,8 +55,8 @@ import os
 import time
 import docopt
 from .ini import character_extraction
-from .ini import phylo_to_areagram
-from .ini import matrix_to_trees
+from .ini import standardisation
+from .ini import hmatrix
 from .ini import helper
 from .analysis import del_replications_forest
 from .analysis import main_tripdec
@@ -75,13 +75,14 @@ from .__version__ import __version__
 def main():
     # docopt flags parsing
     arguments = docopt.docopt(__doc__, version=__version__)
-    print(arguments)
+
     def coremain():
 
         start_time = time.time()
 
         print("agatta {}".center(80).format(__version__))
         print("Three-item analysis Python package".center(80))
+        print()
 
         # Complete analysis
         if arguments["analysis"]:
@@ -210,17 +211,17 @@ def main():
 
         # standardisation
         elif arguments["standardisation"]:
-            phylo_to_areagram(arguments["<file>"][0],
+            standardisation(arguments["<file>"][0],
                               arguments["<file>"][1],
                               arguments["--prefix"],
                               verbose=arguments.get("-v", False))
 
         # transform hierarchical matrix into a tree list
         elif arguments["hmatrix"]:
-            matrix_to_trees(arguments["<file>"][0],
-                            arguments["--prefix"],
-                            arguments["--chardec"],
-                            arguments["-v"])
+            hmatrix(arguments["<file>"][0],
+                    arguments["--prefix"],
+                    arguments["--chardec"],
+                    arguments["-v"])
 
         elif arguments["help"]:
             exit(helper(arguments["<command>"]))
