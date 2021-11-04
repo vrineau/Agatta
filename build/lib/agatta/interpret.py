@@ -16,7 +16,7 @@ with warnings.catch_warnings():
     from ete3 import Tree
 
 
-def constrict(treelist, prefix=False):
+def constrict(treelist, prefix=False, silent=False):
     """
     Compute the strict consensus from a list of rooted trees.
 
@@ -35,7 +35,8 @@ def constrict(treelist, prefix=False):
 
     """
 
-    print("Strict consensus computation")
+    if not silent:
+        print("Strict consensus computation")
 
     constrict = treelist[0]  # base tree for the strict consensus computation
     del treelist[0]
@@ -64,7 +65,8 @@ def constrict(treelist, prefix=False):
         with open(prefix+".constrict", "w") as constrictfile:
             constrictfile.write(constrict.write(format=9)+"\n")
 
-    print("Strict consensus computed")
+    if not silent:
+        print("Strict consensus computed")
 
     return constrict
 
@@ -657,6 +659,7 @@ def character_states_test(cladogram_dict, character_dict,
                         node.add_face(style_num, column=1,
                                       position = "branch-bottom")
                     node.add_feature("clade_label", node_style_num_count)
+                    node.name = node_style_num_count
                     node_style_num_count += 1
                 elif node.is_root() == True:
                     node.add_feature("clade_label", "root")
@@ -876,7 +879,7 @@ def character_states_test(cladogram_dict, character_dict,
             results_file.write("""\n#Legend: #character.state / state accepted
                                or rejected / node(s) characterized by the state
                                (if one: synapomorphy)""")
-            results_file.write("\n")
+            results_file.write("\n" + cladogram.write(format=8) + "\n")
 
         # for each character
         for char_names, values in character_component_dict.items():
@@ -1045,7 +1048,7 @@ def character_states_test(cladogram_dict, character_dict,
 
     with open(prefix+".chartest_node", "w") as results_file_tree:
         results_file_tree.write("Synapomorphies by node:")
-        results_file_tree.write("\n")
+        results_file_tree.write("\n" + cladogram.write(format=8) + "\n")
         for node_set in sorted((str(node_set) for node_set, values in
                                 syn_dict.items())):
             if syn_dict[node_set]["accepted"] or (

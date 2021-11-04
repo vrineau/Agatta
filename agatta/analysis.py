@@ -883,8 +883,13 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
     else:
         ncpu = int(ncpu)
 
-    os.mkdir("out_agatta")
-    os.chdir("out_agatta")
+    try:
+        os.mkdir("tmp_AGATTApickles")
+    except FileExistsError:
+        shutil.rmtree(os.getcwd() + '/tmp_AGATTApickles', ignore_errors=True)
+        os.mkdir("tmp_AGATTApickles")
+    finally:
+        os.chdir("tmp_AGATTApickles")
 
     # computing triplets for each tree in parallel
     treetuple = tuple(character_dict)  # tuple dict for multiprocessing
@@ -924,7 +929,7 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
 
     # pickles deletion
     os.chdir('..')
-    shutil.rmtree(os.getcwd()+'/out_agatta', ignore_errors=True)
+    shutil.rmtree(os.getcwd() + '/tmp_AGATTApickles', ignore_errors=True)
 
     if prefix:
         with open(prefix+".triplet", "w") as tdfile:
@@ -935,8 +940,8 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
             for trip, FW in shared_dict.items():
                 in_taxa = list(trip.in_taxa)
                 tdfile.write("(" + list(trip.out_taxa)[0] + ",(" + in_taxa[0] +
-                             "," + in_taxa[0] + ")):    " + FW + "    " +
-                             round(float(FW), 4) + "\n")
+                             "," + in_taxa[0] + ")):    " + str(FW) + "    " +
+                             str(round(float(FW), 4)) + "\n")
 
         with open(prefix+".taxabloc", "w") as taxa_bloc_file:
             for taxa, code in taxa_dict.items():

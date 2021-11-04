@@ -909,7 +909,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
     # compute triplets and weights from the tree list and save a nex/tnt file
     else:
         convert(character_dict,
-                "characters",
+                "trees",
                 prefix,
                 parallel,
                 weighting,
@@ -969,7 +969,8 @@ def agatta_analysis(file_path, software_path, software="tnt",
     # character states test on the strict consensus
     if chartest:
         character_states_test(character_dict,
-                              {constrict(list(cladogram_dict.keys())): 1},
+                              {constrict(list(cladogram_dict.keys()),
+                                         silent=True): 1},
                               prefix,
                               pdf_file)
 

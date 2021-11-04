@@ -105,6 +105,7 @@ def character_extraction(infile=False, taxa_replacement=False):
 
     print("{} characters loaded".format(str(len(character_dict))))
 
+    return character_dict
 
 def taxa_extraction(character_dict):
     """

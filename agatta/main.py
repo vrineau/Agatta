@@ -14,7 +14,7 @@ Usage:
     agatta consensus       <file>        [options]
     agatta describetree    <file>        [options]
     agatta hmatrix         <file>        [options]
-    agatta ri              <file> <file> [options]
+    agatta support         <file> <file> [options]
     agatta chartest        <file> <file> [options]
     agatta standardisation <file> <file> [options]
     agatta help            <command>
@@ -23,30 +23,31 @@ Usage:
 
 Options:
     -h --help            Show general help information
-    -v                   Verbose mode
-    -s                   Silent mode
     -i                   Replace taxa names for the 1st <file>
     -j                   Replace taxa names for the 2nd <file>
-    --ri                 Calculate Retention Index (Kitching et al. 1998)
-    --parallel=<type>    Number of parallel cores to use [default: auto]
-    --prefix=<file>      Prefix of the output file [default: agatta_out]
-    --directory=<dir>    Directory for output chartest files [default: ./]
-    --software=<str>     Software used for the pipeline [default: tnt]
-    --softpath=<path>    Path of the software used
-    --weighting=<str>    Specify the type of triplet weighting [default: FW]
-    --method=<str>       Specify how to remove repetitions [default: Rineau]
-    --consensus=<str>    Specify type of consensus [default: strict]
-    --index=<str>        Specify type of index to use [default: ri]
+    -s                   Silent mode
+    -v                   Verbose mode
+    --analysis=<str>     Type of searching method [default: auto]
     --chardec            Decompose trees into components
     --chartest           Compute hierarchical character states test (Cao 2007)
-    --multiplier=<int>   Specifies a weight multiplicator [default: 1000000]
-    --log                Add a string to save an analysis log file
+    --consensus=<str>    Specify type of consensus
+    --directory=<dir>    Directory for output chartest files [default: ./]
     --filetype=<str>     Choose a tree file or a triplet file [default: trees]
-    --showtaxanames      Print the list of terminals
-    --analysis=<str>     Type of searching method [default: auto]
+    --index=<str>        Specify type of index to use [default: ri]
+    --log                Add a string to save an analysis log file
+    --method=<str>       Specify how to remove repetitions [default: Rineau]
+    --multiplier=<int>   Specifies a weight multiplicator [default: 1000000]
     --nrep=<int>         Number of replicates for an analysis [default: 1000]
+    --parallel=<type>    Number of parallel cores to use [default: auto]
+    --pdf=<path>         Specifies a path were to save pdf files for chartest
+    --prefix=<file>      Prefix of the output file [default: agatta_out]
+    --ri                 Calculate Retention Index (Kitching et al. 1998)
     --rosette=<path>     Path of the file for taxa conversion
+    --showtaxanames      Print the list of terminals
+    --softpath=<path>    Path of the software used
+    --software=<str>     Software used for the pipeline [default: agatta]
     --taxarep=<file>     Replacement file
+    --weighting=<str>    Specify the type of triplet weighting [default: FW]
 
 """
 
@@ -99,7 +100,7 @@ def main():
                             arguments.get("--rosette", False),
                             arguments["--chartest"],
                             arguments["--ri"],
-                            arguments["--consensus"],
+                            arguments.get("--consensus", False),
                             arguments.get("--pdf", False),
                             arguments.get("-v", False))
 
@@ -113,7 +114,7 @@ def main():
                          arguments.get("-v", False))
 
         # retention index calculation
-        elif arguments["ri"]:
+        elif arguments["support"]:
             # retention index
             if arguments["--index"] == "ri":
 
@@ -122,7 +123,7 @@ def main():
                    character_extraction(arguments["<file>"][1],
                                         arguments.get("-j", False)),
                    arguments["--weighting"],
-                   output=arguments["--prefix"]+".txt")
+                   arguments["--prefix"]+".txt")
 
             # inter-tree retention index
             elif arguments["--index"] == "itri":
@@ -189,7 +190,7 @@ def main():
         # consensus
         elif arguments["consensus"]:
             # strict consensus
-            if arguments["--consensus"] == "strict":
+            if arguments.get("--consensus", "strict"):
                 constrict(list(character_extraction(
                           arguments["<file>"][0],
                           arguments.get("-i", False)).keys()),

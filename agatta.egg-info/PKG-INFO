@@ -6,16 +6,15 @@ Home-page: https://github.com/VRineau/agatta
 Author: Valentin Rineau
 Author-email: valentin.rineau@gmail.com
 License: GNU GPLv3
-Description: # AGATTA - Three-item analysis python package
-        
-        ![alt text](https://github.com/VRineau/agatta/blob/main/agatta/agatta.png?raw=true)
+Description: ![alt text](https://github.com/VRineau/agatta/blob/main/agatta/agatta.png?raw=true)
         
         # AGATTA - Three-item analysis python package
         
-        En construction
+        En construction...
         
         This code is under licence *GNU GPLv3*
         
         Graphic chart by Malcolm T. Sanders
+        
 Platform: UNKNOWN
 Requires-Python: >=3.7.0
