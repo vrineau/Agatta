@@ -402,8 +402,6 @@ def hmatrix(path, prefix=False, chardec=False, verbose=False):
     chardec : bool, optional
         If true, decompose each tree into components (one tree for each
         informative node). The default is False.
-    verbose : bool, optional
-        If true, print all generated trees. The default is False.
 
     Returns
     -------
@@ -500,16 +498,17 @@ def hmatrix(path, prefix=False, chardec=False, verbose=False):
         char.ladderize()
         character_dict[char] = str(value)
 
-    # mode verbose a transformer en raise error
-    if verbose:
-        if error_dict:
+    # error
+    if error_dict:
 
-            print("Error in the input matrix\n")
+        print("Errors in the input matrix:\n")
 
-            for charnum, taxalist in error_dict.items():
-                print("Character number {}:\n".format(str(charnum)))
-                for taxa in taxalist:
-                    print(" - "+taxa)
+        for charnum, taxalist in error_dict.items():
+            print("Column {}:\n".format(str(charnum+1)))
+            for taxa in taxalist:
+                print("Error in row "+taxa)
+
+        raise ValueError("Operation aborted due to errors")
 
     # save resulting tree file
     if prefix:
