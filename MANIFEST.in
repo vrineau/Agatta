@@ -1,2 +1,2 @@
 include *.md
-recursive-include agatta *.png
+recursive-include agatta *.jpg
