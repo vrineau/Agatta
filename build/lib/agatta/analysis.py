@@ -102,13 +102,14 @@ def del_replications(treerep, method="Rineau", verbose=False):
 
     """
 
-    def del_replications_node(treerep, method="Rineau", verbose=False):
+    def del_replications_node(treerep, method="Rineau", verbose=False,
+                              recursionlimit=10000):
         """
             Function to remove a single repeated leaf.
             Used in del_replications.
         """
 
-        sys.setrecursionlimit(10000)
+        sys.setrecursionlimit(recursionlimit)
 
         paralogs = dict()
         cardl = list(Tree.get_leaf_names(treerep))
@@ -280,7 +281,17 @@ def del_replications(treerep, method="Rineau", verbose=False):
 
         return treelistrepclearcopy, treelistnorep
 
-    listundone, listdone = del_replications_node(treerep, method, verbose)
+    error = False
+    recursionlimit = 10000
+    while not error:
+        try:
+            listundone, listdone = del_replications_node(treerep,
+                                                         method,
+                                                         verbose,
+                                                         recursionlimit)
+            error = True
+        except RecursionError:
+            recursionlimit = recursionlimit*10
 
     if listundone:  # if repetitions
         while listundone:  # while until listundone contains trees to analyse
@@ -288,7 +299,18 @@ def del_replications(treerep, method="Rineau", verbose=False):
             listdone1 = []
 
             for treerep2 in listundone:
-                LU, LD = del_replications_node(treerep2, method, verbose)
+                error = False
+                recursionlimit = 10000
+                while not error:
+                    try:
+                        LU, LD = del_replications_node(treerep,
+                                                       method,
+                                                       verbose,
+                                                       recursionlimit)
+                        error = True
+                    except RecursionError:
+                        recursionlimit = recursionlimit*10
+
                 listundone1 += LU
                 listdone1 += LD
 

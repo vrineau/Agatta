@@ -6,18 +6,17 @@ Created on Thu Nov  5 10:46:58 2020
 """
 
 from os import path
-from re import search
-from re import findall
-from re import compile
 from tkinter import Tk
 from tkinter import filedialog
 from collections import defaultdict
-import warnings
 import csv
+import warnings
+import dendropy
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=SyntaxWarning)
     from ete3 import Tree
+    from ete3.parser.newick import NewickError
 
 
 def character_extraction(infile=False, taxa_replacement=False):
@@ -40,14 +39,15 @@ def character_extraction(infile=False, taxa_replacement=False):
 
         The default is False (a selection window appears in this case).
 
-    taxa_replacement : bool, optional
-        If set to True, will replace taxa according to a taxa bloc, i.e.,
-        set of lines in the form new_name = old_name. The separator
-        between names must be ' = '. Example:
-             AA = Diceras
-             AB = Valletia
-             AC = Monopleura
-        The default is False.
+    taxa_replacement : str, optional
+        Path of a table file containing two columns. The first column
+        corresponds to the names of the terminals of the newick stored in
+        infile, and the second column corresponds to their names the user wants
+        to obtain at the end. All separators accepted. Example:
+             AA Diceras
+             AB Valletia
+             AC Monopleura
+        The default is False (no replacement).
 
     Returns
     -------
@@ -68,44 +68,90 @@ def character_extraction(infile=False, taxa_replacement=False):
             title="Select file containing newick character trees",
             filetypes=(
                 ("all files", "*.*"),
-                ("tree files", "*.tre"),
-                ("3ia Lisbeth 1.0 files", "*.3ia")))
+                ("nexus files", "*.nex"),
+                ("phylip files", "*.phy")))
         root.withdraw()
 
     fileName, fileExtension = path.splitext(infile)
 
-    # open input file and extract newick strings
-    with open(infile, "r") as file_tree:
+    if fileExtension == ".nex":
+        schema = "nexus"
+    elif fileExtension == ".phy":
+        schema = "phylip"
+
+    if fileExtension in [".nex",".phy"]:
         a = 1
-        line_nb = 0
-        for line in file_tree:
-            line_nb += 1
-            for character_newick in findall(r"\([^ \t\n\r\f\v]+;", line):
-                if character_newick:
+        dendropylist = dendropy.TreeList.get(path=infile, schema=schema)
+        for dendrotree in dendropylist:
+            t = dendrotree.as_string(schema="newick", suppress_rooting=True)
+            character_dict[Tree(t.strip())] = a
+            a+= 1
 
-                    try:
-                        character_dict[Tree(character_newick)] = a
-                        a += 1
+    else: # if file is newick strings only
+        # open input file and extract newick strings
+        with open(infile, "r") as file_tree:
+            a = 1
+            line_nb = 0
+            for line in file_tree:
+                line_nb += 1
+                if line.strip():
+                    if not line.strip()[-1] == ';':  # error missing semicolon
+                        raise NewickError("Error in the file " + infile +
+                                          "\nLine " + str(line_nb) +
+                                          ": missing semicolon")
 
-                    except Exception as error:
-                        raise UserWarning("Error in the file " + infile +
-                                          "\nLine " + str(line_nb) + ": " +
-                                          str(error))
+                    elif not line.strip()[0] == '(':  # error if not newick
+                        raise NewickError("Error in the file " + infile +
+                                          "\nLine " + str(line_nb) +
+                                          ": each line must a newick string " +
+                                          "and begin with '('")
 
-            # searching taxa bloc for replacing taxa names
-            if taxa_replacement and search(r"\s=\s", line):
-                taxa_dict[line.split(" = ")[0].split()[0]] = line.split(
-                                                            " = ")[1].strip()
+                    else:  # if string with open parenthesis + ending semicolon
+                        try:
+                            character_dict[Tree(line.strip())] = a
+                            a += 1
 
-    if taxa_dict:
+                        except NewickError as error:  #
+                            raise NewickError("Error in the file " + infile +
+                                              "\nLine " + str(line_nb) + ": " +
+                                              str(error))
+
+    if taxa_replacement:
+
+        with open(taxa_replacement, "r") as taxa_table:
+            try:
+                dialect = csv.Sniffer().sniff(taxa_table.read())
+            except:
+                raise ValueError(("Error in the file " + taxa_replacement +
+                                  "Could not determine separator. The table "
+                                  "for taxa replacement is probably broken."))
+
+        l = 0
+        with open(taxa_replacement, "r") as taxa_table:
+            for line in taxa_table:
+                l += 1
+                line = line.strip()
+                try:
+                    idtax, nametax = line.split(dialect.delimiter)
+                    taxa_dict[idtax] = nametax
+
+                except ValueError:
+                    raise ValueError("Error in the file " + taxa_replacement +
+                                     "Table broken line " + str(l))
+
         for cladogram in character_dict.keys():
             for leaf in cladogram.iter_leaves():
-                if taxa_dict[leaf.name]:
+                try:
                     leaf.name = taxa_dict[leaf.name]
+                except KeyError:
+                    raise ValueError("Error in the file " + taxa_replacement +
+                                     "The name '" + str(leaf.name) +
+                                     "' does not exists in the table")
 
     print("{} characters loaded".format(str(len(character_dict))))
 
     return character_dict
+
 
 def taxa_extraction(character_dict):
     """
@@ -262,10 +308,12 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
         taxrep = set()  # set repeated leaves
 
         with open(biogeo_tab, "r") as bt_file:
+            dialect = csv.Sniffer().sniff(bt_file.read())
+
+        with open(biogeo_tab, "r") as bt_file:
             for line in bt_file:
-                regex = compile(r'[\n\r\t]')
-                line = regex.sub("", line)
-                linesplt = line.split(";")
+                line = line.strip()
+                linesplt = line.split(dialect.delimiter)
 
                 # detection of MASTs (if taxon already in list)
                 if linesplt[0] in taxa:
@@ -418,7 +466,22 @@ def hmatrix(path, prefix=False, chardec=False, verbose=False):
 
     # read matrix
     with open(path, 'rt') as f:
-        data = csv.reader(f, delimiter=';')
+        dialect = csv.Sniffer().sniff(f.read())
+
+    with open(path, 'rt') as f:
+        if dialect.delimiter == ",":
+            raise ValueError("""Error in the hierarchical matrix format.
+      "," can't be a delimiter (usage restricted for polymorphic instances)""")
+
+        if dialect.delimiter not in [",",";","\t"," ","|"]:
+             raise ValueError("""Error in the hierarchical matrix format.
+                              The separator must be one of these:
+                                  - semicolon ';'
+                                  - tabulation '   '
+                                  - space ' '
+                                  - pipe '|'""")
+
+        data = csv.reader(f, delimiter=dialect.delimiter)
         hmatrix = list(data)
 
     print("Hierarchical matrix loaded")

@@ -873,7 +873,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
         f_path = os.path.split(file_path)[0]
 
         character_dict = hmatrix(file_path, f_path + "agatta_character_trees",
-                                 prefix, verbose)
+                                 prefix)
 
         file_path = os.path.split(file_path)[0]+"agatta_character_trees.tre"
 

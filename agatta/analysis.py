@@ -108,7 +108,7 @@ def del_replications(treerep, method="Rineau", verbose=False):
             Used in del_replications.
         """
 
-        sys.setrecursionlimit(10000)
+        sys.setrecursionlimit(10**7)  # can hit the recursion limit
 
         paralogs = dict()
         cardl = list(Tree.get_leaf_names(treerep))

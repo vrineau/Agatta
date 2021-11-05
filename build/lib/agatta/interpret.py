@@ -876,9 +876,9 @@ def character_states_test(cladogram_dict, character_dict,
     for cladogram in cladogram_dict:
         with open(prefix+".chartest", "a") as results_file:
             results_file.write("#Character states tests")
-            results_file.write("""\n#Legend: #character.state / state accepted
-                               or rejected / node(s) characterized by the state
-                               (if one: synapomorphy)""")
+            results_file.write(("\n#Legend: #character.state / state accepted"
+                               "or rejected / node(s) characterized by the"
+                               " state (if one: synapomorphy)"))
             results_file.write("\n" + cladogram.write(format=8) + "\n")
 
         # for each character
