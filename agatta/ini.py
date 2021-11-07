@@ -6,12 +6,12 @@ Created on Thu Nov  5 10:46:58 2020
 """
 
 from os import path
+from re import findall
 from tkinter import Tk
 from tkinter import filedialog
-from collections import defaultdict
 import csv
+import sys
 import warnings
-import dendropy
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=SyntaxWarning)
@@ -19,7 +19,7 @@ with warnings.catch_warnings():
     from ete3.parser.newick import NewickError
 
 
-def character_extraction(infile=False, taxa_replacement=False):
+def character_extraction(infile=False, taxa_replacement=False, verbose=True):
     """
     Extract newick rooted trees from a text file.
     The function extract lines begining with an open parenthesis and
@@ -31,7 +31,10 @@ def character_extraction(infile=False, taxa_replacement=False):
     Parameters
     ----------
     infile : str, optional
-        Path of the file containing a single newick tree on each line.
+        Path of the file containing rooted trees in newick format
+        (https://en.wikipedia.org/wiki/Newick_format). The input file must
+        contain a single newick string on each line. Whitespaces are not
+        allowed for leaf names.
         Example:
 
             (a,b,(c,d,(e,f)));
@@ -56,7 +59,8 @@ def character_extraction(infile=False, taxa_replacement=False):
 
     """
 
-    print("Loading character trees")
+    if verbose:
+        print("Loading character trees")
 
     character_dict = {}  # return dictionary containing trees
     taxa_dict = {}  # taxa / symbol dictionary used if taxa_replacement == True
@@ -67,88 +71,66 @@ def character_extraction(infile=False, taxa_replacement=False):
         infile = filedialog.askopenfilename(
             title="Select file containing newick character trees",
             filetypes=(
-                ("all files", "*.*"),
-                ("nexus files", "*.nex"),
-                ("phylip files", "*.phy")))
+                ("Newick files", "*.*"),
+                ("Lisbeth files", "*.3ia")))
         root.withdraw()
 
-    fileName, fileExtension = path.splitext(infile)
+    if not path.isfile(infile):
+        sys.exit(print("ERROR: The file '" + infile + "' does not exist." +
+                       "\nOperation aborted."))
 
-    if fileExtension == ".nex":
-        schema = "nexus"
-    elif fileExtension == ".phy":
-        schema = "phylip"
-
-    if fileExtension in [".nex",".phy"]:
+    with open(infile, "r") as file_tree:
         a = 1
-        dendropylist = dendropy.TreeList.get(path=infile, schema=schema)
-        for dendrotree in dendropylist:
-            t = dendrotree.as_string(schema="newick", suppress_rooting=True)
-            character_dict[Tree(t.strip())] = a
-            a+= 1
-
-    else: # if file is newick strings only
-        # open input file and extract newick strings
-        with open(infile, "r") as file_tree:
-            a = 1
-            line_nb = 0
-            for line in file_tree:
-                line_nb += 1
-                if line.strip():
-                    if not line.strip()[-1] == ';':  # error missing semicolon
-                        raise NewickError("Error in the file " + infile +
-                                          "\nLine " + str(line_nb) +
-                                          ": missing semicolon")
-
-                    elif not line.strip()[0] == '(':  # error if not newick
-                        raise NewickError("Error in the file " + infile +
-                                          "\nLine " + str(line_nb) +
-                                          ": each line must a newick string " +
-                                          "and begin with '('")
-
-                    else:  # if string with open parenthesis + ending semicolon
-                        try:
-                            character_dict[Tree(line.strip())] = a
-                            a += 1
-
-                        except NewickError as error:  #
-                            raise NewickError("Error in the file " + infile +
-                                              "\nLine " + str(line_nb) + ": " +
-                                              str(error))
+        line_nb = 0
+        for line in file_tree:
+            line_nb += 1
+            for character_newick in findall(r"\(\S+;", line):
+                if character_newick:
+                    try:
+                        character_dict[Tree(character_newick)] = a
+                        a += 1
+                    except:
+                        print("Line {}: Broken newick structure.".format(
+                            str(line_nb)))
 
     if taxa_replacement:
+        if not path.isfile(taxa_replacement):
+            sys.exit(print("ERROR: The input file '" + taxa_replacement
+                                    + "' does not exist."
+                                    + "\nOperation aborted."))
 
         with open(taxa_replacement, "r") as taxa_table:
             try:
                 dialect = csv.Sniffer().sniff(taxa_table.read())
             except:
-                raise ValueError(("Error in the file " + taxa_replacement +
-                                  "Could not determine separator. The table "
-                                  "for taxa replacement is probably broken."))
+                sys.exit(print("ERROR: Could not determine separator in the"
+                               + " table file '" + taxa_replacement
+                               + "'.\nThe table is probably broken."
+                               + "\nOperation aborted."))
 
-        l = 0
         with open(taxa_replacement, "r") as taxa_table:
-            for line in taxa_table:
-                l += 1
-                line = line.strip()
-                try:
-                    idtax, nametax = line.split(dialect.delimiter)
-                    taxa_dict[idtax] = nametax
+            tab_test = list(csv.reader(taxa_table,
+                                       delimiter=dialect.delimiter))
+            if not len({len(l) for l in tab_test}) == 1:
+                 sys.exit(print("ERROR: The table file '"
+                                   + taxa_replacement + "' is broken."
+                                   + "\nOperation aborted."))
 
-                except ValueError:
-                    raise ValueError("Error in the file " + taxa_replacement +
-                                     "Table broken line " + str(l))
+            for idtax, nametax in tab_test:
+                taxa_dict[idtax] = nametax
 
         for cladogram in character_dict.keys():
             for leaf in cladogram.iter_leaves():
                 try:
                     leaf.name = taxa_dict[leaf.name]
                 except KeyError:
-                    raise ValueError("Error in the file " + taxa_replacement +
-                                     "The name '" + str(leaf.name) +
-                                     "' does not exists in the table")
+                    sys.exit(print("ERROR: The name '" + str(leaf.name)
+                                   + "' does not exists in the table file '"
+                                   + taxa_replacement
+                                   + "'.\nOperation aborted."))
 
-    print("{} characters loaded".format(str(len(character_dict))))
+    if verbose:
+        print("{} characters loaded".format(str(len(character_dict))))
 
     return character_dict
 
@@ -249,7 +231,7 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
 
     Parameters
     ----------
-    tree_file : str, optional
+    tree_file : str
         Path of the file containing a single newick tree on each line.
         Example:
 
@@ -284,8 +266,14 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
         Parameters
         ----------
         biogeo_tab : str
-            path of table with semicolon separators and two columns, taxa in
+            path of table file with two columns, taxa in
             the left column and corresponding areas in the right column.
+            Example:
+
+                Clinocaprina USA
+                Titanosarcolites Jamaica
+                Diceras France
+
         verbose : bool, optional
             If true, print in the terminal informations on taxa, areas, MASTs
             (Multiple Area Single Taxa) and repetitions. The default is False.
@@ -308,27 +296,36 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
         taxrep = set()  # set repeated leaves
 
         with open(biogeo_tab, "r") as bt_file:
-            dialect = csv.Sniffer().sniff(bt_file.read())
+            try:
+                dialect = csv.Sniffer().sniff(bt_file.read())
+            except:
+                sys.exit(print("ERROR: The table file '" + biogeo_tab +
+                                  "' is probably broken. Could not determine" +
+                                  "separator.\nOperation aborted."))
 
         with open(biogeo_tab, "r") as bt_file:
-            for line in bt_file:
-                line = line.strip()
-                linesplt = line.split(dialect.delimiter)
 
-                # detection of MASTs (if taxon already in list)
-                if linesplt[0] in taxa:
-                    biogeo_dict[linesplt[0]].append(linesplt[1])
-                    MAST.add(linesplt[0])
+            tab_test = csv.reader(bt_file, delimiter=dialect.delimiter)
+            table = list(tab_test)
+            if not len({len(l) for l in table}) == 1:
+                 sys.exit(print("ERROR: The table file '" + biogeo_tab +
+                                  "' is broken.\nOperation aborted."))
 
-                else:
-                    biogeo_dict[linesplt[0]] = [linesplt[1]]
+        for line in table:
+            # detection of MASTs (if taxon already in list)
+            if line[0] in taxa:
+                biogeo_dict[line[0]].append(line[1])
+                MAST.add(line[0])
 
-                # detection of repeated areas
-                if linesplt[1] in areas:
-                    taxrep.add(linesplt[1])
+            else:
+                biogeo_dict[line[0]] = [line[1]]
 
-                taxa.add(linesplt[0])
-                areas.add(linesplt[1])
+            # detection of repeated areas
+            if line[1] in areas:
+                taxrep.add(line[1])
+
+            taxa.add(line[0])
+            areas.add(line[1])
 
         if verbose:
             print(str(len(taxa)) + " terminal taxa, " + str(len(areas)) +
@@ -374,7 +371,14 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
             for leaf in phylogeny.get_leaves():
                 if leaf.name not in MAST:
                     for leafnode in phylogeny2.get_leaves_by_name(leaf.name):
-                        leafnode.name = biogeo_dict[leaf.name][0]
+                        try:
+                            leafnode.name = biogeo_dict[leaf.name][0]
+                        except KeyError:
+                            sys.exit(print("ERROR: The name '" +
+                                             str(leaf.name) +
+                                             "' does not exists in the table" +
+                                             " file '" + biogeo_tab + "'.\n" +
+                                             "\nOperation aborted."))
 
             # add new areagram
             areagram_dict[phylogeny2] = index
@@ -394,7 +398,7 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
     return areagram_dict
 
 
-def hmatrix(path, prefix=False, chardec=False, verbose=False):
+def hmatrix(infile, prefix=False, chardec=False, verbose=False):
     """
     Function that build ete3 trees from a file containing a hierarchical
     matrix. The matrix must be a table text (e.g., a csv file) with semicolons
@@ -442,8 +446,8 @@ def hmatrix(path, prefix=False, chardec=False, verbose=False):
 
     Parameters
     ----------
-    path : str
-        path of the file containing the hierarchical matrix.
+    infile : str
+        Path of the file containing the hierarchical matrix.
     prefix : str, optional
         Prefix of the file to save. If prefix is set to false, no file is
         saved. The default is False.
@@ -462,27 +466,42 @@ def hmatrix(path, prefix=False, chardec=False, verbose=False):
 
     character_dict = dict()  # trees without polytomies
     temp_character_dict = dict()  # trees with polytomies (raw data)
-    error_dict = defaultdict(list)
 
     # read matrix
-    with open(path, 'rt') as f:
-        dialect = csv.Sniffer().sniff(f.read())
+    if not path.isfile(infile):
+        sys.exit(print("ERROR: The hierarchical matrix '" + infile
+                                + "' does not exist.\nOperation aborted."))
 
-    with open(path, 'rt') as f:
+    with open(infile, 'rt') as f:
+        try:
+            dialect = csv.Sniffer().sniff(f.read())
+        except:
+            sys.exit(print(sys.exit(print("ERROR: The table file '" + infile +
+                                  "' is probably broken. Could not determine" +
+                                  "separator.\nOperation aborted."))))
+
+    with open(infile, 'rt') as f:
         if dialect.delimiter == ",":
-            raise ValueError("""Error in the hierarchical matrix format.
-      "," can't be a delimiter (usage restricted for polymorphic instances)""")
+            sys.exit(print("ERROR: ',' can't be a delimiter in the " +
+                           "hierarchical matrix format(usage restricted for " +
+                           "polymorphic instances).\nOperation aborted."""))
 
         if dialect.delimiter not in [",",";","\t"," ","|"]:
-             raise ValueError("""Error in the hierarchical matrix format.
-                              The separator must be one of these:
+             sys.exit(print("""ERROR: Error in the hierarchical matrix format.
+                               The separator must be one of these:
+
                                   - semicolon ';'
                                   - tabulation '   '
                                   - space ' '
-                                  - pipe '|'""")
+                                  - pipe '|'
+
+                                Operation aborted."""))
 
         data = csv.reader(f, delimiter=dialect.delimiter)
         hmatrix = list(data)
+        if not len({len(l) for l in hmatrix}) == 1:
+             sys.exit(print("ERROR: the hierarchical matrix '" +
+                            infile + "' is broken.\nOperation aborted."))
 
     print("Hierarchical matrix loaded")
     print("Treefication of the hierarchical matrix.")
@@ -493,7 +512,11 @@ def hmatrix(path, prefix=False, chardec=False, verbose=False):
     del treeliststr[0]
 
     for char in treeliststr:
-        temp_character_dict[Tree(char+";")] = str(i)
+        try:
+            temp_character_dict[Tree(char+";")] = str(i)
+        except NewickError:
+            sys.exit(print("ERROR: The newick tree " + char + " in column " +
+                               str(i+1) + "is broken\nOperation aborted."))
         i += 1
 
     taxalist = [hmatrix[ncol][0] for ncol in range(1, len(hmatrix))]
@@ -551,7 +574,10 @@ def hmatrix(path, prefix=False, chardec=False, verbose=False):
                             charstate)[0].get_ancestors()[0]
                         branchnode.add_child(name=taxa)
                     except:
-                        error_dict[ind2].append(taxa)  # id character / taxon
+                        sys.exit(print("ERROR: The instance '" + str(ind2)
+                                         + "' of leaf " + taxa + " in column "
+                                         + str(ind) + " does not match.\n"
+                                         +"Operation aborted."))
 
         # deletion of state branches
         for delnode in delnodes:
@@ -560,18 +586,6 @@ def hmatrix(path, prefix=False, chardec=False, verbose=False):
     for char, value in temp_character_dict.items():
         char.ladderize()
         character_dict[char] = str(value)
-
-    # error
-    if error_dict:
-
-        print("Errors in the input matrix:\n")
-
-        for charnum, taxalist in error_dict.items():
-            print("Column {}:\n".format(str(charnum+1)))
-            for taxa in taxalist:
-                print("Error in row "+taxa)
-
-        raise ValueError("Operation aborted due to errors")
 
     # save resulting tree file
     if prefix:
@@ -583,6 +597,86 @@ def hmatrix(path, prefix=False, chardec=False, verbose=False):
                                                     str(len(character_dict))))
 
     return character_dict
+
+
+def checkargs(arguments):
+    """
+    Check parsing and exit if error in flags
+
+    Parameters
+    ----------
+    arguments : dict
+        Docopt dict.
+
+    Returns
+    -------
+    None.
+
+    """
+    if arguments["analysis"]:
+
+        if arguments.get("--pdf", False) and not arguments["--chartest"]:
+            sys.exit(print("ERROR: --pdf flag cannot be used without " +
+                           "--chartest"))
+
+        if (arguments["--software"] == "paup" or
+            arguments["--software"] == "tnt"):
+            if not arguments.get("--softpath", False):
+                sys.exit(print("ERROR: For PAUP and TNT, the path of the " +
+                      "software must be completed in --softpath"))
+
+        elif arguments["--software"] != "agatta":
+            sys.exit(print("ERROR: --software flag must be one of: 'paup', " +
+                           "'tnt', 'agatta'"))
+
+    if arguments["convert"]:
+
+        if not arguments["--filetype"] in ["trees","triplets"]:
+            sys.exit(print("ERROR: --filetype flag must be one of: 'trees', " +
+                           "'triplets'"))
+
+        try:
+            int(arguments["--multiplier"])
+        except ValueError:
+            sys.exit(print("ERROR: --multiplier flag must be an integer"))
+
+    if arguments["convert"] or arguments["analysis"]:
+
+        if not arguments["--analysis"] in ["auto","heuristic", "bandb"]:
+            sys.exit(print("ERROR: --analysis flag must be one of: 'auto', " +
+                           "'heuristic', 'bandb"))
+
+        try:
+            int(arguments["--nrep"])
+        except ValueError:
+            sys.exit(print("ERROR: --nrep flag must be an integer (number of" +
+                  " replicates in heuristic search"))
+
+    if arguments["tripdec"] or arguments["convert"] or arguments["analysis"]:
+
+        if arguments["--parallel"] != "auto":
+            try:
+                int(arguments["--parallel"])
+            except ValueError:
+                sys.exit(print("ERROR: --parallel flag must be 'auto' or an " +
+                      "integer specifying the number of cpu"))
+
+    if arguments["fp"] or arguments["analysis"]:
+        if not arguments["--method"] in ["Rineau","Nelson"]:
+            sys.exit(print("ERROR: --method flag must be one of: 'Rineau', " +
+                           "'Nelson'"))
+
+    if arguments["consensus"] or arguments["analysis"]:
+        if arguments.get("--consensus", False):
+            if not arguments["--consensus"] in ["strict","rcc"]:
+                sys.exit(print("ERROR: --consensus flag must be one of: " +
+                               "'strict', 'rcc'"))
+
+    if arguments["support"]:
+        if not arguments["--index"] in ["ri","itri","itrisym_sum",
+                                        "itrisym_product"]:
+            sys.exit(print("ERROR: --index flag must be one of: 'ri', " +
+                               "'itri', 'itrisym_sum', 'itrisym_product"))
 
 
 def helper(command):
@@ -630,3 +724,8 @@ def helper(command):
 
     elif command == "hmatrix":
         print("Help block line for hmatrix command")
+
+    else:
+        print("""This command does not exist. The current commands are:
+              analysis, tripdec, ri, chartest, convert, fp, consensus,
+              describetree, standardisation, hmatrix""")

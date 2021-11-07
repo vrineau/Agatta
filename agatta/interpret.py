@@ -8,7 +8,11 @@ Created on Thu Nov  5 10:47:52 2020
 from fractions import Fraction
 from itertools import combinations
 from .ini import taxa_extraction
+from .ini import character_extraction
 from .analysis import standard_tripdec
+from .analysis import rep_detector
+import os
+import sys
 import warnings
 
 with warnings.catch_warnings():
@@ -37,6 +41,17 @@ def constrict(treelist, prefix=False, silent=False):
 
     if not silent:
         print("Strict consensus computation")
+
+    if rep_detector(dict.fromkeys(treelist, 1)):
+        sys.exit(print("ERROR: Repeated leaves have been detected.\n" +
+                         "Operation aborted."))
+
+    for t in treelist:
+        for leaf in t.get_leaf_names():
+            if not leaf in treelist[0].get_leaf_names():
+                sys.exit(print("ERROR: All trees do not have the same " +
+                         "length.\nOperation aborted."))
+
 
     constrict = treelist[0]  # base tree for the strict consensus computation
     del treelist[0]
@@ -142,6 +157,16 @@ def rcc(treelist, prefix=False, verbose=False):
 
     print("Reduced cladistic consensus (RCC) computation")
 
+    if rep_detector(dict.fromkeys(treelist, 1)):
+        sys.exit(print("ERROR: Repeated leaves have been detected.\n" +
+                         "Operation aborted."))
+    else:
+        for t in treelist:
+            for leaf in t.get_leaf_names():
+                if not leaf in treelist[0].get_leaf_names():
+                    sys.exit(print("ERROR: All trees do not have the same " +
+                             "length.\nOperation aborted."))
+
     # check size of trees
     cardinal_list = []
     for treel in treelist:
@@ -154,7 +179,8 @@ def rcc(treelist, prefix=False, verbose=False):
     cardinal_set = set(cardinal_list)
 
     if len(cardinal_set) > 1:
-        raise ValueError("Trees must all have the same leaf set")
+        sys.exit(print("ERROR: Trees must all have the same leaf set." +
+                       "\nOperation aborted."))
 
     # build list of components per tree
     component_trees = []
@@ -343,6 +369,19 @@ def RI(cladogram_dict, character_dict, weighting="FW", prefix=False):
 
     print("Computing retention index")
 
+    if rep_detector(cladogram_dict) or rep_detector(character_dict):
+        sys.exit(print("ERROR: Repeated leaves have been detected.\n" +
+                         "Operation aborted."))
+    else:
+        for t, i in character_dict.items():
+            for leaf in t.get_leaf_names():
+                if not leaf in list(cladogram_dict.keys())[0].get_leaf_names():
+                    sys.exit(print("ERROR: Character tree " + str(i)
+                                   + ": leaf set must be equal"
+                                   + " or a subset of the cladogram \nleaf "
+                                   + "set.\nOperation aborted."))
+
+
     c_triplet_dict = standard_tripdec(cladogram_dict,
                                       weighting,
                                       prefix=False,
@@ -446,6 +485,10 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW"):
 
     """
 
+    if rep_detector({true_tree:0, reconstructed_tree:0}):
+        sys.exit(print("ERROR: Repeated leaves have been detected.\n" +
+                         "Operation aborted."))
+
     tt_tripdic = standard_tripdec({true_tree: 0},
                                       weighting,
                                       prefix=False,
@@ -455,7 +498,6 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW"):
                                       weighting,
                                       prefix=False,
                                       verbose=False)
-
 
     RI_reconstructed_tree = Fraction(0, 1) #total reconstruted tree
     RI_true_tree = Fraction(0, 1) #total true tree
@@ -545,6 +587,10 @@ def triplet_distance(t1, t2, prefix,
         Distance between the two trees.
 
     """
+
+    if rep_detector({t1:0, t2:0}):
+        sys.exit(print("ERROR: Repeated leaves have been detected.\n" +
+                         "Operation aborted."))
 
     t1_tripdic = standard_tripdec({t1: 0},
                                       weighting,
@@ -784,9 +830,26 @@ def character_states_test(cladogram_dict, character_dict,
 
         return synapo_test, synapomorphies_set, results_test_dict, cladogram
 
+    if rep_detector(cladogram_dict):
+        sys.exit(print("ERROR: Repeated leaves have been detected in the " +
+                         "cladogram.\nOperation aborted."))
+    elif rep_detector(character_dict):
+        sys.exit(print("ERROR: Repeated leaves have been detected in the " +
+                         "character tree set.\nOperation aborted."))
+    else:
+        for t, i in character_dict.items():
+            for leaf in t.get_leaf_names():
+                if not leaf in list(cladogram_dict.keys())[0].get_leaf_names():
+                    sys.exit(print("ERROR: Character tree " + str(i)
+                                   + ": leaf set must be equal"
+                                   + " or a subset of the cladogram leaf "
+                                   + "set.\nOperation aborted."))
 
     # activate stylenodes from ete3 if pdf option
     if pdf_files:
+        if not os.path.isdir(pdf_files):
+            sys.exit(print("ERROR: '" + pdf_files
+                           + "' folder does not exist.\nOperation aborted."))
         try:
             from ete3 import NodeStyle, TreeStyle, faces, TextFace
 
@@ -1191,3 +1254,63 @@ def describe_forest(character_dict, prefix, showtaxanames=False):
     for dtree in character_dict.keys():
         i += 1
         describe_tree(dtree, prefix+".dt", nb=i, showtaxanames=showtaxanames)
+
+
+def chartest(cladopath, charpath, taxarep1=False, taxarep2=False,
+             prefix="AGATTA_chartest", pdf_files=False):
+    """
+    Run the character states testing procedure for hierarchical characters
+    defined by Cao (2008) and corrected by Rineau (2017). This procedure tests
+    at each symmetric node (paralog) of the cladogram the presence of
+    instances of the derived state.
+
+          Cao, N. (2008). Analyse à trois éléments et anatomie du bois des
+          Fagales Engl (Doctoral dissertation, Paris, Muséum national
+          d'histoire naturelle).
+
+          Rineau, V. (2017). Un nouveau regard cladistique sur l'anatomie
+          comparée, la phylogénie, la systématique et la paléoécologie des
+          rudistes (Bivalvia, Hippuritida) (Doctoral dissertation,
+          Université Pierre et Marie Curie).
+
+    This function is made for giving trees directly to character_states_test
+    from newick files
+
+    Parameters
+    ----------
+    cladopath : str
+        Path to a newick file containing the cladogram. The tree must be the
+        optimal cladogram obtained from the cladistic analysis of character
+        trees stored in charpath.
+    charpath : str
+        Path to a newick file containing the initial character trees.
+    taxarep1 : str, optional
+        DESCRIPTION. The default is False.
+    taxarep2 : str, optional
+        DESCRIPTION. The default is False.
+    prefix : str
+        Prefix of the files to be computed.
+    pdf_files : str or bool, optional
+        This argument can be the path stating the location where to save one
+        pdf file for each character state for visualizing the results of the
+        character state procedure.
+        The default is False (no pdf files computed).
+
+    Returns
+    -------
+    None.
+
+    """
+
+    print("Loading cladogram")
+
+    cladogram_dict = character_extraction(cladopath, taxarep1, verbose=False)
+
+    print("Cladogram loaded")
+    print("Loading character trees")
+
+    character_dict = character_extraction(charpath,taxarep2, verbose=False)
+
+    print(str(len(character_dict)) + " characters loaded")
+
+    character_states_test(cladogram_dict, character_dict, prefix, pdf_files)

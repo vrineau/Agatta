@@ -26,7 +26,7 @@ setup(
 
     long_description=open('README.md').read(),
 
-    install_requires= ["docopt","ete3","tqdm","six","numpy"],
+    install_requires= ["docopt","ete3","tqdm","six","numpy","dendropy"],
 
     include_package_data=True,
 

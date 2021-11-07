@@ -548,10 +548,9 @@ def triplet_to_file(triplet_dict, character_dict, prefix, analysis="heuristic",
     print("elapsed time (output file computation): {}".format(time_cptr))
 
 
-def convert(infile, infiletype, prefix, parallel="auto",
-            weighting="FW", analysis="heuristic", taxa_replacement=False,
-            taxa_replacement_file=False, nreplicates=1000, logfile=True,
-            software="paup", verbose=True, multiplier=1000000):
+def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
+            analysis="heuristic", taxa_replacement=False, nreplicates=1000,
+            logfile=True, software="paup", verbose=True, multiplier=1000000):
     """
     Outputs a three-item analysis file readable by TNT (Goloboff et al. 2008)
     or by PAUP* (Swofford, 2003) from :
@@ -596,20 +595,15 @@ def convert(infile, infiletype, prefix, parallel="auto",
     analysis : str
         Add a line in the nexus file to state the type of analysis between
         branch and bound ("bandb") or heuristic ("heuristic").
-    taxa_replacement : bool, optional
-        Used only if infile is a path to a newick text file. If set to True,
-        will replace taxa according to a taxa bloc, i.e., set of lines in the
-        form new_name = old_name. The separator between names must be ' = '.
-        Example:
-             AA = Diceras
-             AB = Valletia
-             AC = Monopleura
-        The taxabloc must be in the input file 'infile'. The default is False.
-    taxa_replacement_file : str, optional
-        Path of file containing taxa names and id (integers).
-        Separator is a tabulation. Only if infile is a path to a triplet text
-        file output from main_tripdec (in this case, the taxa replacement file
-        is also output by main_tripdec). The default is False.
+    taxa_replacement : str, optional
+        Path of a table file containing two columns. The first column
+        corresponds to the names of the terminals of the newick stored in
+        infile, and the second column corresponds to their names the user wants
+        to obtain at the end. All separators accepted. Example:
+             AA Diceras
+             AB Valletia
+             AC Monopleura
+        The default is False (no replacement).
     nrep : int, optional
         Add a line in the file to state the number of replicates in case
         of heuristic search. The default is 1000.
@@ -633,13 +627,12 @@ def convert(infile, infiletype, prefix, parallel="auto",
     """
 
     if infiletype == "triplets":
-        triplet_dict = triplet_extraction(infile, taxa_replacement_file)
+        triplet_dict = triplet_extraction(infile, taxa_replacement)
         character_dict = False
 
     elif infiletype == "trees":
         if type(infile) == str:
-            character_dict = character_extraction(infile,
-                                                  taxa_replacement=False)
+            character_dict = character_extraction(infile, verbose=False)
 
         else:
             character_dict = infile
@@ -738,12 +731,15 @@ def agatta_analysis(file_path, software_path, software="tnt",
     software : str, optional
         Choose the software to use between 'paup' and 'tnt'.
         The default is 'tnt'.
-    taxa_replacement_file : str, optional
-        Path of file containing taxa names and id (integers).
-        Separator is a tabulation. Only if infile is a path to a triplet text
-        file output from main_tripdec (in this case, the taxa replacement file
-        is also output by main_tripdec). The default is False.
-
+    taxa_replacement : str, optional
+        Path of a table file containing two columns. The first column
+        corresponds to the names of the terminals of the newick stored in
+        infile, and the second column corresponds to their names the user wants
+        to obtain at the end. All separators accepted. Example:
+             AA Diceras
+             AB Valletia
+             AC Monopleura
+        The default is False (no replacement).
     method : str, optional
         One of the two implemented algorithms of free-paralogy subtree
         analysis between "Rineau" and "Nelson". The default is "Rineau".
@@ -830,7 +826,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
         log_file.write("\n")
         log_file.write("Input file path: "+file_path+"\n")
         log_file.write("Prefix: "+prefix+"\n")
-        log_file.write("Taxa replacement:"+str(taxa_replacement)+"\n")
+        log_file.write("Taxa replacement file:"+str(taxa_replacement)+"\n")
         log_file.write("Method: "+method+"\n")
 
         if rosette:
@@ -915,7 +911,6 @@ def agatta_analysis(file_path, software_path, software="tnt",
                 weighting,
                 analysis,
                 taxa_replacement,
-                False,
                 nrep,
                 True,  # logfile
                 software,

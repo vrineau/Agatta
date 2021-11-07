@@ -22,6 +22,7 @@ import shutil
 import os
 import sys
 import time
+import csv
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=SyntaxWarning)
@@ -102,14 +103,13 @@ def del_replications(treerep, method="Rineau", verbose=False):
 
     """
 
-    def del_replications_node(treerep, method="Rineau", verbose=False,
-                              recursionlimit=10000):
+    def del_replications_node(treerep, method="Rineau", verbose=False):
         """
             Function to remove a single repeated leaf.
             Used in del_replications.
         """
 
-        sys.setrecursionlimit(recursionlimit)
+        sys.setrecursionlimit(10**7)  # can hit the recursion limit
 
         paralogs = dict()
         cardl = list(Tree.get_leaf_names(treerep))
@@ -281,17 +281,7 @@ def del_replications(treerep, method="Rineau", verbose=False):
 
         return treelistrepclearcopy, treelistnorep
 
-    error = False
-    recursionlimit = 10000
-    while not error:
-        try:
-            listundone, listdone = del_replications_node(treerep,
-                                                         method,
-                                                         verbose,
-                                                         recursionlimit)
-            error = True
-        except RecursionError:
-            recursionlimit = recursionlimit*10
+    listundone, listdone = del_replications_node(treerep, method, verbose)
 
     if listundone:  # if repetitions
         while listundone:  # while until listundone contains trees to analyse
@@ -299,18 +289,7 @@ def del_replications(treerep, method="Rineau", verbose=False):
             listdone1 = []
 
             for treerep2 in listundone:
-                error = False
-                recursionlimit = 10000
-                while not error:
-                    try:
-                        LU, LD = del_replications_node(treerep,
-                                                       method,
-                                                       verbose,
-                                                       recursionlimit)
-                        error = True
-                    except RecursionError:
-                        recursionlimit = recursionlimit*10
-
+                LU, LD = del_replications_node(treerep2, method, verbose)
                 listundone1 += LU
                 listdone1 += LD
 
@@ -414,11 +393,11 @@ def del_replications_forest(character_dict, method="Rineau",
 
     if output_trees != 0:
         print("Polymorphism removed. "
-              "{} polymorphism free informative trees computed.".format(
+              "{} polymorphism free informative subtrees computed.".format(
                   str(output_trees)))
     else:
         print("Polymorphism removed. No polymorphism free "
-              "informative tree remaining.")
+              "informative subtree remaining.")
 
     return tree_dict
 
@@ -449,9 +428,15 @@ def triplet_extraction(infile, taxa_replacement_file=False):
     infile : str
         Path of file containing triplets and weights.
     taxa_replacement_file : str, optional
-        Path of file containing taxa names and id (integers).
-        Separator is a tabulation. The default is False.
-
+        Path of a table file containing two columns. The first column
+        corresponds to the names of the terminals of the newick stored in
+        infile which must be integers, and the second column corresponds to
+        their names the user wants to obtain at the end.
+        All separators accepted. Example:
+             1 Diceras
+             2 Valletia
+             3 Monopleura
+        The default is False (no replacement).
     Returns
     -------
     triplet_dict : dict
@@ -465,8 +450,27 @@ def triplet_extraction(infile, taxa_replacement_file=False):
 
     if taxa_replacement_file:
         taxa_dict = {}
-        with open(taxa_replacement_file, "r") as line:
-            taxa_dict[int(line.split("    ")[0])] = line.split("    ")[0]
+        with open(taxa_replacement_file, "r") as taxa_table:
+            try:
+                dialect = csv.Sniffer().sniff(taxa_table.read())
+            except:
+                sys.exit(print("ERROR: Could not determine separator in the "
+                                  + "file '" + taxa_replacement_file
+                                  + "'. The table is probably broken."
+                                  + "\nOperation aborted."))
+
+        with open(taxa_replacement_file, "r") as taxa_table:
+
+            tab_test = csv.reader(taxa_table, delimiter=dialect.delimiter)
+            if not len({len(l) for l in tab_test}) == 1:
+                 sys.exit(print("ERROR: The table file '" +
+                                   taxa_table + "' is broken." +
+                                   "\nOperation aborted."))
+
+            for line in taxa_table:
+                line = line.strip()
+                idtax, nametax = line.split(dialect.delimiter)
+                taxa_dict[int(idtax)] = nametax
 
     with open(infile, "r") as file_tree:
         for line in file_tree:
@@ -478,6 +482,15 @@ def triplet_extraction(infile, taxa_replacement_file=False):
             trip = triplet({taxaint[1], taxaint[2]}, {taxaint[0]})
 
             if taxa_replacement_file:
+                for i in [0,1,2]:
+                    try:
+                        taxa_dict[taxaint[i]]
+                    except KeyError:
+                        sys.exit(print("ERROR: The name '" + str(taxaint[i]) +
+                                         "' does not exists in the table " +
+                                         "file '" +
+                                         taxa_replacement_file +
+                                         "'\nOperation aborted."))
                 convert_trip = triplet({taxa_dict[taxaint[1]],
                                         taxa_dict[taxaint[2]]},
                                        {taxa_dict[taxaint[0]]})
@@ -765,7 +778,7 @@ def tripdec_allweights(weighting, character):
                                 in_taxa={taxa_in1, taxa_in2},
                                 out_taxa={singleout})] = 1
 
-            else:  # if FWNL or UW
+            elif weighting in ("FWNL", "UW"):
 
                 for taxa_in1, taxa_in2 in combinations(taxa_in, 2):
 
@@ -778,6 +791,12 @@ def tripdec_allweights(weighting, character):
                         nodaltripletdict[triplet(
                             in_taxa={taxa_in1, taxa_in2},
                             out_taxa={singleout})] = 1
+
+            else:
+                sys.exit(print("ERROR: " + weighting +
+                               " is not a correct weighting method.\n" +
+                               "Allowed weightings: FW, FWNL, MW, UW, AW, NW" +
+                               "\nOperation aborted."))
 
         with open(pickle_name, 'wb') as pickle_file:
             pickle.dump(nodaltripletdict, pickle_file,
@@ -834,7 +853,7 @@ def standard_tripdec(character_dict, weighting, prefix=False, verbose=True):
                 else:  # sum triplet weights
                     triplet_output[trip] = FW
 
-    else:  # MW, AW, NW
+    elif weighting in ("FWNL", "MW", "AW", "UW", "NW"):
         for treedec in character_dict.keys():
             triplet_output2 = tripdec(weighting, treedec)
 
@@ -843,6 +862,13 @@ def standard_tripdec(character_dict, weighting, prefix=False, verbose=True):
                     triplet_output[trip] += FW
                 else:  # sum triplet weights
                     triplet_output[trip] = FW
+
+    else:
+        sys.exit(print("ERROR: " + weighting +
+                       " is not a correct weighting method.\n" +
+                       "Allowed weightings: FW, FWNL, MW, UW, AW, NW" +
+                       "\nOperation aborted."))
+
 
     if prefix:
         with open(prefix+".triplet", "w") as tdfile:
@@ -859,7 +885,7 @@ def standard_tripdec(character_dict, weighting, prefix=False, verbose=True):
 
         with open(prefix+".taxabloc", "w") as taxa_bloc_file:
             for taxa, code in taxa_dict.items():
-                taxa_bloc_file.write("{}    {}\n".format(str(code), taxa))
+                taxa_bloc_file.write("{}    {}\n".format(taxa, str(code)))
 
     return triplet_output
 
@@ -967,12 +993,13 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
 
         with open(prefix+".taxabloc", "w") as taxa_bloc_file:
             for taxa, code in taxa_dict.items():
-                taxa_bloc_file.write("{}    {}\n".format(str(code), taxa))
+                taxa_bloc_file.write("{}    {}\n".format(taxa, str(code)))
 
     return shared_dict
 
 
-def main_tripdec(input_item, prefix, taxarep, weighting, parallel, verbose):
+def main_tripdec(input_item, prefix, taxa_replacement, weighting, parallel,
+                 verbose):
     """
     Main function of Agatta for decomposing trees into triplets and compute
     triplet weights using multiprocessing or not. The input trees can be a
@@ -1006,14 +1033,15 @@ def main_tripdec(input_item, prefix, taxarep, weighting, parallel, verbose):
     prefix : str
         Prefix of the file to save. If prefix is set to false, no file is
         saved. The default is False.
-    taxarep : bool, optional
-        If set to True, will replace taxa according to a taxa bloc, i.e.,
-        set of lines in the form new_name = old_name. The separator
-        between names must be ' = '. Example:
-             AA = Diceras
-             AB = Valletia
-             AC = Monopleura
-        The default is False.
+    taxa_replacement : str, optional
+        Path of a table file containing two columns. The first column
+        corresponds to the names of the terminals of the newick stored in
+        infile, and the second column corresponds to their names the user wants
+        to obtain at the end. All separators accepted. Example:
+             AA Diceras
+             AB Valletia
+             AC Monopleura
+        The default is False (no replacement).
     weighting : str
         Weighting scheme to use between: * FW (Fractional weighting from
                                                Rineau et al. 2021)
@@ -1039,30 +1067,30 @@ def main_tripdec(input_item, prefix, taxarep, weighting, parallel, verbose):
     """
 
     if type(input_item) == str:
-        input_item = character_extraction(input_item, taxa_replacement=taxarep)
+        input_item = character_extraction(input_item,
+                                          taxa_replacement=taxa_replacement)
 
     # abort if repetitions
     if rep_detector(input_item):
-        raise UserWarning("Characters contain repetitions. " +
+        sys.exit(print("ERROR: Characters contain repeated leaves. " +
                           "Operation aborted. Please remove " +
-                          "repetitions before conversion.")
+                          "repetitions before conversion." +
+                          "\nOperation aborted."))
 
     # compute triplet dictionary for each tree in parallel
-    if verbose:
-        print("Starting triplet decomposition and " +
-              weighting + " computation")
-        start = time.time()
+    print("Starting triplet decomposition and " + weighting + " computation")
+    start = time.time()
 
     if parallel == "no":
         triplet_dict = standard_tripdec(input_item, weighting, prefix)
     else:
         triplet_dict = parallel_tripdec(input_item, weighting,
                                         prefix, parallel)
-    if verbose:
-        end = time.time()
-        time_cptr = time.strftime('%H:%M:%S', time.gmtime(end - start))
-        print("elapsed time (triplet decomposition and weighting): {}".format(
-                                                                    time_cptr))
-        print(str(len(triplet_dict))+" triplets decomposed")
+
+    end = time.time()
+    time_cptr = time.strftime('%H:%M:%S', time.gmtime(end - start))
+    print("elapsed time (triplet decomposition and weighting): {}".format(
+                                                                time_cptr))
+    print(str(len(triplet_dict))+" triplets decomposed")
 
     return triplet_dict

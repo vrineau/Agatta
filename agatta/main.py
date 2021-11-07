@@ -7,30 +7,28 @@ agatta is a set of tools to to manipulate hierarchical characters and to
 perform three-item analysis and associated operations in python.
 
 Usage:
-    agatta analysis        <file>        [options]
-    agatta tripdec         <file>        [options]
-    agatta convert         <file>        [options]
-    agatta fp              <file>        [options]
-    agatta consensus       <file>        [options]
-    agatta describetree    <file>        [options]
-    agatta hmatrix         <file>        [options]
-    agatta support         <file> <file> [options]
-    agatta chartest        <file> <file> [options]
-    agatta standardisation <file> <file> [options]
-    agatta help            <command>
+    agatta analysis         <file>        [options]
+    agatta tripdec          <file>        [options]
+    agatta convert          <file>        [options]
+    agatta fp               <file>        [options]
+    agatta consensus        <file>        [options]
+    agatta describetree     <file>        [options]
+    agatta hmatrix          <file>        [options]
+    agatta support          <file> <file> [options]
+    agatta chartest         <file> <file> [options]
+    agatta standardisation  <file> <file> [options]
+    agatta help             <command>
     agatta -h | --help
     agatta --version
 
 Options:
     -h --help            Show general help information
-    -i                   Replace taxa names for the 1st <file>
-    -j                   Replace taxa names for the 2nd <file>
     -s                   Silent mode
     -v                   Verbose mode
     --analysis=<str>     Type of searching method [default: auto]
     --chardec            Decompose trees into components
     --chartest           Compute hierarchical character states test (Cao 2007)
-    --consensus=<str>    Specify type of consensus
+    --consensus=<str>    Specify type of consensus [default: strict]
     --directory=<dir>    Directory for output chartest files [default: ./]
     --filetype=<str>     Choose a tree file or a triplet file [default: trees]
     --index=<str>        Specify type of index to use [default: ri]
@@ -46,31 +44,33 @@ Options:
     --showtaxanames      Print the list of terminals
     --softpath=<path>    Path of the software used
     --software=<str>     Software used for the pipeline [default: agatta]
-    --taxarep=<file>     Replacement file
+    --taxarep1=<file>    Table for leaves replacement for file 1
+    --taxarep2=<file>    Table for leaves replacement for file 2
     --weighting=<str>    Specify the type of triplet weighting [default: FW]
 
 """
 
-import sys
-import os
-import time
-import docopt
-from .ini import character_extraction
-from .ini import standardisation
-from .ini import hmatrix
 from .ini import helper
-from .analysis import del_replications_forest
+from .ini import hmatrix
+from .ini import checkargs
+from .ini import standardisation
+from .ini import character_extraction
 from .analysis import main_tripdec
+from .analysis import del_replications_forest
 from .interpret import RI
 from .interpret import ITRI
-from .interpret import triplet_distance
-from .interpret import character_states_test
-from .interpret import constrict
 from .interpret import rcc
+from .interpret import constrict
 from .interpret import describe_forest
+from .interpret import triplet_distance
+from .interpret import chartest
 from .out import agatta_analysis
 from .out import convert
 from .__version__ import __version__
+import os
+import sys
+import time
+import docopt
 
 
 def main():
@@ -81,16 +81,19 @@ def main():
 
         start_time = time.time()
 
-        print("agatta {}".center(80).format(__version__))
+        print("AGATTA {}".center(80).format(__version__))
         print("Three-item analysis Python package".center(80))
         print()
+
+        # check parsing
+        checkargs(arguments)
 
         # Complete analysis
         if arguments["analysis"]:
             agatta_analysis(arguments["<file>"][0],
                             arguments["--softpath"],
                             arguments["--software"],
-                            arguments.get("-i", False),
+                            arguments.get("--taxarep1", False),
                             arguments["--method"],
                             arguments["--weighting"],
                             arguments["--parallel"],
@@ -108,7 +111,7 @@ def main():
         elif arguments["tripdec"]:
             main_tripdec(arguments["<file>"][0],
                          arguments["--prefix"],
-                         arguments.get("-i", False),
+                         arguments.get("--taxarep1", False),
                          arguments["--weighting"],
                          arguments["--parallel"],
                          arguments.get("-v", False))
@@ -119,9 +122,11 @@ def main():
             if arguments["--index"] == "ri":
 
                 RI(character_extraction(arguments["<file>"][0],
-                                        arguments.get("-i", False)),
+                                        arguments.get("--taxarep1", False),
+                                        verbose=False),
                    character_extraction(arguments["<file>"][1],
-                                        arguments.get("-j", False)),
+                                        arguments.get("--taxarep2", False),
+                                        verbose=False),
                    arguments["--weighting"],
                    arguments["--prefix"]+".txt")
 
@@ -130,10 +135,12 @@ def main():
 
                 ITRI(list(character_extraction(
                     arguments["<file>"][0],
-                    arguments.get("-i", False)).keys())[0],
+                    arguments.get("--taxarep1", False),
+                    verbose=False).keys())[0],
                     list(character_extraction(
                         arguments["<file>"][1],
-                        arguments.get("-j", False)).keys())[0],
+                        arguments.get("--taxarep2", False),
+                        verbose=False).keys())[0],
                     arguments["--prefix"],
                     arguments["--weighting"])
 
@@ -143,24 +150,24 @@ def main():
 
                 triplet_distance(list(character_extraction(
                                 arguments["<file>"][0],
-                                arguments.get("-i", False)).keys())[0],
+                                arguments.get("--taxarep1", False),
+                                verbose=False).keys())[0],
                                 list(character_extraction(
                                 arguments["<file>"][1],
-                                arguments.get("-j", False)).keys())[0],
+                                arguments.get("--taxarep2", False),
+                                verbose=False).keys())[0],
                                 arguments["--prefix"],
                                 arguments["--index"],
                                 arguments["--weighting"])
 
         # character states testing procedure
         elif arguments["chartest"]:
-            character_states_test(character_extraction(
-                                  arguments["<file>"][0],
-                                  arguments.get("-i", False)),
-                                  character_extraction(
-                                      arguments["<file>"][1],
-                                      arguments.get("-j", False)),
-                                  arguments["--prefix"],
-                                  arguments.get("--pdf", False))
+            chartest(arguments["<file>"][0],
+                     arguments["<file>"][1],
+                     taxarep1=arguments.get("--taxarep1", False),
+                     taxarep2=arguments.get("--taxarep2", False),
+                     prefix=arguments["--prefix"],
+                     pdf_files=arguments.get("--pdf", False))
 
         # convert
         elif arguments["convert"]:
@@ -170,8 +177,7 @@ def main():
                     arguments["--parallel"],
                     arguments["--weighting"],
                     arguments["--analysis"],
-                    arguments.get("-i", False),
-                    arguments["--taxarep"],
+                    arguments.get("--taxarep1", False),
                     arguments["--nrep"],
                     arguments.get("--log", False),
                     arguments["--software"],
@@ -182,7 +188,7 @@ def main():
         elif arguments["fp"]:
             del_replications_forest(character_extraction(
                              arguments["<file>"][0],
-                             arguments.get("-i", False)),
+                             arguments.get("--taxarep1", False)),
                              method=arguments["--method"],
                              prefix=arguments["--prefix"],
                              verbose=arguments["-v"])
@@ -193,7 +199,7 @@ def main():
             if arguments.get("--consensus", "strict"):
                 constrict(list(character_extraction(
                           arguments["<file>"][0],
-                          arguments.get("-i", False)).keys()),
+                          arguments.get("--taxarep1", False)).keys()),
                           arguments["--prefix"])
 
             # reduced cladistic consensus
@@ -201,7 +207,7 @@ def main():
 
                 rcc(list(character_extraction(
                     arguments["<file>"][0],
-                    arguments.get("-i", False)).keys()),
+                    arguments.get("--taxarep1", False)).keys()),
                     arguments["--prefix"])
 
         # describe trees

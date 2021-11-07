@@ -1,4 +1,4 @@
-![alt text](https://github.com/VRineau/agatta/blob/main/agatta/agatta.jpg?raw=true)
+![alt text](https://github.com/VRineau/agatta/blob/main/agatta/agatta.png?raw=true)
 
 # AGATTA - Three-item analysis python package
 
