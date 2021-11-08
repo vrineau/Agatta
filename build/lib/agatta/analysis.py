@@ -1,8 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Nov  5 10:47:42 2020
 
-@author: Valentin Rineau
+    AGATTA: Three-item analysis Python package
+    By Valentin Rineau and Paul Zaharias
+
+    AGATTA is a set of tools in the cladistic framework to perform
+    three-item analysis and associated operations in cladistics in python.
+
+    https://github.com/vrineau/agatta
+
+    This code is under license GNU GPLv3
+
 """
 
 from .ini import character_extraction
@@ -15,14 +23,14 @@ from multiprocessing import cpu_count
 from collections import defaultdict
 from functools import partial
 from tqdm import tqdm
-import warnings
-import pickle
-import uuid
-import shutil
 import os
 import sys
-import time
 import csv
+import time
+import uuid
+import shutil
+import pickle
+import warnings
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=SyntaxWarning)

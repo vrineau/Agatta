@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 """
-agatta: Three-item analysis Python package
+AGATTA: Three-item analysis Python package
 
-agatta is a set of tools to to manipulate hierarchical characters and to
-perform three-item analysis and associated operations in python.
+AGATTA is a set of tools in the cladistic framework to perform
+three-item analysis and associated operations in cladistics in python.
+
+https://github.com/vrineau/agatta
 
 Usage:
     agatta analysis         <file>        [options]

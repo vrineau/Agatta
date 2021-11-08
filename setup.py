@@ -26,11 +26,14 @@ setup(
 
     long_description=open('README.md').read(),
 
-    install_requires= ["docopt","ete3","tqdm","six","numpy","dendropy"],
+    install_requires= ["docopt",
+                       "ete3",
+                       "tqdm",
+                       "treeswift"],
 
     include_package_data=True,
 
-    url='https://github.com/VRineau/agatta',
+    url='https://github.com/vrineau/agatta',
 
     entry_points = {
         'console_scripts': [

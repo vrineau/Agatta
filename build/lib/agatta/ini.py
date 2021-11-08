@@ -1,17 +1,27 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Nov  5 10:46:58 2020
 
-@author: Valentin Rineau
+    AGATTA: Three-item analysis Python package
+    By Valentin Rineau and Paul Zaharias
+
+    AGATTA is a set of tools in the cladistic framework to perform
+    three-item analysis and associated operations in cladistics in python.
+
+    https://github.com/vrineau/agatta
+
+    This code is under license GNU GPLv3
+
 """
 
 from os import path
+from re import search
 from re import findall
 from tkinter import Tk
 from tkinter import filedialog
 import csv
 import sys
 import warnings
+import treeswift
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=SyntaxWarning)
@@ -72,26 +82,85 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
             title="Select file containing newick character trees",
             filetypes=(
                 ("Newick files", "*.*"),
-                ("Lisbeth files", "*.3ia")))
+                ("Lisbeth files", "*.3ia"),
+                ("Nexus files", "*.nex"),
+                ("Nexml files", "*.nexml")))
         root.withdraw()
 
     if not path.isfile(infile):
         sys.exit(print("ERROR: The file '" + infile + "' does not exist." +
                        "\nOperation aborted."))
 
-    with open(infile, "r") as file_tree:
-        a = 1
-        line_nb = 0
-        for line in file_tree:
-            line_nb += 1
-            for character_newick in findall(r"\(\S+;", line):
-                if character_newick:
+    fileName, fileExtension = path.splitext(infile)
+    a = 1
+
+    if fileExtension == ".3ia":
+        with open(infile, "r") as file_tree :
+            line_nb = 0
+            for line in file_tree:
+                line_nb += 1
+                for character_newick in findall(r"\(\S+;", line):
+                    if character_newick:
+                        try:
+                            character_dict[Tree(character_newick)] = a
+                            a += 1
+                        except NewickError:
+                            sys.exit(print("ERROR: " +
+                                "Line {}: Broken newick structure.".format(
+                                str(line_nb))))
+
+                if search(r"\s=\s", line):
+                    taxa_dict[line.split(" = ")[0].split()[0]] = line.split(
+                        " = ")[1].strip()
+
+    else:
+        try:
+            if fileExtension == ".nex":
+                tstreelist = treeswift.read_tree_nexus(infile)
+
+            elif fileExtension == ".nexml":
+                tstreelist = treeswift.read_tree_nexml(infile)
+
+            else:  # newick files
+                tstreelist = treeswift.read_tree_newick(infile)
+        except:
+            sys.exit(print("ERROR: The file is broken. Please check the" +
+                           "format. \nNexus files must have the .nex " +
+                           "extension.\nNexml files must have the .nexml " +
+                           "extension.\nThe Lisbeth input files must have " +
+                           "the .3ia extension.\nAll other extension are " +
+                           "considered as newick files containing only " +
+                           "newick strings (one on each line)."))
+
+        if not isinstance(tstreelist, list):
+            tstreelist = [tstreelist]
+
+        for tstree in tstreelist:
+            if isinstance(tstree, dict):
+                for idtree, tst in tstree.items():
                     try:
-                        character_dict[Tree(character_newick)] = a
-                        a += 1
-                    except:
-                        print("Line {}: Broken newick structure.".format(
-                            str(line_nb)))
+                        if (tst.newick().startswith("[&R] ") or
+                            tst.newick().startswith("[&U] ")):
+                            character_dict[Tree(
+                                tst.newick().split(" ")[1])] = idtree
+                        else:
+                            character_dict[Tree(tst.newick())] = idtree
+                    except NewickError:
+                        sys.exit(print(
+                            "Tree {}: Broken newick structure.".format(
+                                str(idtree))))
+
+            else:
+                try:
+                    if (tstree.newick().startswith("[&R] ") or
+                        tstree.newick().startswith("[&U] ")):
+                        character_dict[Tree(tstree.newick().split(" ")[1])] = a
+                    else:
+                        character_dict[Tree(tstree.newick())] = a
+                    a += 1
+                except NewickError:
+                    sys.exit(print(
+                        "Tree {}: Broken newick structure.".format(str(a))))
 
     if taxa_replacement:
         if not path.isfile(taxa_replacement):
