@@ -2,7 +2,13 @@
 
 # AGATTA - Three-item analysis python package
 
-To do...
+Requests: python 3.7 or more.
+
+Installation
+
+```
+pip install agatta
+```
 
 This code is under licence *GNU GPLv3*
 

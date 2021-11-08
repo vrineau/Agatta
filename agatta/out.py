@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 
-    AGATTA: Three-item analysis Python package
+    Agatta: Three-item analysis Python package
     By Valentin Rineau and Paul Zaharias
 
-    AGATTA is a set of tools in the cladistic framework to perform
+    Agatta is a set of tools in the cladistic framework to perform
     three-item analysis and associated operations in cladistics in python.
 
     https://github.com/vrineau/agatta
@@ -658,7 +658,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
                     nrep=1000, rosette=False, chartest=False, ri=False,
                     consensus=False, pdf_file=False, verbose=True):
     """
-    Main function of the agatta python package. Allow to perform a three-item
+    Main function of the Agatta python package. Allow to perform a three-item
     analysis (Nelson & Platnick, 1991), e.g., in the context of systematics
     phylogenetics, using hierarchical characters (Cao et al. 2007), or in
     cladistic biogeography.
@@ -812,7 +812,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
         The default is False.
     pdf_file : bool or str, optional
         Can be used to compute pdf files if the character state procedure.
-        pdf_file argument is a path to a floder where agatta will write one pdf
+        pdf_file argument is a path to a floder where Agatta will write one pdf
         file for each character state. The default is False (no pdf generated).
 
     verbose : bool, optional
@@ -924,7 +924,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
                 software,
                 verbose)
 
-        # three-item analysis using PAUP*, TNT, or agatta
+        # three-item analysis using PAUP*, TNT, or Agatta
         if software == "paup":
             prefix_end = prefix_path+".nex"
             search_pipeline(prefix_end,

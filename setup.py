@@ -10,7 +10,7 @@ with open(ver_path) as ver_file:
 
 setup(
 
-    name='agatta',
+    name='Agatta',
 
     version=main_ns['__version__'],
 

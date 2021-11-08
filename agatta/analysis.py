@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 
-    AGATTA: Three-item analysis Python package
+    Agatta: Three-item analysis Python package
     By Valentin Rineau and Paul Zaharias
 
-    AGATTA is a set of tools in the cladistic framework to perform
+    Agatta is a set of tools in the cladistic framework to perform
     three-item analysis and associated operations in cladistics in python.
 
     https://github.com/vrineau/agatta
@@ -940,12 +940,12 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
         ncpu = int(ncpu)
 
     try:
-        os.mkdir("tmp_AGATTApickles")
+        os.mkdir("tmp_Agatta_pickles")
     except FileExistsError:
-        shutil.rmtree(os.getcwd() + '/tmp_AGATTApickles', ignore_errors=True)
-        os.mkdir("tmp_AGATTApickles")
+        shutil.rmtree(os.getcwd() + '/tmp_Agatta_pickles', ignore_errors=True)
+        os.mkdir("tmp_Agatta_pickles")
     finally:
-        os.chdir("tmp_AGATTApickles")
+        os.chdir("tmp_Agatta_pickles")
 
     # computing triplets for each tree in parallel
     treetuple = tuple(character_dict)  # tuple dict for multiprocessing
@@ -985,7 +985,7 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
 
     # pickles deletion
     os.chdir('..')
-    shutil.rmtree(os.getcwd() + '/tmp_AGATTApickles', ignore_errors=True)
+    shutil.rmtree(os.getcwd() + '/tmp_Agatta_pickles', ignore_errors=True)
 
     if prefix:
         with open(prefix+".triplet", "w") as tdfile:

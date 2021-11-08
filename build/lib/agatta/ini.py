@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 
-    AGATTA: Three-item analysis Python package
+    Agatta: Three-item analysis Python package
     By Valentin Rineau and Paul Zaharias
 
-    AGATTA is a set of tools in the cladistic framework to perform
+    Agatta is a set of tools in the cladistic framework to perform
     three-item analysis and associated operations in cladistics in python.
 
     https://github.com/vrineau/agatta
@@ -233,7 +233,7 @@ def taxa_triplet_extraction(triplet_dict):
     Parameters
     ----------
     triplet_dict : dict
-        Dictionary containing triplets (agatta triplet objects) in keys.
+        Dictionary containing triplets (Agatta triplet objects) in keys.
 
     Returns
     -------
@@ -755,7 +755,7 @@ def helper(command):
     Parameters
     ----------
     option : str
-        Any command that can be used with agatta. Agatta commands comprises
+        Any command that can be used with Agatta. Agatta commands comprises
         analysis, tripdec, ri, chartest, convert, fp, consensus, describetree,
         standardisation, hmatrix
 
@@ -765,7 +765,22 @@ def helper(command):
 
     """
     if command == "analysis":
-        print("Help block line for analysis command")
+        print("""
+              analysis
+              explanation
+
+              Usage:
+                  agatta analysis ...
+
+              Mandatory parameters:
+                  <file>
+
+              Optionnal parameters:
+                  --taxarep1  explication
+
+              Output:
+                  Two tree files with ...
+              """)
 
     elif command == "tripdec":
         print("Help block line for tripdec command")

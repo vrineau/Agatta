@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 
-    AGATTA: Three-item analysis Python package
+    Agatta: Three-item analysis Python package
     By Valentin Rineau and Paul Zaharias
 
-    AGATTA is a set of tools in the cladistic framework to perform
+    Agatta is a set of tools in the cladistic framework to perform
     three-item analysis and associated operations in cladistics in python.
 
     https://github.com/vrineau/agatta
