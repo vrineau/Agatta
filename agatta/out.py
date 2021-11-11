@@ -521,7 +521,7 @@ def triplet_to_file(triplet_dict, character_dict, prefix, analysis="heuristic",
 
     """
 
-    print("Computing {} file.".format(software))
+    print("Computing {} file".format(software))
 
     start = time.time()
 
@@ -655,7 +655,7 @@ def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
 def agatta_analysis(file_path, software_path, software="tnt",
                     taxa_replacement=False, method="Rineau", weighting="FW",
                     parallel="auto", prefix="agatta_out", analysis="bandb",
-                    nrep=1000, rosette=False, chartest=False, ri=False,
+                    nrep=1000, rosetta=False, chartest=False, ri=False,
                     consensus=False, pdf_file=False, verbose=True):
     """
     Main function of the Agatta python package. Allow to perform a three-item
@@ -827,7 +827,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
     print("Starting analysis.")
 
     with open(prefix+".log", "w") as log_file:
-        log_file.write("Analysis parameter\n\n")
+        log_file.write("Agatta parameters\n\n")
         log_file.write("Current date and time : ")
         now = datetime.datetime.now()
         log_file.write(now.strftime("%Y-%m-%d %H:%M:%S"))
@@ -837,9 +837,9 @@ def agatta_analysis(file_path, software_path, software="tnt",
         log_file.write("Taxa replacement file:"+str(taxa_replacement)+"\n")
         log_file.write("Method: "+method+"\n")
 
-        if rosette:
+        if rosetta:
             log_file.write("Standardisation: yes\n")
-            log_file.write("Table path for standardisation: "+rosette+"\n")
+            log_file.write("Table path for standardisation: "+rosetta+"\n")
         else:
             log_file.write("Standardisation: no\n")
 
@@ -857,7 +857,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
             log_file.write("Analysis: heuristic with {} replicates\n".format(
                 str(nrep)))
         else:
-            log_file.write("Analysis: branch and bound\n")
+            log_file.write("Analysis: " + analysis + "\n")
 
         log_file.write("Character states test: "+str(chartest)+"\n")
 
@@ -885,11 +885,11 @@ def agatta_analysis(file_path, software_path, software="tnt",
         character_dict = character_extraction(file_path, taxa_replacement)
 
     # standardisation option
-    if rosette:
+    if rosetta:
 
         #save character_dict
         character_dict = standardisation(character_dict,
-                                         rosette,
+                                         rosetta,
                                          prefix,
                                          verbose=verbose)
 
@@ -942,7 +942,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
         with open(prefix + ".tre", "r") as result_file:
             for ln in result_file:
                 if ln.startswith("("):
-                    tree = Tree(ln.replace(" ", ""))
+                    tree = Tree(ln.replace(" ", "")[1:-2]+";")
                     results_dict[tree] = i
                     i += 1
 
@@ -955,6 +955,11 @@ def agatta_analysis(file_path, software_path, software="tnt",
             root.detach()
 
             cladogram_dict[cladogram] = i
+
+        if software != "tnt":
+            with open(prefix + ".tre", "w") as result_file:
+                for tree in cladogram_dict.keys():
+                    result_file.write(tree.write(format=9) + "\n")
 
     # consensus computation
     if consensus:

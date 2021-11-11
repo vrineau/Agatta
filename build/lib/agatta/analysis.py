@@ -880,20 +880,30 @@ def standard_tripdec(character_dict, weighting, prefix=False, verbose=True):
 
     if prefix:
         with open(prefix+".triplet", "w") as tdfile:
-            for trip, FW in triplet_output.items():
+            if weighting in ("FW", "FWNL", "MW"):
+                for trip, FW in triplet_output.items():
 
-                trip2 = trip
-                in_taxa = list(trip2.in_taxa)
-                trip2.in_taxa = {taxa_dict[in_taxa[0]], taxa_dict[in_taxa[1]]}
-                trip2.out_taxa = {taxa_dict[list(trip.out_taxa)[0]]}
+                    trip2 = trip
+                    in_taxa = list(trip2.in_taxa)
+                    trip2.in_taxa = {taxa_dict[in_taxa[0]],
+                                     taxa_dict[in_taxa[1]]}
+                    trip2.out_taxa = {taxa_dict[list(trip.out_taxa)[0]]}
+                    tdfile.write("{}:    {}    {}\n".format(trip, FW, round(
+                        float(FW), 4)))
 
-                tdfile.write("{}:    {}    {}\n".format(trip,
-                                                        FW,
-                                                        round(float(FW), 4)))
+            else:
+                 for trip, FW in triplet_output.items():
+
+                    trip2 = trip
+                    in_taxa = list(trip2.in_taxa)
+                    trip2.in_taxa = {taxa_dict[in_taxa[0]],
+                                     taxa_dict[in_taxa[1]]}
+                    trip2.out_taxa = {taxa_dict[list(trip.out_taxa)[0]]}
+                    tdfile.write("{}:    {}\n".format(trip, FW))
 
         with open(prefix+".taxabloc", "w") as taxa_bloc_file:
             for taxa, code in taxa_dict.items():
-                taxa_bloc_file.write("{}    {}\n".format(taxa, str(code)))
+                taxa_bloc_file.write("{}    {}\n".format(str(code), taxa))
 
     return triplet_output
 
@@ -989,19 +999,28 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
 
     if prefix:
         with open(prefix+".triplet", "w") as tdfile:
-
-            # replace taxa by numbers
             taxa_dict, code_dict, taxa_convers = taxa_to_numbers(
                                                                 character_dict)
-            for trip, FW in shared_dict.items():
-                in_taxa = list(trip.in_taxa)
-                tdfile.write("(" + list(trip.out_taxa)[0] + ",(" + in_taxa[0] +
-                             "," + in_taxa[0] + ")):    " + str(FW) + "    " +
-                             str(round(float(FW), 4)) + "\n")
+            if weighting in ("FW", "FWNL", "MW"):
+                for trip, FW in shared_dict.items():
+
+                    in_taxa = list(trip.in_taxa)
+                    tdfile.write("(" + list(trip.out_taxa)[0] + ",("
+                                 + in_taxa[0] + "," + in_taxa[1] + ")):    "
+                                 + str(FW) + "    " + str(round(float(FW), 4))
+                                 + "\n")
+
+            else:
+                 for trip, FW in shared_dict.items():
+
+                    in_taxa = list(trip.in_taxa)
+                    tdfile.write("(" + list(trip.out_taxa)[0] + ",("
+                                 + in_taxa[0] + "," + in_taxa[1] + ")):    "
+                                 + str(FW) + "\n")
 
         with open(prefix+".taxabloc", "w") as taxa_bloc_file:
             for taxa, code in taxa_dict.items():
-                taxa_bloc_file.write("{}    {}\n".format(taxa, str(code)))
+                taxa_bloc_file.write("{}    {}\n".format(str(code), taxa))
 
     return shared_dict
 
@@ -1099,6 +1118,6 @@ def main_tripdec(input_item, prefix, taxa_replacement, weighting, parallel,
     time_cptr = time.strftime('%H:%M:%S', time.gmtime(end - start))
     print("elapsed time (triplet decomposition and weighting): {}".format(
                                                                 time_cptr))
-    print(str(len(triplet_dict))+" triplets decomposed")
+    print("Generated " + str(len(triplet_dict))+" triplets")
 
     return triplet_dict

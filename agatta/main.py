@@ -24,31 +24,31 @@ Usage:
     agatta --version
 
 Options:
-    -h --help            Show general help information
-    -s                   Silent mode
-    -v                   Verbose mode
-    --analysis=<str>     Type of searching method [default: auto]
-    --chardec            Decompose trees into components
-    --chartest           Compute hierarchical character states test (Cao 2007)
-    --consensus=<str>    Specify type of consensus [default: strict]
-    --directory=<dir>    Directory for output chartest files [default: ./]
-    --filetype=<str>     Choose a tree file or a triplet file [default: trees]
-    --index=<str>        Specify type of index to use [default: ri]
-    --log                Add a string to save an analysis log file
-    --method=<str>       Specify how to remove repetitions [default: Rineau]
-    --multiplier=<int>   Specifies a weight multiplicator [default: 1000000]
-    --nrep=<int>         Number of replicates for an analysis [default: 1000]
-    --parallel=<type>    Number of parallel cores to use [default: auto]
-    --pdf=<path>         Specifies a path were to save pdf files for chartest
-    --prefix=<file>      Prefix of the output file [default: agatta_out]
-    --ri                 Calculate Retention Index (Kitching et al. 1998)
-    --rosette=<path>     Path of the file for taxa conversion
-    --showtaxanames      Print the list of terminals
-    --softpath=<path>    Path of the software used
-    --software=<str>     Software used for the pipeline [default: agatta]
-    --taxarep1=<file>    Table for leaves replacement for file 1
-    --taxarep2=<file>    Table for leaves replacement for file 2
-    --weighting=<str>    Specify the type of triplet weighting [default: FW]
+    -h --help             Show general help information
+    -s                    Silent mode
+    -v                    Verbose mode
+    --analysis=<type>     Type of searching method [default: auto]
+    --chardec             Decompose trees into components
+    --chartest            Compute hierarchical character states test
+    --consensus=<type>    Specify type of consensus [default: strict]
+    --directory=<dir>     Directory for output chartest files [default: ./]
+    --filetype=<type>     Choose a tree file or a triplet file [default: trees]
+    --index=<type>        Specify type of index to use [default: ri]
+    --log                 Add a string to save an analysis log file
+    --repetitions=<type>  Specify how to remove repetitions [default: Rineau]
+    --multiplier=<int>    Specifies a weight multiplicator [default: 1000000]
+    --replicates=<int>    Number of replicates for an analysis [default: 1000]
+    --parallel=<type>     Number of parallel cores to use [default: auto]
+    --pdf=<path>          Specifies a path were to save pdf files for chartest
+    --prefix=<name>       Prefix of the output file [default: agatta_out]
+    --ri                  Calculate Retention Index (Kitching et al. 1998)
+    --rosetta=<path>      Path of the file for taxa conversion
+    --showtaxanames       Print the list of terminals
+    --softpath=<path>     Path of the software used
+    --software=<type>     Software used for the pipeline [default: agatta]
+    --taxarep1=<path>     Table for leaves replacement for file 1
+    --taxarep2=<path>     Table for leaves replacement for file 2
+    --weighting=<type>    Specify the type of triplet weighting [default: FW]
 
 """
 
@@ -96,13 +96,13 @@ def main():
                             arguments["--softpath"],
                             arguments["--software"],
                             arguments.get("--taxarep1", False),
-                            arguments["--method"],
+                            arguments["--repetitions"],
                             arguments["--weighting"],
                             arguments["--parallel"],
                             arguments["--prefix"],
                             arguments["--analysis"],
-                            arguments["--nrep"],
-                            arguments.get("--rosette", False),
+                            arguments["--replicates"],
+                            arguments.get("--rosetta", False),
                             arguments["--chartest"],
                             arguments["--ri"],
                             arguments.get("--consensus", False),
@@ -180,7 +180,7 @@ def main():
                     arguments["--weighting"],
                     arguments["--analysis"],
                     arguments.get("--taxarep1", False),
-                    arguments["--nrep"],
+                    arguments["--replicates"],
                     arguments.get("--log", False),
                     arguments["--software"],
                     arguments.get("-v", False),
@@ -191,7 +191,7 @@ def main():
             del_replications_forest(character_extraction(
                              arguments["<file>"][0],
                              arguments.get("--taxarep1", False)),
-                             method=arguments["--method"],
+                             method=arguments["--repetitions"],
                              prefix=arguments["--prefix"],
                              verbose=arguments["-v"])
 
@@ -237,7 +237,8 @@ def main():
 
         # display elapsed time
         elapsed_time = time.time() - start_time
-        time.strftime("%H:%M:%S", time.gmtime(elapsed_time))
+        time_cptr = time.strftime("%H:%M:%S", time.gmtime(elapsed_time))
+        print("elapsed time (total): {}".format(time_cptr))
 
     # class silent mode
     class HiddenPrints:

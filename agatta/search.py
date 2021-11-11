@@ -74,7 +74,7 @@ def search_pipeline(path_infile, software_path=False, software="paup"):
 
     end = time.time()
     time_cptr = time.strftime('%H:%M:%S', time.gmtime(end - start))
-    print("elapsed time (3ia analysis): {}".format(time_cptr))
+    print("elapsed time (3-item analysis): {}".format(time_cptr))
 
 
 def rear_taxa(tree1):
