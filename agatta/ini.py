@@ -717,10 +717,10 @@ def checkargs(arguments):
                            "'heuristic', 'bandb"))
 
         try:
-            int(arguments["--nrep"])
+            int(arguments["--replicates"])
         except ValueError:
-            sys.exit(print("ERROR: --nrep flag must be an integer (number of" +
-                  " replicates in heuristic search"))
+            sys.exit(print("ERROR: --replicates flag must be an integer " +
+                  "(number of replicates in heuristic search"))
 
     if arguments["tripdec"] or arguments["convert"] or arguments["analysis"]:
 
