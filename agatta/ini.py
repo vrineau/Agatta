@@ -732,9 +732,9 @@ def checkargs(arguments):
                       "integer specifying the number of cpu"))
 
     if arguments["fp"] or arguments["analysis"]:
-        if not arguments["--method"] in ["Rineau","Nelson"]:
-            sys.exit(print("ERROR: --method flag must be one of: 'Rineau', " +
-                           "'Nelson'"))
+        if not arguments["--repetitions"] in ["Rineau","Nelson"]:
+            sys.exit(print("ERROR: --repetitions flag must be one of: " +
+                           "'Rineau', 'Nelson'"))
 
     if arguments["consensus"] or arguments["analysis"]:
         if arguments.get("--consensus", False):
