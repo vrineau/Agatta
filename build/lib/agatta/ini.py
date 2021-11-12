@@ -724,8 +724,7 @@ def checkargs(arguments):
 
     if arguments["tripdec"] or arguments["convert"] or arguments["analysis"]:
 
-        if (arguments["--parallel"] != "auto" or
-            arguments["--parallel"] != "no"):
+        if not arguments["--parallel"] in ["auto","no"]:
             try:
                 int(arguments["--parallel"])
             except ValueError:
