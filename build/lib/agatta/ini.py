@@ -724,12 +724,13 @@ def checkargs(arguments):
 
     if arguments["tripdec"] or arguments["convert"] or arguments["analysis"]:
 
-        if arguments["--parallel"] != "auto":
+        if (arguments["--parallel"] != "auto" or
+            arguments["--parallel"] != "no"):
             try:
                 int(arguments["--parallel"])
             except ValueError:
-                sys.exit(print("ERROR: --parallel flag must be 'auto' or an " +
-                      "integer specifying the number of cpu"))
+                sys.exit(print("ERROR: --parallel flag must be 'auto', 'no'" +
+                      " or an integer specifying the number of cpu"))
 
     if arguments["fp"] or arguments["analysis"]:
         if not arguments["--repetitions"] in ["Rineau","Nelson"]:

@@ -743,6 +743,12 @@ def tripdec_allweights(weighting, character):
         computation in parallel_tripdec.
     """
 
+    if not weighting in ("FW", "FWNL", "UW", "MW", "AW", "NW"):
+        sys.exit(print("ERROR: " + weighting +
+                       " is not a correct weighting method.\n" +
+                       "Allowed weightings: FW, FWNL, MW, UW, AW, NW" +
+                       "\nOperation aborted."))
+
     pickle_dict = defaultdict(int)
     tree_id = str(uuid.uuid4())
 
@@ -799,12 +805,6 @@ def tripdec_allweights(weighting, character):
                         nodaltripletdict[triplet(
                             in_taxa={taxa_in1, taxa_in2},
                             out_taxa={singleout})] = 1
-
-            else:
-                sys.exit(print("ERROR: " + weighting +
-                               " is not a correct weighting method.\n" +
-                               "Allowed weightings: FW, FWNL, MW, UW, AW, NW" +
-                               "\nOperation aborted."))
 
         with open(pickle_name, 'wb') as pickle_file:
             pickle.dump(nodaltripletdict, pickle_file,
@@ -949,13 +949,18 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
     else:
         ncpu = int(ncpu)
 
+    if prefix:
+        tmp = "tmp_Agatta_picles_" + prefix
+    else:
+        tmp = "tmp_Agatta_pickles"
+
     try:
-        os.mkdir("tmp_Agatta_pickles")
+        os.mkdir(tmp)
     except FileExistsError:
-        shutil.rmtree(os.getcwd() + '/tmp_Agatta_pickles', ignore_errors=True)
-        os.mkdir("tmp_Agatta_pickles")
+        shutil.rmtree(os.getcwd() + '/' + tmp, ignore_errors=True)
+        os.mkdir(tmp)
     finally:
-        os.chdir("tmp_Agatta_pickles")
+        os.chdir(tmp)
 
     # computing triplets for each tree in parallel
     treetuple = tuple(character_dict)  # tuple dict for multiprocessing
@@ -995,7 +1000,7 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
 
     # pickles deletion
     os.chdir('..')
-    shutil.rmtree(os.getcwd() + '/tmp_Agatta_pickles', ignore_errors=True)
+    shutil.rmtree(os.getcwd() + '/' + tmp, ignore_errors=True)
 
     if prefix:
         with open(prefix+".triplet", "w") as tdfile:
@@ -1080,7 +1085,7 @@ def main_tripdec(input_item, prefix, taxa_replacement, weighting, parallel,
     parallel : str or int
         Option for choosing if the analysis is made using multiprocessing or
         not. This argument can be:
-            * "not" if the user does not wan to use multiprocessing.
+            * "no" if the user does not wan to use multiprocessing.
             * "auto" for automatic detection of the number of cpu available.
             * any integer corresponding to the number of cpu the user wants to
               allow to the analysis.
