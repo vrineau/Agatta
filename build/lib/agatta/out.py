@@ -337,7 +337,7 @@ def triplet_tnt_file(triplet_dict, character_dict, weighting, analysis,
     tntstring += "\nquit"
 
     if count_zeroweights > 0:
-        print("Warning: " + count_zeroweights +
+        print("Warning: " + str(count_zeroweights) +
               " zero weight triplets deleted due to rounding")
 
     with open(prefix+".tnt", "w") as tnt_file:
