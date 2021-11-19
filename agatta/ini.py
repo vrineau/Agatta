@@ -2,7 +2,7 @@
 """
 
     Agatta: Three-item analysis Python package
-    By Valentin Rineau and Paul Zaharias
+    Contact: Valentin Rineau - valentin.rineau@gmail.com
 
     Agatta is a set of tools in the cladistic framework to perform
     three-item analysis and associated operations in cladistics in python.
@@ -752,39 +752,35 @@ def checkargs(arguments):
 def helper(command):
     """
     Helper function that print the help block corresponding to a command.
-
     Parameters
     ----------
     option : str
         Any command that can be used with Agatta. Agatta commands comprises
         analysis, tripdec, ri, chartest, convert, fp, consensus, describetree,
         standardisation, hmatrix
-
     Returns
     -------
     None.
-
     """
+
     if command == "analysis":
-        print("\033[1;34;48m    analysis")
         print("""
+    analysis
+
     Main function of the Agatta python package. Allow to perform a three-item
     analysis, e.g., in the context of systematics phylogenetics, using
     hierarchical characters, or in cladistic biogeography. The cladogram(s)
     obtained by congruence is the tree that maximises the amount of hypotheses
     of cladistic relationships (i.e., the three-item statements) deduced from
     the input trees (the characters).
-
     The analysis can be performed using a text file containing a hierarchical
     matrix (see section mandatory parameters below for informations about
     the format) or newick rooted trees encoded in a newick, nexus, or nexml
     file.
-
     There are no constraints on the input trees excepted that they must
     be rooted to perform the analysis. If they are repeated leaves
     (polymorphism), they are automatically removed (several methods
     are implemented, see below).
-
     Several options are available for analysing the results: the user can
     compute a consensus when several cladograms are optimal, a specific
     character-state testing procedure can be used to test whether each
@@ -792,7 +788,6 @@ def helper(command):
     or an homoplasy, and finally a retention index can be computed to
     obtained the proportion of phylogenetic relationships of characters
     that have been retained in the optimal cladogram.
-
 
     Usage:
 
@@ -808,29 +803,17 @@ def helper(command):
 
             <file> Path of the file containing the character trees.
             The trees can be encoded for Agatta in a file in several ways:
-
-              - a hierarchical matrix (more on the hierarchical matrix
-                format here: INSERT_URL_HERE)
-
-              - A newick file with a single newick tree on each line.
-                (see explanations here:
-                https://en.wikipedia.org/wiki/Newick_format)
-
-                Example:
-
-                (a,b,(c,d,(e,f)));
-                ((c,e),(a,(b,(d,f))));
-
-              - A nexus file (extension in .nex).
-
+              - a hierarchical matrix,
+              - A newick file with a single newick tree on each line,
+              - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
+            THe following url give more information on how to build input
+            files: URL.
 
         Optionnal parameters:
 
             -s  Silent mode.
-
             -v  Verbose mode.
-
             --analysis=<type>  Type of tree search analysis between an exact
             branch and bound ('bandb') or an heuristic tree search
             ('heuristic'). The heuristic search is only available through
@@ -838,7 +821,6 @@ def helper(command):
             or --software=paup (and the flag --softpath accordingly).
             By default the analysis is in branch and bound below 15 terminals
             and heuristic otherwise.
-
             --chartest  Test and locates all character states on the cladogram.
             Each character state can be a synapomorphy if the hypothesis is
             accepted or an homoplasy if the hypothesis of sameness is rejected.
@@ -846,14 +828,12 @@ def helper(command):
             of the states on the cladogram and if the test is passed or not,
             sorted by state, and prefix.chartest_node gives the same
             information sorted by node.
-
             --consensus=<type>  Compute a consensus which can be a strict
             consensus ('strict') or a reduced cladistic consensus ('rcc',
             Wilkinson 1994) which is able to detect more common information
             in subtrees. By default, the flag without argument produces a
             strict consensus. The output file is prefix.constrict or
             prefix.rcc.
-
             --parallel=<type>  Option for choosing if the analysis is made
             using multiprocessing or not. This argument can be:
               - 'not' if the user does not wan to use multiprocessing.
@@ -863,17 +843,14 @@ def helper(command):
             cpu. This option can be used in the case of very large character
             tree that can saturate the RAM if too many parallel processing are
             active.
-
             --pdf=<path>  Compute pdf files to visualise character states on
             the cladogram if --chartest is used. One pdf for each state is
             writen named prefix.character_name.character_state_number.pdf.
             The flag's argument is the path where the user wants to save the
             pdfs.
-
             --prefix=<file>  Prefix of all saving files. The complete path can
             be used. By default, the prefix is 'agatta_out' and all files are
             saved in the directory of the first <file>.
-
             --repetitions=<type>  The removal of repeated leaves in character
             trees is made using the method of free-paralogy subtree.
             Two algorithms are implemented, the original one from Nelson and
@@ -886,16 +863,13 @@ def helper(command):
             each new tree receives an id, e.g. 1.2 corresponds to the second
             repetition-free subtree computed from the 1st original character
             tree.
-
             --replicates=<int>  State the number of replicates in case
             of an heuristic tree search. By default the heuristic search is
             launched with 1000 replicates.
-
             --ri  Compute the retention index of the resulting cladogram and
             a retention index for each character which states the percentage
             of phylogenetic information retained in the optimal cladogram.
             The results are writen in prefix.ri.
-
             --rosetta=<file>  If the input tree leaves are parts, cladistics
             requires a standardisation step with replacement of parts to
             wholes. It is especially important in cladistic biogeography where
@@ -905,9 +879,7 @@ def helper(command):
             one with the name of the tree leaves and the second with their
             corresponding names to be switched. The results of the
             standardisation are writen in the file prefix.std.
-
             --softpath=<path>  Path of the software declared in --software.
-
             --software=<type>  Choose how to perform the three-item analysis.
             The analysis can be performed using the built-in branch and bound
             in Agatta ('agatta'). 'paup' and 'tnt' can be used for branch and
@@ -916,13 +888,11 @@ def helper(command):
             terminals. User should consider to switch the software is the
             analysis time appears to be too long. A prefix.nex file is
             generated if 'paup', and a prefix.tnt file for 'tnt'.
-
             --taxarep1=<path>  If the user wants to replace identifiers by real
             leaf names in the result files, this flag can be used with a path
             to a csv file with two columns, the first with the identifiers in
             the actual newick strings and the other with the names the user
             wants.
-
             --weighting=<type>  Weighting scheme to use on triplets. The
             type of weighting will change the results of the analysis.
             The following schemes can be used:
@@ -935,36 +905,31 @@ def helper(command):
                 - NW: No weighting (all triplets have a weight of 1).
             By default 'FW' is used.
 
-
     Output:
 
         Four ouput files are writen all the time when using the analysis
         command in addition to optionnal output files.
         The files are:
-
           - prefix.log is a log file with all the parameters of the analysis.
-
           - prefix.triplet is a file with all triplets deduced from the input
             character trees. Each row corresponds to one triplet with its
             weight as a fraction and as a float.
-
           - prefix.taxabloc is a table file with the correspondance between
             leaf identifiers and names given in the input.
-
           - prefix.tre is a newick file recording all the optimal cladograms
             found during the analysis.
               """)
 
     elif command == "tripdec":
-        print("\033[1;34;48m    tripdec")
         print("""
+    tripdec
+
     Decomposes rooted tree(s) into minimal cladistic statements (triplets
     or three-item statements) stating that two leaves are closer between them
     than to a third. During decomposition the weight of each triplet is
     computed according to a specific weighting scheme. In three-item analysis,
     the weighted triplets are then analysed to compute the cladogram that is
     in agreement with the maximum amout of them.
-
 
     Usage:
 
@@ -975,29 +940,17 @@ def helper(command):
 
             <file> Path of the file containing the character trees.
             The trees can be encoded for Agatta in a file in several ways:
-
-              - a hierarchical matrix (more on the hierarchical matrix
-                format here: INSERT_URL_HERE)
-
-              - A newick file with a single newick tree on each line.
-                (see explanations here:
-                https://en.wikipedia.org/wiki/Newick_format)
-
-                Example:
-
-                (a,b,(c,d,(e,f)));
-                ((c,e),(a,(b,(d,f))));
-
-              - A nexus file (extension in .nex).
-
+              - a hierarchical matrix,
+              - A newick file with a single newick tree on each line,
+              - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
+            The following url give more information on how to build input
+            files: URL.
 
         Optionnal parameters:
 
             -s  Silent mode.
-
             -v  Verbose mode.
-
             --parallel=<type>  Option for choosing if the analysis is made
             using multiprocessing or not. This argument can be:
               - 'not' if the user does not wan to use multiprocessing.
@@ -1007,17 +960,14 @@ def helper(command):
             cpu. This option can be used in the case of very large character
             tree that can saturate the RAM if too many parallel processing are
             active.
-
             --prefix=<file>  Prefix of all saving files. The complete path can
             be used. By default, the prefix is 'agatta_out' and all files are
             saved in the directory of the first <file>.
-
             --taxarep1=<path>  If the user wants to replace identifiers by real
             leaf names in the result files, this flag can be used with a path
             to a csv file with two columns, the first with the identifiers in
             the actual newick strings and the other with the names the user
             wants.
-
             --weighting=<type>  Weighting scheme to use on triplets. The
             type of weighting will change the results of the analysis.
             The following schemes can be used:
@@ -1029,7 +979,6 @@ def helper(command):
                   triplet is present,
                 - NW: No weighting (all triplets have a weight of 1).
             By default 'FW' is used.
-
 
     Output:
 
@@ -1043,8 +992,9 @@ def helper(command):
               """)
 
     elif command == "support":
-        print("\033[1;34;48m    support")
         print("""
+    support
+
     The support command gathers several triplet metrics and indices that are
     intended to compare trees between them. The retention index measures the
     amount of cladistic relationships from the input characters retained in
@@ -1062,56 +1012,46 @@ def helper(command):
 
         Mandatory parameters:
 
-            The requested files depend of the --index the user wants to
-            compute:
-
-                --index=<type>
-
             Two <file> arguments are requested which represents the path of
-            tree files (more on accepted formats here INSERT_URL_HERE)
-
-
-              Path of the file containing the character trees.
-            The trees can be encoded for Agatta in a file in several ways:
-
-              - a hierarchical matrix (more on the hierarchical matrix
-                format here: INSERT_URL_HERE)
-
-              - A newick file with a single newick tree on each line.
-                (see explanations here:
-                https://en.wikipedia.org/wiki/Newick_format)
-
-                Example:
-
-                (a,b,(c,d,(e,f)));
-                ((c,e),(a,(b,(d,f))));
-
-              - A nexus file (extension in .nex).
-
-              - A nexml file (extension in .nexml).
-
-            <file>
+            tree files. Both <file> must contain newick tree(s) (more on
+            accepted formats here INSERT_URL_HERE).
+            The trees can be stored in newick files, nexus files (.nex), or
+            nexml files (.nexml). Hierarchical matrices are not handled by the
+            support command.
+            The requested files depend of the --index flag:
+                --index=ri: the retention index compares the cladogram to its
+                characters. The first <file> contains one tree considered as
+                the optimal cladogram (or a consensus); the second <file>
+                contains the input character trees used to construct the
+                cladogram.
+                --index=itri: the inter-tree retention index compares one tree
+                to a reference tree. It is an asymmetric measure, thus the
+                order of the file is important as for the ri. The first <file>
+                contains the reference tree and the second file contains the
+                tree to compare. Generally used in simulation studies to
+                compare a reconstructed tree to a true tree.
+                --index=itrisym_sum or --index=itrisym_product:
+                triplet distance between two trees. As it
+                is a distance, this measure is symmetric. Thus the order
+                between the two <file> doesn't matter. Each file must include
+                one tree. itrisym_sum is the mean between the two asymmetric
+                ITRI, and itrisym_product is the product between the two ITRI.
 
         Optionnal parameters:
 
             -s  Silent mode.
-
             -v  Verbose mode.
-
-            --index  prout
-
+            --index  The index flag specifies which measure to use to compare
+            rooted trees between retention index ('ri'), inter-tree retention
+            index ('itri'), or triplet distance ('itrisym_sum' or
+            'itrisym_product'). More informations on the input file in the
+            mandatory parameters section.
             --taxarep1=<path>  If the user wants to replace identifiers by real
             leaf names in the result files, this flag can be used with a path
             to a csv file with two columns, the first with the identifiers in
             the actual newick strings and the other with the names the user
             wants.
-
-            --taxarep2=<path>  If the user wants to replace identifiers by real
-            leaf names in the result files, this flag can be used with a path
-            to a csv file with two columns, the first with the identifiers in
-            the actual newick strings and the other with the names the user
-            wants.
-
+            --taxarep2=<path>  Idem as --taxarep1 for the second <file>.
             --weighting=<type>  Weighting scheme to use on triplets. The
             type of weighting will change the results of the analysis.
             The following schemes can be used:
@@ -1124,30 +1064,33 @@ def helper(command):
                 - NW: No weighting (all triplets have a weight of 1).
             By default 'FW' is used.
 
-
     Output:
 
-        Four ouput files are writen all the time when using the analysis
-        command in addition to optionnal output files.
-        The files are:
-
-          - prefix.log is a log file with all the parameters of the analysis.
-
-          - prefix.triplet is a file with all triplets deduced from the input
-            character trees. Each row corresponds to one triplet with its
-            weight as a fraction and as a float.
-
-          - prefix.taxabloc is a table file with the correspondance between
-            leaf identifiers and names given in the input.
-
-          - prefix.tre is a newick file recording all the optimal cladograms
-            found during the analysis.
+        One ouput file is writen the results of the tree comparisons:
+            - For ri, a global retention index stating the overall information
+            content of all character trees retained in the cladogram is writen,
+            plus a ri for each character.
+            - For itri, three values are computed, power (amount of triplets
+            shared between the trees / triplets of the reference tree),
+            artefact (amount of triplets from the reconstructed tree that
+            are not present in the reference tree / triplets of the
+            reconstructed tree), and efficiency (power - artefact).
+            - For itrisym_sum and itrisym_product, the file contains the
+            triplet distance between the two trees.
+        All values are displayed as percentages excepted itrisym_product.
               """)
 
     elif command == "chartest":
-        print("\033[1;34;48m    chartest")
         print("""
-    Text
+    chartest
+
+    The chartest command is intended to use the character state testing
+    procedure for hierarchical characters. Each character state
+    (an informative node in a rooted tree) is tested against a cladogram:
+    if the test fails, the character state hypothesis (an hypothesis of clade)
+    is rejected, and the state becomes homoplasic; otherwise, if the state pass
+    the test, it becomes a synapomorphy that supports a specific node of the
+    cladogram.
 
     Usage:
 
@@ -1156,143 +1099,105 @@ def helper(command):
 
         Mandatory parameters:
 
-            <file> Path of the file containing the character trees.
+            <file> Path of files containing the character trees.
             The trees can be encoded for Agatta in a file in several ways:
-
-              - a hierarchical matrix (more on the hierarchical matrix
-                format here: INSERT_URL_HERE)
-
-              - A newick file with a single newick tree on each line.
-                (see explanations here:
-                https://en.wikipedia.org/wiki/Newick_format)
-
-                Example:
-
-                (a,b,(c,d,(e,f)));
-                ((c,e),(a,(b,(d,f))));
-
-              - A nexus file (extension in .nex).
-
+              - a hierarchical matrix,
+              - A newick file with a single newick tree on each line,
+              - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
-
-            <file>
+            THe following url give more information on how to build input
+            files: URL.
+            The first <file> contains only one tree: the optimal cladogram or
+            the consensus tree resulting from the analysis of a set of
+            character trees. THe second <file> contains the set of character
+            trees(more on accepted formats here INSERT_URL_HERE).
 
         Optionnal parameters:
 
             -s  Silent mode.
-
             -v  Verbose mode.
-
             --pdf=<path>  Compute pdf files to visualise character states on
             the cladogram if --chartest is used. One pdf for each state is
             writen named prefix.character_name.character_state_number.pdf.
             The flag's argument is the path where the user wants to save the
             pdfs.
-
             --prefix=<file>  Prefix of all saving files. The complete path can
             be used. By default, the prefix is 'agatta_out' and all files are
             saved in the directory of the first <file>.
-
             --taxarep1=<path>  If the user wants to replace identifiers by real
             leaf names in the result files, this flag can be used with a path
             to a csv file with two columns, the first with the identifiers in
             the actual newick strings and the other with the names the user
             wants.
-
-            --taxarep2=<path>
-
-
+            --taxarep2=<path>  Idem as --taxarep1 for the second <file>.
     Output:
 
-        Four ouput files are writen all the time when using the analysis
-        command in addition to optionnal output files.
-        The files are:
-
-          - prefix.log is a log file with all the parameters of the analysis.
-
-          - prefix.triplet is a file with all triplets deduced from the input
-            character trees. Each row corresponds to one triplet with its
-            weight as a fraction and as a float.
-
-          - prefix.taxabloc is a table file with the correspondance between
-            leaf identifiers and names given in the input.
-
-          - prefix.tre is a newick file recording all the optimal cladograms
-            found during the analysis.
+        Two output files are writen: prefix.chartest gives all locations
+        of the states on the cladogram and if the test is passed or not,
+        sorted by state, and prefix.chartest_node gives the same
+        information sorted by node. For better visualisation, the flag --pdf
+        allow to generate one pdf file for each character state with the
+        resulting location and results.
               """)
 
     elif command == "convert":
-        print("\033[1;34;48m    convert")
         print("""
-    Text
+    convert
+
+    The convert command is intended to compute a triplet matrix readable by an
+    external software (currently PAUP* and TNT are implemented) from a file
+    containing a list of trees or a list of triplets.
 
     Usage:
 
         agatta convert <file> [-s -v --analysis=<type> --filetype=<type> --log
-                                      --multiplier=<int> --replicates=<int>
                                       --parallel=<int> --prefix=<file>
-                                      --software=<type> --taxarep1=<path>
-                                      --weighting=<type>]
+                                      --replicates=<int> --software=<type>
+                                      --taxarep1=<path> --weighting=<type>]
 
         Mandatory parameters:
 
-            <file> Path of the file containing the character trees.
+            <file> Path of the file containing character trees or triplets.
             The trees can be encoded for Agatta in a file in several ways:
-
-              - a hierarchical matrix (more on the hierarchical matrix
-                format here: INSERT_URL_HERE)
-
-              - A newick file with a single newick tree on each line.
-                (see explanations here:
-                https://en.wikipedia.org/wiki/Newick_format)
-
-                Example:
-
-                (a,b,(c,d,(e,f)));
-                ((c,e),(a,(b,(d,f))));
-
-              - A nexus file (extension in .nex).
-
+              - a hierarchical matrix,
+              - A newick file with a single newick tree on each line,
+              - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
+            THe following url give more information on how to build input
+            files: URL.
+            The user can also use as input file a triplet file generated from
+            the Agatta tripdec command.
 
         Optionnal parameters:
 
             -s  Silent mode.
-
             -v  Verbose mode.
-
             --analysis=<type>  Type of tree search analysis between an exact
             branch and bound ('bandb') or an heuristic tree search
-            ('heuristic'). The heuristic search is only available through
-            PAUP* and TNT, thus it is mandatory to add the flag --software=tnt
-            or --software=paup (and the flag --softpath accordingly).
+            ('heuristic'). A line is writen accordingly in the output file.
             By default the analysis is in branch and bound below 15 terminals
             and heuristic otherwise.
-
-            --filetype=<type>
-
-            --log
-
-            --multiplier=<int>
-
-            --parallel=<type>  Option for choosing if the analysis is made
-            using multiprocessing or not. This argument can be:
-              - 'not' if the user does not wan to use multiprocessing.
+            --filetype=<type>  The input file can be a classic file containing
+            newick trees (newick file, nexus file, or nexml file) ('trees'), or
+            a list of triplets ('triplets') generated using the Agatta tripdec
+            command.
+            --log  Add a line in the output file to generate a log file during
+            the PAUP* our TNT analysis.
+            --parallel=<type>  Option for choosing if the triplet decomposition
+            is made using multiprocessing or not. This argument can be:
+              - 'no' if the user does not want to use multiprocessing.
               - 'auto' for automatic detection of the number of cpu.
               - any integer corresponding to the number of cpu allowed.
             By default, the analysis is made in parallel using all available
             cpu. This option can be used in the case of very large character
             tree that can saturate the RAM if too many parallel processing are
             active.
-
-            --prefix=<file>  Prefix of all saving files. The complete path can
-            be used. By default, the prefix is 'agatta_out' and all files are
-            saved in the directory of the first <file>.
-
+            --prefix=<file>  Prefix of saving .nex or .tnt file. The complete
+            path can be used. By default, the prefix is 'agatta_out' and output
+            file is saved in the directory of <file>.
             --replicates=<int>  State the number of replicates in case
             of an heuristic tree search. By default the heuristic search is
             launched with 1000 replicates.
-
             --software=<type>  Choose how to perform the three-item analysis.
             The analysis can be performed using the built-in branch and bound
             in Agatta ('agatta'). 'paup' and 'tnt' can be used for branch and
@@ -1301,13 +1206,11 @@ def helper(command):
             terminals. User should consider to switch the software is the
             analysis time appears to be too long. A prefix.nex file is
             generated if 'paup', and a prefix.tnt file for 'tnt'.
-
             --taxarep1=<path>  If the user wants to replace identifiers by real
             leaf names in the result files, this flag can be used with a path
             to a csv file with two columns, the first with the identifiers in
             the actual newick strings and the other with the names the user
             wants.
-
             --weighting=<type>  Weighting scheme to use on triplets. The
             type of weighting will change the results of the analysis.
             The following schemes can be used:
@@ -1320,30 +1223,21 @@ def helper(command):
                 - NW: No weighting (all triplets have a weight of 1).
             By default 'FW' is used.
 
-
     Output:
 
-        Four ouput files are writen all the time when using the analysis
-        command in addition to optionnal output files.
-        The files are:
-
-          - prefix.log is a log file with all the parameters of the analysis.
-
-          - prefix.triplet is a file with all triplets deduced from the input
-            character trees. Each row corresponds to one triplet with its
-            weight as a fraction and as a float.
-
-          - prefix.taxabloc is a table file with the correspondance between
-            leaf identifiers and names given in the input.
-
-          - prefix.tre is a newick file recording all the optimal cladograms
-            found during the analysis.
+        A triplet matrix file with weights that can be analysed using
+        PAUP* or TNT.
               """)
 
     elif command == "fp":
-        print("\033[1;34;48m    fp")
         print("""
-    Text
+    fp
+
+    The free-paralogy analysis is a method used to manage repetitions
+    (polymorphism in phylogenetics) in the context of cladistic analysis
+    using hierarchical characters. Free-paralogy subtree analysis build
+    subtrees to avoid repetition of leaves. Two distinct algorithm for building
+    subtrees are currently implemented in Agatta (see --repetitions).
 
     Usage:
 
@@ -1354,153 +1248,100 @@ def helper(command):
 
             <file> Path of the file containing the character trees.
             The trees can be encoded for Agatta in a file in several ways:
-
-              - a hierarchical matrix (more on the hierarchical matrix
-                format here: INSERT_URL_HERE)
-
-              - A newick file with a single newick tree on each line.
-                (see explanations here:
-                https://en.wikipedia.org/wiki/Newick_format)
-
-                Example:
-
-                (a,b,(c,d,(e,f)));
-                ((c,e),(a,(b,(d,f))));
-
-              - A nexus file (extension in .nex).
-
+              - a hierarchical matrix,
+              - A newick file with a single newick tree on each line,
+              - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
+            The following url give more information on how to build input
+            files: URL.
 
         Optionnal parameters:
 
             -s  Silent mode.
-
             -v  Verbose mode.
-
             --prefix=<file>  Prefix of all saving files. The complete path can
             be used. By default, the prefix is 'agatta_out' and all files are
             saved in the directory of the first <file>.
-
-            --repetitions=<type>  The removal of repeated leaves in character
-            trees is made using the method of free-paralogy subtree.
-            Two algorithms are implemented, the original one from Nelson and
-            Ladiges (1996) ('Nelson') for dealing with paralogy in cladistic
-            biogeography, and the algorithm of Rineau et al. (2021) ('Rineau')
-            designed for all cases of repetitions (not only paralogy).
+            --repetitions=<type>  Two algorithms are implemented, the original
+            one from Nelson and Ladiges (1996) ('Nelson') for dealing with
+            paralogy in cladistic biogeography, and the algorithm of
+            Rineau et al. (2021) ('Rineau') designed for all cases of
+            repetitions (not only paralogy).
             If the flag is not used and if repetitions are detected, they are
             automatically removed using Rineau et al. algorithm's.
-            The repetition-free character trees are writen in prefix.poly and
-            each new tree receives an id, e.g. 1.2 corresponds to the second
-            repetition-free subtree computed from the 1st original character
-            tree.
-
             --taxarep1=<path>  If the user wants to replace identifiers by real
             leaf names in the result files, this flag can be used with a path
             to a csv file with two columns, the first with the identifiers in
             the actual newick strings and the other with the names the user
             wants.
 
-
     Output:
 
-        Four ouput files are writen all the time when using the analysis
-        command in addition to optionnal output files.
-        The files are:
-
-          - prefix.log is a log file with all the parameters of the analysis.
-
-          - prefix.triplet is a file with all triplets deduced from the input
-            character trees. Each row corresponds to one triplet with its
-            weight as a fraction and as a float.
-
-          - prefix.taxabloc is a table file with the correspondance between
-            leaf identifiers and names given in the input.
-
-          - prefix.tre is a newick file recording all the optimal cladograms
-            found during the analysis.
+        One newick file prefix.poly with a list of subtrees free of repeated
+        leaves. Each subtree is labelled with the number of the original tree
+        and the number of the subtree generated from the original tree,
+        e.g. 1.2 corresponds to the second repetition-free subtree computed
+        from the 1st original character tree.
               """)
 
     elif command == "consensus":
-        print("\033[1;34;48m    consensus")
         print("""
-    Text
+    consensus
+
+    Compute a consensus of several equally optimal trees. Two types of
+    consensus are available: a strict consensus, that displays only the clades
+    common to all trees, and a reduced cladistic consensus (rcc), that displays
+    subtrees that are common to all trees (or in other words, the rcc
+    generates all triplets common to all optimal trees and combines them
+    into the bigest trees).
 
     Usage:
 
         agatta consensus <file> [-s -v --consensus=<type> --prefix=<file>
                                        --taxarep1=<path>]
-
         Mandatory parameters:
 
-            <file> Path of the file containing the character trees.
+            <file> Path of the file containing the equally optimal trees.
             The trees can be encoded for Agatta in a file in several ways:
-
-              - a hierarchical matrix (more on the hierarchical matrix
-                format here: INSERT_URL_HERE)
-
-              - A newick file with a single newick tree on each line.
-                (see explanations here:
-                https://en.wikipedia.org/wiki/Newick_format)
-
-                Example:
-
-                (a,b,(c,d,(e,f)));
-                ((c,e),(a,(b,(d,f))));
-
-              - A nexus file (extension in .nex).
-
+              - a hierarchical matrix,
+              - A newick file with a single newick tree on each line,
+              - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
+            The following url give more information on how to build input
+            files: URL.
 
         Optionnal parameters:
 
             -s  Silent mode.
-
             -v  Verbose mode.
-
             --consensus=<type>  Compute a consensus which can be a strict
             consensus ('strict') or a reduced cladistic consensus ('rcc',
             Wilkinson 1994) which is able to detect more common information
             in subtrees. By default, the flag without argument produces a
-            strict consensus. The output file is prefix.constrict or
-            prefix.rcc.
-
+            strict consensus.
             --prefix=<file>  Prefix of all saving files. The complete path can
             be used. By default, the prefix is 'agatta_out' and all files are
             saved in the directory of the first <file>.
-
             --taxarep1=<path>  If the user wants to replace identifiers by real
             leaf names in the result files, this flag can be used with a path
             to a csv file with two columns, the first with the identifiers in
             the actual newick strings and the other with the names the user
             wants.
 
-
     Output:
 
-        Four ouput files are writen all the time when using the analysis
-        command in addition to optionnal output files.
-        The files are:
-
-          - prefix.log is a log file with all the parameters of the analysis.
-
-          - prefix.triplet is a file with all triplets deduced from the input
-            character trees. Each row corresponds to one triplet with its
-            weight as a fraction and as a float.
-
-          - prefix.taxabloc is a table file with the correspondance between
-            leaf identifiers and names given in the input.
-
-          - prefix.tre is a newick file recording all the optimal cladograms
-            found during the analysis.
-
-
-    References
+        One newick file containing the strict consensus prefix.constrict or
+        a list of common subtrees (the rcc profile) prefix.rcc.
               """)
 
     elif command == "describetree":
-        print("\033[1;34;48m    describetree")
         print("""
-    Text
+    describetree
+
+    The describetree command output basic informations on a list of
+    rooted trees. The informations writen are related to the number of
+    nodes, terminals, internal nodes, symmetric nodes, apical nodes, to the
+    sesolution of the tree, number of dichotomies, polytomies.
 
     Usage:
 
@@ -1508,61 +1349,43 @@ def helper(command):
 
         Mandatory parameters:
 
-            <file> Path of the file containing the character trees.
+            <file> Path of the file containing rooted trees.
             The trees can be encoded for Agatta in a file in several ways:
-
-              - a hierarchical matrix (more on the hierarchical matrix
-                format here: INSERT_URL_HERE)
-
-              - A newick file with a single newick tree on each line.
-                (see explanations here:
-                https://en.wikipedia.org/wiki/Newick_format)
-
-                Example:
-
-                (a,b,(c,d,(e,f)));
-                ((c,e),(a,(b,(d,f))));
-
-              - A nexus file (extension in .nex).
-
+              - a hierarchical matrix,
+              - A newick file with a single newick tree on each line,
+              - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
+            THe following url give more information on how to build input
+            files: URL.
 
         Optionnal parameters:
 
             -s  Silent mode.
-
             -v  Verbose mode.
-
-            --prefix=<file>  Prefix of all saving files. The complete path can
+            --prefix=<file>  Prefix of the saving file. The complete path can
             be used. By default, the prefix is 'agatta_out' and all files are
             saved in the directory of the first <file>.
-
-            --showtaxanames  blabla
-
+            --showtaxanames  The list of all tree leaves is writen in the
+            output file.
 
     Output:
 
-        Four ouput files are writen all the time when using the analysis
-        command in addition to optionnal output files.
-        The files are:
-
-          - prefix.log is a log file with all the parameters of the analysis.
-
-          - prefix.triplet is a file with all triplets deduced from the input
-            character trees. Each row corresponds to one triplet with its
-            weight as a fraction and as a float.
-
-          - prefix.taxabloc is a table file with the correspondance between
-            leaf identifiers and names given in the input.
-
-          - prefix.tre is a newick file recording all the optimal cladograms
-            found during the analysis.
+        One output file prefix.dt with descriptors for each tree.
               """)
 
     elif command == "standardisation":
-        print("\033[1;34;48m    standardisation")
         print("""
-    Text
+    standardisation
+
+    This command is used for standardisation of characters in the context of
+    cladistic biogeography, i.e., replacement of leaves using a correspondence
+    table. In cladistic theory, the standardisation is the construction of
+    character trees (hypotheses of kinship relationship between bearers) based
+    on homologies (hypotheses of kinship relationships between parts). The
+    standardisation is used to convert phylogenies in areagrams in cladistic
+    biogeography. The only currently implemented option for managing MAST is
+    their automatic deletion (i.e. MAST do not bear any unambiguous
+    biogeographic information).
 
     Usage:
 
@@ -1570,61 +1393,42 @@ def helper(command):
 
         Mandatory parameters:
 
-            <file> Path of the file containing the character trees.
-            The trees can be encoded for Agatta in a file in several ways:
-
-              - a hierarchical matrix (more on the hierarchical matrix
-                format here: INSERT_URL_HERE)
-
-              - A newick file with a single newick tree on each line.
-                (see explanations here:
-                https://en.wikipedia.org/wiki/Newick_format)
-
-                Example:
-
-                (a,b,(c,d,(e,f)));
-                ((c,e),(a,(b,(d,f))));
-
-              - A nexus file (extension in .nex).
-
+            Two <file> arguments are requested with the standardisation
+            command. The first <file> is the path of the file containing the
+            character trees. The trees can be encoded for Agatta in a file in
+            several ways:
+              - a hierarchical matrix,
+              - A newick file with a single newick tree on each line,
+              - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
-
-            <file> Path
+            The following url give more information on how to build input
+            files: URL.
+            The second <file> argument is the path of a csv table with two
+            columns, the first column corresponds to the leaf names of input
+            trees, and the second column to corresponding names for
+            replacement. FOr example, in cladistic biogeography, taxa are in
+            the left column and corresponding areas in the right column.
 
         Optionnal parameters:
 
             -s  Silent mode.
-
             -v  Verbose mode.
-
-            --prefix=<file>  Prefix of all saving files. The complete path can
+            --prefix=<file>  Prefix of the saving files. The complete path can
             be used. By default, the prefix is 'agatta_out' and all files are
             saved in the directory of the first <file>.
 
-
     Output:
 
-        Four ouput files are writen all the time when using the analysis
-        command in addition to optionnal output files.
-        The files are:
-
-          - prefix.log is a log file with all the parameters of the analysis.
-
-          - prefix.triplet is a file with all triplets deduced from the input
-            character trees. Each row corresponds to one triplet with its
-            weight as a fraction and as a float.
-
-          - prefix.taxabloc is a table file with the correspondance between
-            leaf identifiers and names given in the input.
-
-          - prefix.tre is a newick file recording all the optimal cladograms
-            found during the analysis.
+        One output newick file prefix.std containing the trees after
+        leaf replacement.
               """)
 
     elif command == "hmatrix":
-        print("\033[1;34;48m    hmatrix")
         print("""
-    Text
+    hmatrix
+
+    hmatrix converts a hierarchical matrix into rooted trees. Each column of
+    the matrix corresponds to one tree.
 
     Usage:
 
@@ -1632,55 +1436,23 @@ def helper(command):
 
         Mandatory parameters:
 
-            <file> Path of the file containing the character trees.
-            The trees can be encoded for Agatta in a file in several ways:
-
-              - a hierarchical matrix (more on the hierarchical matrix
-                format here: INSERT_URL_HERE)
-
-              - A newick file with a single newick tree on each line.
-                (see explanations here:
-                https://en.wikipedia.org/wiki/Newick_format)
-
-                Example:
-
-                (a,b,(c,d,(e,f)));
-                ((c,e),(a,(b,(d,f))));
-
-              - A nexus file (extension in .nex).
-
-              - A nexml file (extension in .nexml).
+            <file>  Hierarchical matrix. A complete guide on the hierarchical
+            matrix format is available here: URL.
 
         Optionnal parameters:
 
             -s  Silent mode.
-
             -v  Verbose mode.
-
-            --chardec
-
-            --prefix=<file>  Prefix of all saving files. The complete path can
+            --chardec  Decompose each tree into components (one subtree for
+            each informative node).
+            --prefix=<file>  Prefix of the saving file. The complete path can
             be used. By default, the prefix is 'agatta_out' and all files are
             saved in the directory of the first <file>.
 
-
     Output:
 
-        Four ouput files are writen all the time when using the analysis
-        command in addition to optionnal output files.
-        The files are:
-
-          - prefix.log is a log file with all the parameters of the analysis.
-
-          - prefix.triplet is a file with all triplets deduced from the input
-            character trees. Each row corresponds to one triplet with its
-            weight as a fraction and as a float.
-
-          - prefix.taxabloc is a table file with the correspondance between
-            leaf identifiers and names given in the input.
-
-          - prefix.tre is a newick file recording all the optimal cladograms
-            found during the analysis.
+        One output file prefix.tre with the trees deduced from the hierarchical
+        matrix.
               """)
 
     else:

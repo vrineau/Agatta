@@ -2,7 +2,7 @@
 """
 
     Agatta: Three-item analysis Python package
-    By Valentin Rineau and Paul Zaharias
+    Contact: Valentin Rineau - valentin.rineau@gmail.com
 
     Agatta is a set of tools in the cladistic framework to perform
     three-item analysis and associated operations in cladistics in python.
@@ -188,6 +188,31 @@ def tripletscore(triplet_dict, stree):
                 score += FW*2
             else:  # if triplet compatible
                 score += FW
+
+    return score
+
+
+def triplet_check(triplet, stree):
+    """
+    check if triplet exists in tree.
+    Returns true or false.
+
+    """
+
+    tripin = list(triplet.in_taxa)
+    a = stree.get_leaves_by_name(tripin[0])
+    b = stree.get_leaves_by_name(tripin[1])
+    c = stree.get_leaves_by_name(list(triplet.out_taxa)[0])
+
+    if a and b and c:  # if the three leaves are in the tree
+
+        common = stree.get_common_ancestor([a[0], b[0]])
+        cc = common.get_leaves_by_name(list(triplet.out_taxa)[0])
+
+        if cc:  # if triplet not compatible
+            score = False
+        else:  # if triplet compatible
+            score = True
 
     return score
 

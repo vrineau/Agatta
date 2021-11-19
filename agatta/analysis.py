@@ -2,7 +2,7 @@
 """
 
     Agatta: Three-item analysis Python package
-    By Valentin Rineau and Paul Zaharias
+    Contact: Valentin Rineau - valentin.rineau@gmail.com
 
     Agatta is a set of tools in the cladistic framework to perform
     three-item analysis and associated operations in cladistics in python.
@@ -68,7 +68,7 @@ class triplet():
 
     def __repr__(self):
 
-        return "({}({},{}))".format(str(list(self.out_taxa)[0]),
+        return "({},({},{}))".format(str(list(self.out_taxa)[0]),
                                     str(list(self.in_taxa)[0]),
                                     str(list(self.in_taxa)[1]))
 
@@ -528,9 +528,11 @@ def picklemerge(namelist):
 
     """
 
+    # load first pickle (first component triplet set)
     with open(namelist[0], 'rb') as pickle_file:
         superdict = defaultdict(int, pickle.load(pickle_file))
 
+    # load each pickle file and add triplets to dict / cumulative weights
     for i in range(1, len(namelist)):
         with open(namelist[i], 'rb') as pickle_file:
             tripletdict_temp = pickle.load(pickle_file)
@@ -575,7 +577,7 @@ def tripdecFW(triplet_output=dict(), total_taxaset=False, character=Tree()):
         ) if not child_node.is_leaf())  # compute descendants info. nodes
 
     # Compute triplets from descendant nodes
-    for child_node in children_generator:  # for each couple of node
+    for child_node in children_generator:
         newtripletdict = tripdecFW(defaultdict(int),
                                    total_taxaset,
                                    character=child_node)
@@ -586,13 +588,7 @@ def tripdecFW(triplet_output=dict(), total_taxaset=False, character=Tree()):
     # Compute triplets if not is not root
     if character.is_root():  # if node is root, end of analysis
 
-        for trip in tree_tripdic.keys():
-            if trip in triplet_output:  # new triplets
-                triplet_output[trip] += tree_tripdic[trip]
-            else:  # add weights to triplets that already exist
-                triplet_output[trip] = tree_tripdic[trip]
-
-        return triplet_output  # end
+        return tree_tripdic  # end
 
     else:
         taxa_in = set(character.get_leaf_names())  # taxa inside the node
@@ -770,6 +766,8 @@ def tripdec_allweights(weighting, character):
         FW_node = Fraction(len(taxa_out)*(len(taxa_in)-1), len(taxa_out)*tempw)
 
         for singleout in taxa_out:
+
+            # generate all exclusive triplets from component
             if weighting in ("FW", "MW", "AW", "NW"):
 
                 for taxalist1, taxalist2 in combinations((
@@ -792,6 +790,7 @@ def tripdec_allweights(weighting, character):
                                 in_taxa={taxa_in1, taxa_in2},
                                 out_taxa={singleout})] = 1
 
+            # generate all triplets from component
             elif weighting in ("FWNL", "UW"):
 
                 for taxa_in1, taxa_in2 in combinations(taxa_in, 2):
@@ -866,7 +865,7 @@ def standard_tripdec(character_dict, weighting, prefix=False, verbose=True):
             triplet_output2 = tripdec(weighting, treedec)
 
             for trip, FW in triplet_output2.items():
-                if trip in triplet_output:  # new triplets
+                if trip in triplet_output and not weighting == "NW":
                     triplet_output[trip] += FW
                 else:  # sum triplet weights
                     triplet_output[trip] = FW
@@ -985,15 +984,14 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
     with Pool(ncpu) as pool:  # multiprocessing
         dictuple = pool.map(picklemerge, pickletuple)  # list of triplet dicts
 
-    shared_dict = dictuple[0]
-
     if weighting == "NW":  # unique weight of 1
-
+        shared_dict = {t: 1 for t in dictuple[0]}
         for d in dictuple[1:len(dictuple)]:
-            shared_dict.update(d)
+            for trip in d:
+                shared_dict[trip] = 1
 
     else:  # sum weights
-
+        shared_dict = dictuple[0]
         for d in dictuple[1:len(dictuple)]:
             for trip, FW in d.items():
                 shared_dict[trip] += FW

@@ -2,7 +2,7 @@
 """
 
     Agatta: Three-item analysis Python package
-    By Valentin Rineau and Paul Zaharias
+    Contact: Valentin Rineau - valentin.rineau@gmail.com
 
     Agatta is a set of tools in the cladistic framework to perform
     three-item analysis and associated operations in cladistics in python.
@@ -950,10 +950,8 @@ def agatta_analysis(file_path, software_path, software="tnt",
 
         for cladogram, i in results_dict.items():
 
-            root = cladogram.search_nodes(name="root")[0]
-
-            root.detach()
-
+            cladogram.search_nodes(name="root")[0].delete()
+            cladogram.get_children()[0].delete()
             cladogram_dict[cladogram] = i
 
         if software != "tnt":
