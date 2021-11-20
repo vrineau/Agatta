@@ -3,6 +3,7 @@
 # AGATTA - Three-item analysis python package
 
 [![Build Status](https://app.travis-ci.com/vrineau/Agatta.svg?token=nhvCPs5vUaEvgro4jgU7&branch=main)](https://app.travis-ci.com/vrineau/Agatta)
+
 Requests: python 3.7 or more.
 
 Installation
