@@ -3,9 +3,5 @@ python:
   - "3.7"
   - "3.8"
   - "3.9"
-# command to install dependencies
-install:
-  - pip install -r
-# command to run tests
 script:
-  - pytest
+  - python test_agatta.py 
