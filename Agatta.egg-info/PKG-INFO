@@ -1,4 +1,4 @@
-Metadata-Version: 1.2
+Metadata-Version: 2.1
 Name: Agatta
 Version: 0.7.3
 Summary: Three-item analysis python package
@@ -6,21 +6,27 @@ Home-page: https://github.com/vrineau/agatta
 Author: Valentin Rineau
 Author-email: valentin.rineau@gmail.com
 License: GNU GPLv3
-Description: ![alt text](https://github.com/VRineau/agatta/blob/main/agatta/agatta.png?raw=true)
-        
-        # AGATTA - Three-item analysis python package
-        
-        Requests: python 3.7 or more.
-        
-        Installation
-        
-        ```
-        pip install agatta
-        ```
-        
-        This code is under licence *GNU GPLv3*
-        
-        Graphic chart by Malcolm T. Sanders
-        
 Platform: UNKNOWN
 Requires-Python: >=3.7.0
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+![alt text](https://github.com/VRineau/agatta/blob/main/agatta/agatta.png?raw=true)
+
+# AGATTA - Three-item analysis python package
+
+[![Build Status](https://app.travis-ci.com/vrineau/Agatta.svg?token=nhvCPs5vUaEvgro4jgU7&branch=main)](https://app.travis-ci.com/vrineau/Agatta)
+
+Requests: python 3.7 or more.
+
+Installation
+
+```
+pip install agatta
+```
+
+This code is under licence *GNU GPLv3*
+
+Graphic chart by Malcolm T. Sanders
+
+

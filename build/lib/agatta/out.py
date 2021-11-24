@@ -35,6 +35,7 @@ import os
 import time
 import datetime
 import warnings
+import treeswift
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=SyntaxWarning)
@@ -653,7 +654,7 @@ def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
 
 
 def agatta_analysis(file_path, software_path, software="tnt",
-                    taxa_replacement=False, method="Rineau", weighting="FW",
+                    taxa_replacement=False, method="TMS", weighting="FW",
                     parallel="auto", prefix="agatta_out", analysis="bandb",
                     nrep=1000, rosetta=False, chartest=False, ri=False,
                     consensus=False, pdf_file=False, verbose=True):
@@ -683,7 +684,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
           cladistic consensus; Wilkinson 1994)
 
         * Character state test procedure for hierarchical characters (Cao 2008
-          modified by Rineau 2017)0
+          modified by Rineau (2017)
           to analyse if character states are synapomorphies or homoplasies.
 
         * Retention index computation for all characters
@@ -750,7 +751,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
         The default is False (no replacement).
     method : str, optional
         One of the two implemented algorithms of free-paralogy subtree
-        analysis between "Rineau" and "Nelson". The default is "Rineau".
+        analysis between "TMS" and "FPS". The default is "TMS".
     weighting : str
         Weighting scheme to use between:
 
@@ -936,28 +937,49 @@ def agatta_analysis(file_path, software_path, software="tnt",
                             software_path,
                             "tnt")
 
-        # extract trees from output file and delete profile
-        results_dict = dict()
-        i = 1
-        with open(prefix + ".tre", "r") as result_file:
-            for ln in result_file:
-                if ln.startswith("("):
-                    tree = Tree(ln.replace(" ", "")[1:-2]+";")
-                    results_dict[tree] = i
-                    i += 1
-
+        # extract trees from output file and delete root
         cladogram_dict = dict()
+        i = 1
 
-        for cladogram, i in results_dict.items():
+        if software == "tnt":
+                tstreelist = treeswift.read_tree_nexus(prefix + ".tre")
+        elif software == "tnt":
+            tstreelist = treeswift.read_tree_newick(prefix + ".tre")
 
-            cladogram.search_nodes(name="root")[0].delete()
-            cladogram.get_children()[0].delete()
-            cladogram_dict[cladogram] = i
+        if not isinstance(tstreelist, list):
+            tstreelist = [tstreelist]
 
-        if software != "tnt":
-            with open(prefix + ".tre", "w") as result_file:
-                for tree in cladogram_dict.keys():
-                    result_file.write(tree.write(format=9) + "\n")
+        for tstree in tstreelist:
+            if isinstance(tstree, dict):
+                for idt, tst in tstree.items():
+
+                    nodedict = tst.label_to_node(selection='leaves')
+                    tst.reroot(nodedict["root"])
+                    tst.suppress_unifurcations()
+                    newickstring = tst.newick().replace("root","")
+
+                    if (newickstring.startswith("[&R] ") or
+                        newickstring.startswith("[&U] ")):
+                        cladogram_dict[Tree(newickstring.split(" ")[1])] = idt
+                    else:
+                        cladogram_dict[Tree(newickstring)] = idt
+
+            else:
+                nodedict = tstree.label_to_node(selection='leaves')
+                tstree.reroot(nodedict["root"])
+                tstree.suppress_unifurcations()
+                newickstring = tstree.newick().replace("root","")
+
+                if (newickstring.startswith("[&R] ") or
+                    newickstring.startswith("[&U] ")):
+                    cladogram_dict[Tree(newickstring.split(" ")[1])] = i
+                else:
+                    cladogram_dict[Tree(newickstring)] = i
+                i += 1
+
+        with open(prefix + ".tre", "w") as result_file:
+            for tree in cladogram_dict.keys():
+                result_file.write(tree.write(format=9) + "\n")
 
     # consensus computation
     if consensus:

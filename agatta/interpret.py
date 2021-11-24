@@ -295,7 +295,7 @@ def rcc(treelist, prefix=False, verbose=False):
         if not len(tree_profile) == leaf_cptr:
             profile.append(tree_profile)
 
-    profile.append(constrict(treelist, prefix=False, verbose=False))
+    profile.append(constrict(treelist, prefix=False, silent=True))
 
     #sort trees by size
     def get_len(in_set):
@@ -447,7 +447,7 @@ def RI(cladogram_dict, character_dict, weighting="FW", prefix=False):
     return RI_char_dict
 
 
-def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW"):
+def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
     """
     Compute the inter-tree retention index (ITRI; Grand et al. 2014,
     which is an asymmetric distance between two trees, one
@@ -522,37 +522,37 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW"):
             RI_intersect_true_tree += FW
         RI_true_tree += FW
 
-    ITRI_power = Fraction(RI_intersect_true_tree, RI_true_tree)
+    ITRI_power = float(Fraction(RI_intersect_true_tree, RI_true_tree)) * 100
 
     try:
-        ITRI_arte = 1 - Fraction(RI_intersect_reconstructed_tree,
-                                 RI_reconstructed_tree)
+        ITRI_arte = 100 - (float(Fraction(RI_intersect_reconstructed_tree,
+                                 RI_reconstructed_tree)) * 100)
     except ZeroDivisionError:
         ITRI_arte  = 0
 
-    ITRI_efficiency = ((float(ITRI_power) * 100) - (float(ITRI_arte) * 100))
+    ITRI_efficiency = (ITRI_power - ITRI_arte + 100 ) / 2
 
     if prefix:
         with open(prefix+".txt", "w") as itrifile:
-            itrifile.write("power : " + str(round(float(ITRI_power), 3))
+            itrifile.write("power : " + str(round(ITRI_power, 3))
                            + "\n")
-            itrifile.write("artefact : " + str(round(float(ITRI_arte), 3))
+            itrifile.write("artefact : " + str(round(ITRI_arte, 3))
                            + "\n")
-            itrifile.write("efficiency : "
-                           + str(round(float(ITRI_efficiency), 3)) + "\n")
+            itrifile.write("efficiency : " + str(round(ITRI_efficiency, 3)))
 
-    print("power : " + str(round(float(ITRI_power), 3)) + "\n")
-    print("artefact : " + str(round(float(ITRI_arte), 3)) + "\n")
-    print("efficiency : " + str(round(float(ITRI_efficiency), 3)) + "\n")
+    if not silent:
+        print("power : " + str(round(ITRI_power, 3)))
+        print("artefact : " + str(round(ITRI_arte, 3)))
+        print("efficiency : " + str(round(ITRI_efficiency, 3)))
 
-    return float(ITRI_power)*100, float(ITRI_arte)*100, ITRI_efficiency
+    return ITRI_power, ITRI_arte, ITRI_efficiency
 
 
 def triplet_distance(t1, t2, prefix,
                      method="itrisym_sum", weighting="FW"):
     """
-    Compute the triplet distance between two trees. The triplet distance is the
-    number of triplet differing between two trees (weights can be used).
+    Compute a weighted triplet distance between two trees. The triplet distance
+    is the number of triplet differing between two trees (weights can be used).
     The order between the two trees t1 and t2 is not important.
 
     Parameters
@@ -600,51 +600,18 @@ def triplet_distance(t1, t2, prefix,
         sys.exit(print("ERROR: Repeated leaves have been detected.\n" +
                          "Operation aborted."))
 
-    t1_tripdic = standard_tripdec({t1: 0},
-                                      weighting,
-                                      prefix=False,
-                                      verbose=False)
-    t2_tripdic = standard_tripdec({t2: 0},
-                                      weighting,
-                                      prefix=False,
-                                      verbose=False)
-
-    RI_t2 = Fraction(0, 1)
-    RI_t1 = Fraction(0, 1)
-    RI_intersect_t2 = Fraction(0, 1)
-    RI_intersect_t1 = Fraction(0, 1)
-
-    for trip, FW in t2_tripdic.items():
-        if trip in t1_tripdic:
-            RI_intersect_t2 += FW
-        RI_t2 += FW
-
-    for trip, FW in t1_tripdic.items():
-        if trip in t2_tripdic:
-            RI_intersect_t1 += FW
-        RI_t1 += FW
-
-    ITRIp_12 = Fraction(RI_intersect_t1, RI_t1)
-    ITRIp_21 = Fraction(RI_t1, RI_intersect_t1)
-
-    try:
-        ITRIa_12 = 1 - Fraction(RI_intersect_t2, RI_t2)
-    except ZeroDivisionError:
-        ITRIa_12  = 0
-
-    try:
-        ITRIa_21 = 1 - Fraction(RI_t2, RI_intersect_t2)
-    except ZeroDivisionError:
-        ITRIa_21  = 0
-
-    ITRIe_12 = ((float(ITRIp_12)*100) - (float(ITRIa_12)*100))
-    ITRIe_21 = ((float(ITRIp_21)*100) - (float(ITRIa_21)*100))
+    power12, arte12, efficiency12 = ITRI(t1, t2, prefix=False,
+                                         weighting=weighting,
+                                         silent=True)
+    power21, arte21, efficiency21 = ITRI(t2, t1, prefix=False,
+                                         weighting=weighting,
+                                         silent=True)
 
     if method == "itrisym_sum":  # classic mean
-        ITRIsym = (ITRIe_12+ITRIe_21)/2
+        ITRIsym = (efficiency12 + efficiency21) / 2
 
     elif method == "itrisym_product":  # Grand et al. 2014 proposal
-        ITRIsym = ITRIe_12*ITRIe_21
+        ITRIsym = efficiency12 * efficiency21
 
     if prefix:
         with open(prefix+".txt", "w") as itrifile:

@@ -732,9 +732,9 @@ def checkargs(arguments):
                       " or an integer specifying the number of cpu"))
 
     if arguments["fp"] or arguments["analysis"]:
-        if not arguments["--repetitions"] in ["Rineau","Nelson"]:
+        if not arguments["--repetitions"] in ["TMS","FPS"]:
             sys.exit(print("ERROR: --repetitions flag must be one of: " +
-                           "'Rineau', 'Nelson'"))
+                           "'TMS', 'FPS'"))
 
     if arguments["consensus"] or arguments["analysis"]:
         if arguments.get("--consensus", False):
@@ -854,8 +854,8 @@ def helper(command):
             --repetitions=<type>  The removal of repeated leaves in character
             trees is made using the method of free-paralogy subtree.
             Two algorithms are implemented, the original one from Nelson and
-            Ladiges (1996) ('Nelson') for dealing with paralogy in cladistic
-            biogeography, and the algorithm of Rineau et al. (2021) ('Rineau')
+            Ladiges (1996) ('FPS') for dealing with paralogy in cladistic
+            biogeography, and the algorithm of Rineau et al. (2021) ('TMS')
             designed for all cases of repetitions (not only paralogy).
             If the flag is not used and if repetitions are detected, they are
             automatically removed using Rineau et al. algorithm's.
@@ -1263,9 +1263,9 @@ def helper(command):
             be used. By default, the prefix is 'agatta_out' and all files are
             saved in the directory of the first <file>.
             --repetitions=<type>  Two algorithms are implemented, the original
-            one from Nelson and Ladiges (1996) ('Nelson') for dealing with
+            one from Nelson and Ladiges (1996) ('FPS') for dealing with
             paralogy in cladistic biogeography, and the algorithm of
-            Rineau et al. (2021) ('Rineau') designed for all cases of
+            Rineau et al. (2021) ('TMS') designed for all cases of
             repetitions (not only paralogy).
             If the flag is not used and if repetitions are detected, they are
             automatically removed using Rineau et al. algorithm's.

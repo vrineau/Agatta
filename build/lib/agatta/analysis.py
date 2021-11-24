@@ -73,18 +73,19 @@ class triplet():
                                     str(list(self.in_taxa)[1]))
 
 
-def del_replications(treerep, method="Rineau", verbose=False):
+def del_replications(treerep, method="TMS", verbose=False):
     """
     Remove all repeated leaves from a single rooted tree according to the
     free-paralogy subtree analysis. Two algorithms are currently implemented in
     Agatta:
 
         * The original algorithm of Nelson and Ladiges (1996) designed in the
-          paradigm of cladistic biogeography.
+          paradigm of cladistic biogeography: Free-paralogy Subtree analysis.
 
         * The algorithm of Rineau et al. (in prep) designed to construct
           subtrees without repeated leaves while minimising the loss of
-          information in terms of triplets. This is the default mode.
+          information in terms of triplets: Triplet Maximisation Subtrees.
+          This is the default mode.
 
           Nelson, G. J., & Ladiges, P. Y. (1996). Paralogy in cladistic
           biogeography and analysis of paralogy-free subtrees.
@@ -100,7 +101,7 @@ def del_replications(treerep, method="Rineau", verbose=False):
         One rooted tree.
     method : str, optional
         One of the two implemented algorithms of free-paralogy subtree
-        analysis between "Rineau" and "Nelson". The default is "Rineau".
+        analysis between "TMS" and "FPS". The default is "TMS".
     verbose : bool, optional
         Verbose mode if true. The default is False.
 
@@ -111,7 +112,7 @@ def del_replications(treerep, method="Rineau", verbose=False):
 
     """
 
-    def del_replications_node(treerep, method="Rineau", verbose=False):
+    def del_replications_node(treerep, method="TMS", verbose=False):
         """
             Function to remove a single repeated leaf.
             Used in del_replications.
@@ -226,8 +227,8 @@ def del_replications(treerep, method="Rineau", verbose=False):
 
                         j = 1
 
-                        # Rineau's algorithm
-                        if method == "Rineau":
+                        # Rineau's algorithm - Triplet Maximisation Subtrees
+                        if method == "TMS":
                             paralogs["main"] = treerep.copy(method='cpickle')
 
                             for delnode in paralogs["main"].search_nodes(
@@ -245,8 +246,8 @@ def del_replications(treerep, method="Rineau", verbose=False):
 
                                 j += 1
 
-                        # Nelson's algorithm
-                        elif method == "Nelson":
+                        # Nelson's algorithm - Free paralogy subtree analysis
+                        elif method == "FPS":
 
                             while j != i+1:  # for each node brch to paralog
 
@@ -331,7 +332,7 @@ def del_replications(treerep, method="Rineau", verbose=False):
     return treelist
 
 
-def del_replications_forest(character_dict, method="Rineau",
+def del_replications_forest(character_dict, method="TMS",
                             prefix="agatta_del_replications", verbose=False):
     """
     Remove all repeated leaves from trees according to the
@@ -359,7 +360,7 @@ def del_replications_forest(character_dict, method="Rineau",
         Dictionary containing newick trees (ete3 Tree objects) in keys.
     method : str, optional
         One of the two implemented algorithms of free-paralogy subtree
-        analysis between "Rineau" and "Nelson". The default is "Rineau".
+        analysis between "TMS" and "FPS". The default is "TMS".
     prefix : str, optional
         Prefix of the saving file. The default is False.
     verbose : bool, optional
@@ -482,29 +483,31 @@ def triplet_extraction(infile, taxa_replacement_file=False):
 
     with open(infile, "r") as file_tree:
         for line in file_tree:
-            tripletstr = line.split("    ")
+            if line.strip():
+                tripletstr = line.split("    ")
+                newstr = ''.join(
+                    (ch if ch in '0123456789.-e' else ' ')
+                    for ch in tripletstr[0])
+                taxaint = [int(i) for i in newstr.split()]
+                trip = triplet({taxaint[1], taxaint[2]}, {taxaint[0]})
 
-            newstr = ''.join(
-                (ch if ch in '0123456789.-e' else ' ') for ch in tripletstr[0])
-            taxaint = [int(i) for i in newstr.split()]
-            trip = triplet({taxaint[1], taxaint[2]}, {taxaint[0]})
-
-            if taxa_replacement_file:
-                for i in [0,1,2]:
-                    try:
-                        taxa_dict[taxaint[i]]
-                    except KeyError:
-                        sys.exit(print("ERROR: The name '" + str(taxaint[i]) +
-                                         "' does not exists in the table " +
-                                         "file '" +
-                                         taxa_replacement_file +
-                                         "'\nOperation aborted."))
-                convert_trip = triplet({taxa_dict[taxaint[1]],
-                                        taxa_dict[taxaint[2]]},
-                                       {taxa_dict[taxaint[0]]})
-                triplet_dict[convert_trip] = Fraction(tripletstr[1])
-            else:
-                triplet_dict[trip] = Fraction(tripletstr[1])
+                if taxa_replacement_file:
+                    for i in [0,1,2]:
+                        try:
+                            taxa_dict[taxaint[i]]
+                        except KeyError:
+                            sys.exit(print("ERROR: The name '"
+                                           + str(taxaint[i])
+                                           + "' does not exists in the table "
+                                           + "file '"
+                                           + taxa_replacement_file
+                                           + "'\nOperation aborted."))
+                    convert_trip = triplet({taxa_dict[taxaint[1]],
+                                            taxa_dict[taxaint[2]]},
+                                           {taxa_dict[taxaint[0]]})
+                    triplet_dict[convert_trip] = Fraction(tripletstr[1])
+                else:
+                    triplet_dict[trip] = Fraction(tripletstr[1])
 
     print("{} characters loaded".format(str(len(triplet_dict))))
 

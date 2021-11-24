@@ -287,51 +287,30 @@ def bandb(leaves, triplet_dict, base_tree=False,
 
         # Step 2 - compute score and recursion
         tripscore = tripletscore(triplet_dict, newtree)  # compute score
+        newtree = [newtree]
 
-        if tripscore > optimal_score:  # if score alread upper, stop
+        # Step 3 - check if score already too high and discard
+        if not tripscore > optimal_score:  # if score not already too high
 
-            return [optimal_score, optimal_tree_list]  # fail, stop this search
+            # Step 4 - continue recursion to build a tree on all leaves
+            if l:  # ifleaves are remaining
+                tripscore, newtree = bandb(l,
+                                     triplet_dict,
+                                     newtree[0],
+                                     optimal_score,
+                                     optimal_tree_list)
 
-        if l:  # if recursion is not ended
-            bandb_result = bandb(l,
-                                 triplet_dict,
-                                 newtree,
-                                 optimal_score,
-                                 optimal_tree_list)
-
-            # if recursion give a result
-            if bandb_result[0] < optimal_score:
-                optimal_score = bandb_result[0]  # new optimal score
-                optimal_tree_list = bandb_result[1]  # new optimal tree
-
-            if bandb_result[0] == optimal_score:
-                add_tree = True
-                for rftree in optimal_tree_list:
-                    for rftree2 in bandb_result[1]:
-                        if rftree.robinson_foulds(rftree2)[0] == 0:
-                            add_tree = False
-                if add_tree:
-                    optimal_tree_list.append(bandb_result[1])
-
-        else:
+            # Step 5 - recursion ends with an optimal tree
             if tripscore == optimal_score:
                 add_tree = True
                 for rftree in optimal_tree_list:
-                    if rftree.robinson_foulds(newtree)[0] == 0:
+                    if rftree.robinson_foulds(newtree[0])[0] == 0:
                         add_tree = False
                 if add_tree:
-                    optimal_tree_list.append(newtree)
+                    optimal_tree_list += newtree  # tree added to list
 
-            if tripscore < optimal_score:  # if recursion gives a result
+            elif tripscore < optimal_score:  # if recursion gives a result
                 optimal_score = tripscore  # new optimal score
-                optimal_tree_list = [newtree]  # new optimal tree
-
-            if tripscore == optimal_score:
-                add_tree = True
-                for rftree in optimal_tree_list:
-                    if rftree.robinson_foulds(newtree)[0] == 0:
-                        add_tree = False
-                if add_tree:
-                    optimal_tree_list.append(newtree)
+                optimal_tree_list = newtree  # new optimal tree
 
     return optimal_score, optimal_tree_list

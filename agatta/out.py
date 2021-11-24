@@ -654,7 +654,7 @@ def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
 
 
 def agatta_analysis(file_path, software_path, software="tnt",
-                    taxa_replacement=False, method="Rineau", weighting="FW",
+                    taxa_replacement=False, method="TMS", weighting="FW",
                     parallel="auto", prefix="agatta_out", analysis="bandb",
                     nrep=1000, rosetta=False, chartest=False, ri=False,
                     consensus=False, pdf_file=False, verbose=True):
@@ -684,7 +684,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
           cladistic consensus; Wilkinson 1994)
 
         * Character state test procedure for hierarchical characters (Cao 2008
-          modified by Rineau 2017)0
+          modified by Rineau (2017)
           to analyse if character states are synapomorphies or homoplasies.
 
         * Retention index computation for all characters
@@ -751,7 +751,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
         The default is False (no replacement).
     method : str, optional
         One of the two implemented algorithms of free-paralogy subtree
-        analysis between "Rineau" and "Nelson". The default is "Rineau".
+        analysis between "TMS" and "FPS". The default is "TMS".
     weighting : str
         Weighting scheme to use between:
 

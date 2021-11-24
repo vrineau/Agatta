@@ -36,7 +36,7 @@ Options:
     --filetype=<type>     Choose a tree file or a triplet file [default: trees]
     --index=<type>        Specify type of index to use [default: ri]
     --log                 Add a string to save an analysis log file
-    --repetitions=<type>  Specify how to remove repetitions [default: Rineau]
+    --repetitions=<type>  Specify how to remove repetitions [default: TMS]
     --multiplier=<int>    Specifies a weight multiplicator [default: 1000000]
     --replicates=<int>    Number of replicates for an analysis [default: 1000]
     --parallel=<type>     Number of parallel cores to use [default: auto]
