@@ -66,3 +66,5 @@ When using Agatta, please cite **PREPRINT URL**
 * Morrone, J. J. (2008). *Evolutionary biogeography: an integrative approach with case studies*. Columbia University Press.
 * Nelson, G., & Platnick, N. I. (1991). Three‐taxon statements: a more precise use of parsimony? *Cladistics*, 7(4), 351-366.
 * Rineau, V., Zaragüeta i Bagils, R., & Bardin, J. (2021). Information content of trees: three-taxon statements, inference rules and dependency. *Biological Journal of the Linnean Society*, 133(4), 1152-1170.
+
+*Graphic chart by Malcolm T Sanders*
