@@ -1,4 +1,4 @@
-<img src="https://github.com/vrineau/agatta/blob/main/agatta/agatta.png?raw=true" alt="agatta_logotype" width="350"/>
+<img src="https://github.com/vrineau/agatta/blob/main/agatta/agatta.png?raw=true" alt="agatta_logotype" width="700"/>
 
 # Agatta
 
