@@ -47,7 +47,7 @@ def search_pipeline(path_infile, software_path=False, software="paup"):
 
     """
 
-    print("Running analysis on " + software + " software.")
+    print("Running analysis on " + software + " software")
     start = time.time()
 
     if software_path:

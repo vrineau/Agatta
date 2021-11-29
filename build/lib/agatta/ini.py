@@ -210,15 +210,15 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
             for idtax, nametax in tab_test:
                 taxa_dict[idtax] = nametax
 
+    if taxa_replacement or fileExtension == ".3ia":
         for cladogram in character_dict.keys():
             for leaf in cladogram.iter_leaves():
                 try:
                     leaf.name = taxa_dict[leaf.name]
                 except KeyError:
                     print("ERROR: The name '" + str(leaf.name)
-                                   + "' does not exists in the table file '"
-                                   + taxa_replacement
-                                   + "'.\nOperation aborted.")
+                                   + "' cannot be replaced."
+                                   + "\nOperation aborted.")
                 else:
                     no_exception = True
                 if not 'no_exception' in locals():

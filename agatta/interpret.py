@@ -541,7 +541,7 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
     ITRI_efficiency = (ITRI_power - ITRI_arte + 100 ) / 2
 
     if prefix:
-        with open(prefix+".txt", "w") as itrifile:
+        with open(prefix+".itri", "w") as itrifile:
             itrifile.write("power : " + str(round(ITRI_power, 3))
                            + "\n")
             itrifile.write("artefact : " + str(round(ITRI_arte, 3))
@@ -623,7 +623,7 @@ def triplet_distance(t1, t2, prefix,
         ITRIsym = efficiency12 * efficiency21
 
     if prefix:
-        with open(prefix+".txt", "w") as itrifile:
+        with open(prefix+".dist", "w") as itrifile:
             itrifile.write(str(round(ITRIsym,3)))
 
     print("Symmetrical ITRI value :"+str(round(ITRIsym,3)))
