@@ -407,6 +407,7 @@ def del_replications_forest(character_dict, method="TMS",
     else:
         print("Polymorphism removed. No polymorphism free "
               "informative subtree remaining.")
+        sys.exit(1)
 
     return tree_dict
 
@@ -962,7 +963,7 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
     else:
         ncpu = int(ncpu)
 
-    tmp = "tmp_Agatta_picKles_" + str(uuid.uuid4())
+    tmp = "tmp_Agatta_picKles_" + str(uuid.uuid4())  # folder for pickles
 
     try:
         os.mkdir(tmp)
