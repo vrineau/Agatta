@@ -224,6 +224,27 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
                 if not 'no_exception' in locals():
                     sys.exit(1)
 
+    # check if all characters are informative
+    non_info_chars = []
+    for cladogram, a in character_dict.items():
+        lroot = len(cladogram.get_leaf_names())
+        non_info_chars.append(a)
+        if lroot > 2:
+            for node in cladogram.traverse():
+                if not node.is_leaf() and not node.is_root():
+                    lnode = len(node.get_leaf_names())
+                    if lnode > 1 and lnode < lroot:
+                        non_info_chars.remove(a)
+                        break
+    if non_info_chars:
+        print("ERROR: the following input trees are non-informative:")
+        for a in non_info_chars:
+            non_info_tree = list(character_dict.keys())[list(
+                character_dict.values()).index(a)].write(format=9)
+            print("[{}] {}".format(str(a),non_info_tree))
+        print("Operation aborted.")
+        sys.exit(1)
+
     if verbose:
         print("{} characters loaded".format(str(len(character_dict))))
 
