@@ -962,10 +962,7 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
     else:
         ncpu = int(ncpu)
 
-    if prefix:  # prefix cannot be a path
-        tmp = "tmp_Agatta_picles_" + prefix
-    else:
-        tmp = "tmp_Agatta_pickles"
+    tmp = "tmp_Agatta_picKles_" + str(uuid.uuid4())
 
     try:
         os.mkdir(tmp)
