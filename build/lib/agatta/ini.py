@@ -88,8 +88,9 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
         root.withdraw()
 
     if not path.isfile(infile):
-        sys.exit(print("ERROR: The file '" + infile + "' does not exist." +
-                       "\nOperation aborted."))
+        print("ERROR: The file '" + infile + "' does not exist." +
+                       "\nOperation aborted.")
+        sys.exit(1)
 
     fileName, fileExtension = path.splitext(infile)
     a = 1
@@ -99,15 +100,20 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
             line_nb = 0
             for line in file_tree:
                 line_nb += 1
-                for character_newick in findall(r"\(\S+;", line):
+                for character_newick in findall(r"\(\S+", line):
                     if character_newick:
+                        is_exception = True
                         try:
-                            character_dict[Tree(character_newick)] = a
+                            character_dict[Tree(character_newick + ';')] = a
                             a += 1
                         except NewickError:
-                            sys.exit(print("ERROR: " +
+                            print("ERROR: " +
                                 "Line {}: Broken newick structure.".format(
-                                str(line_nb))))
+                                str(line_nb)))
+                        else:
+                            no_exception = True
+                        if not 'no_exception' in locals():
+                            sys.exit(1)
 
                 if search(r"\s=\s", line):
                     taxa_dict[line.split(" = ")[0].split()[0]] = line.split(
@@ -124,13 +130,17 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
             else:  # newick files
                 tstreelist = treeswift.read_tree_newick(infile)
         except:
-            sys.exit(print("ERROR: The file is broken. Please check the" +
+            print("ERROR: The file is broken. Please check the " +
                            "format. \nNexus files must have the .nex " +
                            "extension.\nNexml files must have the .nexml " +
                            "extension.\nThe Lisbeth input files must have " +
                            "the .3ia extension.\nAll other extension are " +
                            "considered as newick files containing only " +
-                           "newick strings (one on each line)."))
+                           "newick strings (one on each line).")
+        else:
+            no_exception = True
+        if not 'no_exception' in locals():
+            sys.exit(1)
 
         if not isinstance(tstreelist, list):
             tstreelist = [tstreelist]
@@ -146,9 +156,12 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
                         else:
                             character_dict[Tree(tst.newick())] = idtree
                     except NewickError:
-                        sys.exit(print(
-                            "Tree {}: Broken newick structure.".format(
-                                str(idtree))))
+                        print("Tree {}: Broken newick structure.".format(
+                            str(idtree)))
+                    else:
+                        no_exception = True
+                    if not 'no_exception' in locals():
+                        sys.exit(1)
 
             else:
                 try:
@@ -159,31 +172,40 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
                         character_dict[Tree(tstree.newick())] = a
                     a += 1
                 except NewickError:
-                    sys.exit(print(
-                        "Tree {}: Broken newick structure.".format(str(a))))
+                    print("Tree {}: Broken newick structure.".format(str(a)))
+                else:
+                    no_exception = True
+                if not 'no_exception' in locals():
+                    sys.exit(1)
 
     if taxa_replacement:
         if not path.isfile(taxa_replacement):
-            sys.exit(print("ERROR: The input file '" + taxa_replacement
+            print("ERROR: The input file '" + taxa_replacement
                                     + "' does not exist."
-                                    + "\nOperation aborted."))
+                                    + "\nOperation aborted.")
+            sys.exit(1)
 
         with open(taxa_replacement, "r") as taxa_table:
             try:
                 dialect = csv.Sniffer().sniff(taxa_table.read())
             except:
-                sys.exit(print("ERROR: Could not determine separator in the"
+                print("ERROR: Could not determine separator in the"
                                + " table file '" + taxa_replacement
                                + "'.\nThe table is probably broken."
-                               + "\nOperation aborted."))
+                               + "\nOperation aborted.")
+            else:
+                no_exception = True
+            if not 'no_exception' in locals():
+                sys.exit(1)
 
         with open(taxa_replacement, "r") as taxa_table:
             tab_test = list(csv.reader(taxa_table,
                                        delimiter=dialect.delimiter))
             if not len({len(l) for l in tab_test}) == 1:
-                 sys.exit(print("ERROR: The table file '"
+                 print("ERROR: The table file '"
                                    + taxa_replacement + "' is broken."
-                                   + "\nOperation aborted."))
+                                   + "\nOperation aborted.")
+                 sys.exit(1)
 
             for idtax, nametax in tab_test:
                 taxa_dict[idtax] = nametax
@@ -193,10 +215,14 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
                 try:
                     leaf.name = taxa_dict[leaf.name]
                 except KeyError:
-                    sys.exit(print("ERROR: The name '" + str(leaf.name)
+                    print("ERROR: The name '" + str(leaf.name)
                                    + "' does not exists in the table file '"
                                    + taxa_replacement
-                                   + "'.\nOperation aborted."))
+                                   + "'.\nOperation aborted.")
+                else:
+                    no_exception = True
+                if not 'no_exception' in locals():
+                    sys.exit(1)
 
     if verbose:
         print("{} characters loaded".format(str(len(character_dict))))
@@ -368,17 +394,22 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
             try:
                 dialect = csv.Sniffer().sniff(bt_file.read())
             except:
-                sys.exit(print("ERROR: The table file '" + biogeo_tab +
+                print("ERROR: The table file '" + biogeo_tab +
                                   "' is probably broken. Could not determine" +
-                                  "separator.\nOperation aborted."))
+                                  "separator.\nOperation aborted.")
+            else:
+                no_exception = True
+            if not 'no_exception' in locals():
+                sys.exit(1)
 
         with open(biogeo_tab, "r") as bt_file:
 
             tab_test = csv.reader(bt_file, delimiter=dialect.delimiter)
             table = list(tab_test)
             if not len({len(l) for l in table}) == 1:
-                 sys.exit(print("ERROR: The table file '" + biogeo_tab +
-                                  "' is broken.\nOperation aborted."))
+                 print("ERROR: The table file '" + biogeo_tab +
+                                  "' is broken.\nOperation aborted.")
+                 sys.exit(1)
 
         for line in table:
             # detection of MASTs (if taxon already in list)
@@ -443,11 +474,15 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
                         try:
                             leafnode.name = biogeo_dict[leaf.name][0]
                         except KeyError:
-                            sys.exit(print("ERROR: The name '" +
+                            print("ERROR: The name '" +
                                              str(leaf.name) +
                                              "' does not exists in the table" +
                                              " file '" + biogeo_tab + "'.\n" +
-                                             "\nOperation aborted."))
+                                             "\nOperation aborted.")
+                        else:
+                            no_exception = True
+                        if not 'no_exception' in locals():
+                            sys.exit(1)
 
             # add new areagram
             areagram_dict[phylogeny2] = index
@@ -538,25 +573,31 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
 
     # read matrix
     if not path.isfile(infile):
-        sys.exit(print("ERROR: The hierarchical matrix '" + infile
-                                + "' does not exist.\nOperation aborted."))
+        print("ERROR: The hierarchical matrix '" + infile
+                                + "' does not exist.\nOperation aborted.")
+        sys.exit(1)
 
     with open(infile, 'rt') as f:
         try:
             dialect = csv.Sniffer().sniff(f.read())
         except:
-            sys.exit(print(sys.exit(print("ERROR: The table file '" + infile +
+            print("ERROR: The table file '" + infile +
                                   "' is probably broken. Could not determine" +
-                                  "separator.\nOperation aborted."))))
+                                  "separator.\nOperation aborted.")
+        else:
+            no_exception = True
+        if not 'no_exception' in locals():
+            sys.exit(1)
 
     with open(infile, 'rt') as f:
         if dialect.delimiter == ",":
-            sys.exit(print("ERROR: ',' can't be a delimiter in the " +
+            print("ERROR: ',' can't be a delimiter in the " +
                            "hierarchical matrix format(usage restricted for " +
-                           "polymorphic instances).\nOperation aborted."""))
+                           "polymorphic instances).\nOperation aborted.""")
+            sys.exit(1)
 
         if dialect.delimiter not in [",",";","\t"," ","|"]:
-             sys.exit(print("""ERROR: Error in the hierarchical matrix format.
+            print("""ERROR: Error in the hierarchical matrix format.
                                The separator must be one of these:
 
                                   - semicolon ';'
@@ -564,13 +605,15 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
                                   - space ' '
                                   - pipe '|'
 
-                                Operation aborted."""))
+                                Operation aborted.""")
+            sys.exit(1)
 
         data = csv.reader(f, delimiter=dialect.delimiter)
         hmatrix = list(data)
         if not len({len(l) for l in hmatrix}) == 1:
-             sys.exit(print("ERROR: the hierarchical matrix '" +
-                            infile + "' is broken.\nOperation aborted."))
+             print("ERROR: the hierarchical matrix '" +
+                            infile + "' is broken.\nOperation aborted.")
+             sys.exit(1)
 
     print("Hierarchical matrix loaded")
     print("Treefication of the hierarchical matrix.")
@@ -584,8 +627,12 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
         try:
             temp_character_dict[Tree(char+";")] = str(i)
         except NewickError:
-            sys.exit(print("ERROR: The newick tree " + char + " in column " +
-                               str(i+1) + "is broken\nOperation aborted."))
+            print("ERROR: The newick tree " + char + " in column " +
+                               str(i+1) + "is broken\nOperation aborted.")
+        else:
+            no_exception = True
+        if not 'no_exception' in locals():
+            sys.exit(1)
         i += 1
 
     taxalist = [hmatrix[ncol][0] for ncol in range(1, len(hmatrix))]
@@ -643,10 +690,14 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
                             charstate)[0].get_ancestors()[0]
                         branchnode.add_child(name=taxa)
                     except:
-                        sys.exit(print("ERROR: The instance '" + str(ind2)
+                        print("ERROR: The instance '" + str(ind2)
                                          + "' of leaf " + taxa + " in column "
                                          + str(ind) + " does not match.\n"
-                                         +"Operation aborted."))
+                                         +"Operation aborted.")
+                    else:
+                        no_exception = True
+                    if not 'no_exception' in locals():
+                        sys.exit(1)
 
         # deletion of state branches
         for delnode in delnodes:

@@ -941,10 +941,12 @@ def agatta_analysis(file_path, software_path, software="tnt",
         cladogram_dict = dict()
         i = 1
 
-        if software == "tnt":
-                tstreelist = treeswift.read_tree_nexus(prefix + ".tre")
-        elif software == "tnt":
-            tstreelist = treeswift.read_tree_newick(prefix + ".tre")
+        with warnings.catch_warnings():  # rerooting func poorly tested
+            warnings.filterwarnings("ignore", category=UserWarning)
+            if software == "tnt":
+                    tstreelist = treeswift.read_tree_nexus(prefix + ".tre")
+            elif software == "paup":
+                tstreelist = treeswift.read_tree_newick(prefix + ".tre")
 
         if not isinstance(tstreelist, list):
             tstreelist = [tstreelist]

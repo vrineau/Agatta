@@ -463,18 +463,23 @@ def triplet_extraction(infile, taxa_replacement_file=False):
             try:
                 dialect = csv.Sniffer().sniff(taxa_table.read())
             except:
-                sys.exit(print("ERROR: Could not determine separator in the "
+                print("ERROR: Could not determine separator in the "
                                   + "file '" + taxa_replacement_file
                                   + "'. The table is probably broken."
-                                  + "\nOperation aborted."))
+                                  + "\nOperation aborted.")
+            else:
+                no_exception = True
+            if not 'no_exception' in locals():
+                sys.exit(1)
 
         with open(taxa_replacement_file, "r") as taxa_table:
 
             tab_test = csv.reader(taxa_table, delimiter=dialect.delimiter)
             if not len({len(l) for l in tab_test}) == 1:
-                 sys.exit(print("ERROR: The table file '" +
+                 print("ERROR: The table file '" +
                                    taxa_table + "' is broken." +
-                                   "\nOperation aborted."))
+                                   "\nOperation aborted.")
+                 sys.exit(1)
 
             for line in taxa_table:
                 line = line.strip()
@@ -496,12 +501,16 @@ def triplet_extraction(infile, taxa_replacement_file=False):
                         try:
                             taxa_dict[taxaint[i]]
                         except KeyError:
-                            sys.exit(print("ERROR: The name '"
+                            print("ERROR: The name '"
                                            + str(taxaint[i])
                                            + "' does not exists in the table "
                                            + "file '"
                                            + taxa_replacement_file
-                                           + "'\nOperation aborted."))
+                                           + "'\nOperation aborted.")
+                        else:
+                            no_exception = True
+                        if not 'no_exception' in locals():
+                            sys.exit(1)
                     convert_trip = triplet({taxa_dict[taxaint[1]],
                                             taxa_dict[taxaint[2]]},
                                            {taxa_dict[taxaint[0]]})
@@ -743,10 +752,11 @@ def tripdec_allweights(weighting, character):
     """
 
     if not weighting in ("FW", "FWNL", "UW", "MW", "AW", "NW"):
-        sys.exit(print("ERROR: " + weighting +
+        print("ERROR: " + weighting +
                        " is not a correct weighting method.\n" +
                        "Allowed weightings: FW, FWNL, MW, UW, AW, NW" +
-                       "\nOperation aborted."))
+                       "\nOperation aborted.")
+        sys.exit(1)
 
     pickle_dict = defaultdict(int)
     tree_id = str(uuid.uuid4())
@@ -874,10 +884,11 @@ def standard_tripdec(character_dict, weighting, prefix=False, verbose=True):
                     triplet_output[trip] = FW
 
     else:
-        sys.exit(print("ERROR: " + weighting +
+        print("ERROR: " + weighting +
                        " is not a correct weighting method.\n" +
                        "Allowed weightings: FW, FWNL, MW, UW, AW, NW" +
-                       "\nOperation aborted."))
+                       "\nOperation aborted.")
+        sys.exit(1)
 
 
     if prefix:
@@ -951,7 +962,7 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
     else:
         ncpu = int(ncpu)
 
-    if prefix:
+    if prefix:  # prefix cannot be a path
         tmp = "tmp_Agatta_picles_" + prefix
     else:
         tmp = "tmp_Agatta_pickles"
@@ -1105,10 +1116,11 @@ def main_tripdec(input_item, prefix, taxa_replacement, weighting, parallel,
 
     # abort if repetitions
     if rep_detector(input_item):
-        sys.exit(print("ERROR: Characters contain repeated leaves. " +
+        print("ERROR: Characters contain repeated leaves. " +
                           "Operation aborted. Please remove " +
                           "repetitions before conversion." +
-                          "\nOperation aborted."))
+                          "\nOperation aborted.")
+        sys.exit(1)
 
     # compute triplet dictionary for each tree in parallel
     print("Starting triplet decomposition and " + weighting + " computation")

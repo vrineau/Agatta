@@ -52,8 +52,9 @@ def search_pipeline(path_infile, software_path=False, software="paup"):
 
     if software_path:
         if not os.path.isfile(software_path):
-            sys.exit(print("ERROR: '" + software_path
-                           + "' folder does not exist.\nOperation aborted."))
+            print("ERROR: '" + software_path
+                           + "' folder does not exist.\nOperation aborted.")
+            sys.exit(1)
 
     ostype = platform.system()  # os detection
 

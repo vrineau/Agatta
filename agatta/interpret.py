@@ -51,14 +51,16 @@ def constrict(treelist, prefix=False, silent=False):
         print("Strict consensus computation")
 
     if rep_detector(dict.fromkeys(treelist, 1)):
-        sys.exit(print("ERROR: Repeated leaves have been detected.\n" +
-                         "Operation aborted."))
+        print("ERROR: Repeated leaves have been detected.\n" +
+                         "Operation aborted.")
+        sys.exit(1)
 
     for t in treelist:
         for leaf in t.get_leaf_names():
             if not leaf in treelist[0].get_leaf_names():
-                sys.exit(print("ERROR: All trees do not have the same " +
-                         "length.\nOperation aborted."))
+                print("ERROR: All trees do not have the same " +
+                         "length.\nOperation aborted.")
+                sys.exit(1)
 
 
     constrict = treelist[0]  # base tree for the strict consensus computation
@@ -166,14 +168,16 @@ def rcc(treelist, prefix=False, verbose=False):
     print("Reduced cladistic consensus (RCC) computation")
 
     if rep_detector(dict.fromkeys(treelist, 1)):
-        sys.exit(print("ERROR: Repeated leaves have been detected.\n" +
-                         "Operation aborted."))
+        print("ERROR: Repeated leaves have been detected.\n" +
+                         "Operation aborted.")
+        sys.exit(1)
     else:
         for t in treelist:
             for leaf in t.get_leaf_names():
                 if not leaf in treelist[0].get_leaf_names():
-                    sys.exit(print("ERROR: All trees do not have the same " +
-                             "length.\nOperation aborted."))
+                    print("ERROR: All trees do not have the same " +
+                             "length.\nOperation aborted.")
+                    sys.exit(1)
 
     # check size of trees
     cardinal_list = []
@@ -187,8 +191,9 @@ def rcc(treelist, prefix=False, verbose=False):
     cardinal_set = set(cardinal_list)
 
     if len(cardinal_set) > 1:
-        sys.exit(print("ERROR: Trees must all have the same leaf set." +
-                       "\nOperation aborted."))
+        print("ERROR: Trees must all have the same leaf set." +
+                       "\nOperation aborted.")
+        sys.exit(1)
 
     # build list of components per tree
     component_trees = []
@@ -378,16 +383,18 @@ def RI(cladogram_dict, character_dict, weighting="FW", prefix=False):
     print("Computing retention index")
 
     if rep_detector(cladogram_dict) or rep_detector(character_dict):
-        sys.exit(print("ERROR: Repeated leaves have been detected.\n" +
-                         "Operation aborted."))
+        print("ERROR: Repeated leaves have been detected.\n" +
+                         "Operation aborted.")
+        sys.exit(1)
     else:
         for t, i in character_dict.items():
             for leaf in t.get_leaf_names():
                 if not leaf in list(cladogram_dict.keys())[0].get_leaf_names():
-                    sys.exit(print("ERROR: Character tree " + str(i)
+                    print("ERROR: Character tree " + str(i)
                                    + ": leaf set must be equal"
                                    + " or a subset of the cladogram \nleaf "
-                                   + "set.\nOperation aborted."))
+                                   + "set.\nOperation aborted.")
+                    sys.exit(1)
 
 
     c_triplet_dict = standard_tripdec(cladogram_dict,
@@ -494,8 +501,9 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
     """
 
     if rep_detector({true_tree:0, reconstructed_tree:0}):
-        sys.exit(print("ERROR: Repeated leaves have been detected.\n" +
-                         "Operation aborted."))
+        print("ERROR: Repeated leaves have been detected.\n" +
+                         "Operation aborted.")
+        sys.exit(1)
 
     tt_tripdic = standard_tripdec({true_tree: 0},
                                       weighting,
@@ -597,8 +605,9 @@ def triplet_distance(t1, t2, prefix,
     """
 
     if rep_detector({t1:0, t2:0}):
-        sys.exit(print("ERROR: Repeated leaves have been detected.\n" +
-                         "Operation aborted."))
+        print("ERROR: Repeated leaves have been detected.\n" +
+                         "Operation aborted.")
+        sys.exit(1)
 
     power12, arte12, efficiency12 = ITRI(t1, t2, prefix=False,
                                          weighting=weighting,
@@ -806,25 +815,29 @@ def character_states_test(cladogram_dict, character_dict,
         return synapo_test, synapomorphies_set, results_test_dict, cladogram
 
     if rep_detector(cladogram_dict):
-        sys.exit(print("ERROR: Repeated leaves have been detected in the " +
-                         "cladogram.\nOperation aborted."))
+        print("ERROR: Repeated leaves have been detected in the " +
+                         "cladogram.\nOperation aborted.")
+        sys.exit(1)
     elif rep_detector(character_dict):
-        sys.exit(print("ERROR: Repeated leaves have been detected in the " +
-                         "character tree set.\nOperation aborted."))
+        print("ERROR: Repeated leaves have been detected in the " +
+                         "character tree set.\nOperation aborted.")
+        sys.exit(1)
     else:
         for t, i in character_dict.items():
             for leaf in t.get_leaf_names():
                 if not leaf in list(cladogram_dict.keys())[0].get_leaf_names():
-                    sys.exit(print("ERROR: Character tree " + str(i)
+                    print("ERROR: Character tree " + str(i)
                                    + ": leaf set must be equal"
                                    + " or a subset of the cladogram leaf "
-                                   + "set.\nOperation aborted."))
+                                   + "set.\nOperation aborted.")
+                    sys.exit(1)
 
     # activate stylenodes from ete3 if pdf option
     if pdf_files:
         if not os.path.isdir(pdf_files):
-            sys.exit(print("ERROR: '" + pdf_files
-                           + "' folder does not exist.\nOperation aborted."))
+            print("ERROR: '" + pdf_files
+                           + "' folder does not exist.\nOperation aborted.")
+            sys.exit(1)
         try:
             from ete3 import NodeStyle, TreeStyle, faces, TextFace
 

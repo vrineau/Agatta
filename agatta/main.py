@@ -234,7 +234,7 @@ def main():
                     arguments["-v"])
 
         elif arguments["help"]:
-            exit(helper(arguments["<command>"]))
+            helper(arguments["<command>"])
 
         # display elapsed time
         elapsed_time = time.time() - start_time
