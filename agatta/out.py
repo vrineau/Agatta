@@ -948,36 +948,37 @@ def agatta_analysis(file_path, software_path, software="tnt",
             elif software == "paup":
                 tstreelist = treeswift.read_tree_newick(prefix + ".tre")
 
-        if not isinstance(tstreelist, list):
-            tstreelist = [tstreelist]
+            if not isinstance(tstreelist, list):
+                tstreelist = [tstreelist]
 
-        for tstree in tstreelist:
-            if isinstance(tstree, dict):
-                for idt, tst in tstree.items():
+            for tstree in tstreelist:
+                if isinstance(tstree, dict):
+                    for idt, tst in tstree.items():
 
-                    nodedict = tst.label_to_node(selection='leaves')
-                    tst.reroot(nodedict["root"])
-                    tst.suppress_unifurcations()
-                    newickstring = tst.newick().replace("root","")
+                        nodedict = tst.label_to_node(selection='leaves')
+                        tst.reroot(nodedict["root"])
+                        tst.suppress_unifurcations()
+                        newickstring = tst.newick().replace("root","")
+
+                        if (newickstring.startswith("[&R] ") or
+                            newickstring.startswith("[&U] ")):
+                            cladogram_dict[Tree(
+                                newickstring.split(" ")[1])] = idt
+                        else:
+                            cladogram_dict[Tree(newickstring)] = idt
+
+                else:
+                    nodedict = tstree.label_to_node(selection='leaves')
+                    tstree.reroot(nodedict["root"])
+                    tstree.suppress_unifurcations()
+                    newickstring = tstree.newick().replace("root","")
 
                     if (newickstring.startswith("[&R] ") or
                         newickstring.startswith("[&U] ")):
-                        cladogram_dict[Tree(newickstring.split(" ")[1])] = idt
+                        cladogram_dict[Tree(newickstring.split(" ")[1])] = i
                     else:
-                        cladogram_dict[Tree(newickstring)] = idt
-
-            else:
-                nodedict = tstree.label_to_node(selection='leaves')
-                tstree.reroot(nodedict["root"])
-                tstree.suppress_unifurcations()
-                newickstring = tstree.newick().replace("root","")
-
-                if (newickstring.startswith("[&R] ") or
-                    newickstring.startswith("[&U] ")):
-                    cladogram_dict[Tree(newickstring.split(" ")[1])] = i
-                else:
-                    cladogram_dict[Tree(newickstring)] = i
-                i += 1
+                        cladogram_dict[Tree(newickstring)] = i
+                    i += 1
 
         with open(prefix + ".tre", "w") as result_file:
             for tree in cladogram_dict.keys():
