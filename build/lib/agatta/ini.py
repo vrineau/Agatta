@@ -21,6 +21,7 @@ from tkinter import filedialog
 import csv
 import sys
 import warnings
+import platform
 import treeswift
 
 with warnings.catch_warnings():
@@ -401,7 +402,7 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
             dictionary with taxa in keys and areas in values.
         MAST : set
             set of MAST areas.
-        taxrep : set
+        arearep : set
             set of repeated areas.
 
         """
@@ -410,7 +411,7 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
         taxa = set()    # taxa set
         areas = set()   # areas set
         MAST = set()    # set of detected MAST
-        taxrep = set()  # set repeated leaves
+        arearep = set()  # set repeated leaves
 
         with open(biogeo_tab, "r") as bt_file:
             try:
@@ -434,8 +435,9 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
                  sys.exit(1)
 
         for line in table:
+            print(line)
             # detection of MASTs (if taxon already in list)
-            if line[0] in taxa:
+            if line[0] in taxa:  # if taxa already recorded = MAST
                 biogeo_dict[line[0]].append(line[1])
                 MAST.add(line[0])
 
@@ -444,7 +446,7 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
 
             # detection of repeated areas
             if line[1] in areas:
-                taxrep.add(line[1])
+                arearep.add(line[1])
 
             taxa.add(line[0])
             areas.add(line[1])
@@ -452,18 +454,18 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
         if verbose:
             print(str(len(taxa)) + " terminal taxa, " + str(len(areas)) +
                   " terminal areas")
-            print(str(len(taxrep)) + " repeated taxa, " + str(len(MAST)) +
+            print(str(len(arearep)) + " repeated taxa, " + str(len(MAST)) +
                   " MAST detected")
             print("taxa: {}".format(taxa))
             print("areas: {}".format(areas))
-            if len(taxrep) > 0:
-                print("repeated taxa: {}".format(taxrep))
+            if len(arearep) > 0:
+                print("repeated taxa: {}".format(arearep))
             if len(MAST) > 0:
                 print("MAST: {}".format(MAST))
 
-        return biogeo_dict, MAST, taxrep
+        return biogeo_dict, MAST, arearep
 
-    biogeo_dict, MAST, taxrep = biogeo_table(biogeo_tab, verbose=False)
+    biogeo_dict, MAST, arearep = biogeo_table(biogeo_tab, verbose=False)
     if type(tree_file) == str:
         character_dict = character_extraction(tree_file)
     else:
@@ -475,6 +477,8 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
         print("Standardising {} characters".format(str(nb_char)))
     else:
         print("Standardising 1 character")
+
+    error_message = ""
 
     # for each tree
     with open(prefix + ".std", "w") as area_file:
@@ -496,15 +500,10 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
                         try:
                             leafnode.name = biogeo_dict[leaf.name][0]
                         except KeyError:
-                            print("ERROR: The name '" +
-                                             str(leaf.name) +
-                                             "' does not exists in the table" +
-                                             " file '" + biogeo_tab + "'.\n" +
-                                             "\nOperation aborted.")
-                        else:
-                            no_exception = True
-                        if not 'no_exception' in locals():
-                            sys.exit(1)
+                            error_message += ("ERROR: The name '"
+                                            + str(leaf.name)
+                                            + "' does not exists in the table"
+                                            + " file '" + biogeo_tab + "'.\n")
 
             # add new areagram
             areagram_dict[phylogeny2] = index
@@ -518,6 +517,12 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
 
             if verbose:
                 print(new_tree_line)
+
+    if error_message:
+        print(error_message)
+        print("Operation aborted.")
+        sys.exit(1)
+
 
     print("Characters standardised")
 
@@ -763,7 +768,8 @@ def checkargs(arguments):
 
         if (arguments["--software"] == "paup" or
             arguments["--software"] == "tnt"):
-            if not arguments.get("--softpath", False):
+            if (not arguments.get("--softpath", False)
+                and platform.system() != "Windows"):
                 sys.exit(print("ERROR: For PAUP and TNT, the path of the " +
                       "software must be completed in --softpath"))
 

@@ -21,6 +21,7 @@ from tkinter import filedialog
 import csv
 import sys
 import warnings
+import platform
 import treeswift
 
 with warnings.catch_warnings():
@@ -767,7 +768,8 @@ def checkargs(arguments):
 
         if (arguments["--software"] == "paup" or
             arguments["--software"] == "tnt"):
-            if not arguments.get("--softpath", False):
+            if (not arguments.get("--softpath", False)
+                and platform.system() != "Windows"):
                 sys.exit(print("ERROR: For PAUP and TNT, the path of the " +
                       "software must be completed in --softpath"))
 
