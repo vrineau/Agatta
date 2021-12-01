@@ -60,7 +60,7 @@ def search_pipeline(path_infile, software_path=False, software="paup"):
 
     if ostype == "Windows":
         if software == "paup":
-            os.system("paup "+path_infile)
+            os.system("paup -n "+path_infile)
 
         elif software == "tnt":
             os.system(software_path+" proc "+path_infile)
