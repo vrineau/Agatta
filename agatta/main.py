@@ -31,7 +31,7 @@ Options:
     --analysis=<type>     Type of searching method [default: auto]
     --chardec             Decompose trees into components
     --chartest            Compute hierarchical character states test
-    --consensus=<type>    Specify type of consensus [default: strict]
+    --consensus=<type>    Specify type of consensus
     --directory=<dir>     Directory for output chartest files [default: ./]
     --filetype=<type>     Choose a tree file or a triplet file [default: trees]
     --index=<type>        Specify type of index to use [default: ri]
@@ -198,20 +198,20 @@ def main():
 
         # consensus
         elif arguments["consensus"]:
-            # strict consensus
-            if arguments.get("--consensus", "strict"):
-                constrict(list(character_extraction(
-                          arguments["<file>"][0],
-                          arguments.get("--taxarep1", False)).keys()),
-                          arguments["--prefix"])
-
             # reduced cladistic consensus
-            elif arguments["--consensus"] == "rcc":
+            if arguments["--consensus"] == "rcc":
 
                 rcc(list(character_extraction(
                     arguments["<file>"][0],
                     arguments.get("--taxarep1", False)).keys()),
                     arguments["--prefix"])
+
+            # strict consensus
+            else:
+                constrict(list(character_extraction(
+                          arguments["<file>"][0],
+                          arguments.get("--taxarep1", False)).keys()),
+                          arguments["--prefix"])
 
         # describe trees
         elif arguments["describetree"]:
@@ -221,7 +221,9 @@ def main():
 
         # standardisation
         elif arguments["standardisation"]:
-            standardisation(arguments["<file>"][0],
+            standardisation(character_extraction(
+                              arguments["<file>"][0],
+                              arguments.get("--taxarep1", False)),
                               arguments["<file>"][1],
                               arguments["--prefix"],
                               verbose=arguments.get("-v", False))

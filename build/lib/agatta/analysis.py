@@ -458,11 +458,17 @@ def triplet_extraction(infile, taxa_replacement_file=False):
 
     triplet_dict = {}
 
+    if not os.path.isfile(infile):
+        print("ERROR: The file '" + infile + "' does not exist." +
+                       "\nOperation aborted.")
+        sys.exit(1)
+
     if taxa_replacement_file:
         taxa_dict = {}
-        with open(taxa_replacement_file, "r") as taxa_table:
+        # detect separator in taxa_replacement_file
+        with open(taxa_replacement_file, "r") as taxa_table1:
             try:
-                dialect = csv.Sniffer().sniff(taxa_table.read())
+                dialect = csv.Sniffer().sniff(taxa_table1.read())
             except:
                 print("ERROR: Could not determine separator in the "
                                   + "file '" + taxa_replacement_file
@@ -473,20 +479,16 @@ def triplet_extraction(infile, taxa_replacement_file=False):
             if not 'no_exception' in locals():
                 sys.exit(1)
 
-        with open(taxa_replacement_file, "r") as taxa_table:
-
-            tab_test = csv.reader(taxa_table, delimiter=dialect.delimiter)
-            if not len({len(l) for l in tab_test}) == 1:
-                 print("ERROR: The table file '" +
-                                   taxa_table + "' is broken." +
-                                   "\nOperation aborted.")
-                 sys.exit(1)
-
-            for line in taxa_table:
+        # build taxanames to id converter
+        with open(taxa_replacement_file, "r") as taxa_table2:
+            for line in taxa_table2:
                 line = line.strip()
-                idtax, nametax = line.split(dialect.delimiter)
-                taxa_dict[int(idtax)] = nametax
+                idtax = line.split(dialect.delimiter)[0]
+                nametax = line.split(dialect.delimiter)[-1]
+                if line.strip() and idtax and nametax:
+                    taxa_dict[int(idtax)] = nametax
 
+    # read triplet file and build triplet dictionary
     with open(infile, "r") as file_tree:
         for line in file_tree:
             if line.strip():
@@ -495,7 +497,6 @@ def triplet_extraction(infile, taxa_replacement_file=False):
                     (ch if ch in '0123456789.-e' else ' ')
                     for ch in tripletstr[0])
                 taxaint = [int(i) for i in newstr.split()]
-                trip = triplet({taxaint[1], taxaint[2]}, {taxaint[0]})
 
                 if taxa_replacement_file:
                     for i in [0,1,2]:
@@ -516,7 +517,9 @@ def triplet_extraction(infile, taxa_replacement_file=False):
                                             taxa_dict[taxaint[2]]},
                                            {taxa_dict[taxaint[0]]})
                     triplet_dict[convert_trip] = Fraction(tripletstr[1])
+
                 else:
+                    trip = triplet({taxaint[1], taxaint[2]}, {taxaint[0]})
                     triplet_dict[trip] = Fraction(tripletstr[1])
 
     print("{} characters loaded".format(str(len(triplet_dict))))
@@ -902,7 +905,7 @@ def standard_tripdec(character_dict, weighting, prefix=False, verbose=True):
                     trip2.in_taxa = {taxa_dict[in_taxa[0]],
                                      taxa_dict[in_taxa[1]]}
                     trip2.out_taxa = {taxa_dict[list(trip.out_taxa)[0]]}
-                    tdfile.write("{}:    {}    {}\n".format(trip, FW, round(
+                    tdfile.write("{};    {}    {}\n".format(trip, FW, round(
                         float(FW), 4)))
 
             else:
@@ -913,7 +916,7 @@ def standard_tripdec(character_dict, weighting, prefix=False, verbose=True):
                     trip2.in_taxa = {taxa_dict[in_taxa[0]],
                                      taxa_dict[in_taxa[1]]}
                     trip2.out_taxa = {taxa_dict[list(trip.out_taxa)[0]]}
-                    tdfile.write("{}:    {}\n".format(trip, FW))
+                    tdfile.write("{};    {}\n".format(trip, FW))
 
         with open(prefix+".taxabloc", "w") as taxa_bloc_file:
             for taxa, code in taxa_dict.items():
@@ -1020,9 +1023,12 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
                 for trip, FW in shared_dict.items():
 
                     in_taxa = list(trip.in_taxa)
-                    tdfile.write("(" + list(trip.out_taxa)[0] + ",("
-                                 + in_taxa[0] + "," + in_taxa[1] + ")):    "
-                                 + str(FW) + "    " + str(round(float(FW), 4))
+                    tdfile.write("(" + str(taxa_dict[list(trip.out_taxa)[0]])
+                                 + ",("
+                                 + str(taxa_dict[in_taxa[0]]) + ","
+                                 + str(taxa_dict[in_taxa[1]]) + ")):    "
+                                 + str(FW) + "    "
+                                 + str(round(float(FW), 4))
                                  + "\n")
 
             else:
@@ -1030,7 +1036,7 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
 
                     in_taxa = list(trip.in_taxa)
                     tdfile.write("(" + list(trip.out_taxa)[0] + ",("
-                                 + in_taxa[0] + "," + in_taxa[1] + ")):    "
+                                 + in_taxa[0] + "," + in_taxa[1] + "));    "
                                  + str(FW) + "\n")
 
         with open(prefix+".taxabloc", "w") as taxa_bloc_file:

@@ -134,8 +134,9 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
                            "format. \nNexus files must have the .nex " +
                            "extension.\nNexml files must have the .nexml " +
                            "extension.\nThe Lisbeth input files must have " +
-                           "the .3ia extension.\nAll other extension are " +
-                           "considered as newick files containing only " +
+                           "the .3ia extension.\nHierarchical matrices have" +
+                           " the .hmatrix extension.\nAll other extensions " +
+                           "are considered as newick files containing only " +
                            "newick strings (one on each line).")
         else:
             no_exception = True
@@ -400,7 +401,7 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
             dictionary with taxa in keys and areas in values.
         MAST : set
             set of MAST areas.
-        taxrep : set
+        arearep : set
             set of repeated areas.
 
         """
@@ -409,7 +410,7 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
         taxa = set()    # taxa set
         areas = set()   # areas set
         MAST = set()    # set of detected MAST
-        taxrep = set()  # set repeated leaves
+        arearep = set()  # set repeated leaves
 
         with open(biogeo_tab, "r") as bt_file:
             try:
@@ -433,8 +434,9 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
                  sys.exit(1)
 
         for line in table:
+            print(line)
             # detection of MASTs (if taxon already in list)
-            if line[0] in taxa:
+            if line[0] in taxa:  # if taxa already recorded = MAST
                 biogeo_dict[line[0]].append(line[1])
                 MAST.add(line[0])
 
@@ -443,7 +445,7 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
 
             # detection of repeated areas
             if line[1] in areas:
-                taxrep.add(line[1])
+                arearep.add(line[1])
 
             taxa.add(line[0])
             areas.add(line[1])
@@ -451,18 +453,18 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
         if verbose:
             print(str(len(taxa)) + " terminal taxa, " + str(len(areas)) +
                   " terminal areas")
-            print(str(len(taxrep)) + " repeated taxa, " + str(len(MAST)) +
+            print(str(len(arearep)) + " repeated taxa, " + str(len(MAST)) +
                   " MAST detected")
             print("taxa: {}".format(taxa))
             print("areas: {}".format(areas))
-            if len(taxrep) > 0:
-                print("repeated taxa: {}".format(taxrep))
+            if len(arearep) > 0:
+                print("repeated taxa: {}".format(arearep))
             if len(MAST) > 0:
                 print("MAST: {}".format(MAST))
 
-        return biogeo_dict, MAST, taxrep
+        return biogeo_dict, MAST, arearep
 
-    biogeo_dict, MAST, taxrep = biogeo_table(biogeo_tab, verbose=False)
+    biogeo_dict, MAST, arearep = biogeo_table(biogeo_tab, verbose=False)
     if type(tree_file) == str:
         character_dict = character_extraction(tree_file)
     else:
@@ -474,6 +476,8 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
         print("Standardising {} characters".format(str(nb_char)))
     else:
         print("Standardising 1 character")
+
+    error_message = ""
 
     # for each tree
     with open(prefix + ".std", "w") as area_file:
@@ -495,15 +499,10 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
                         try:
                             leafnode.name = biogeo_dict[leaf.name][0]
                         except KeyError:
-                            print("ERROR: The name '" +
-                                             str(leaf.name) +
-                                             "' does not exists in the table" +
-                                             " file '" + biogeo_tab + "'.\n" +
-                                             "\nOperation aborted.")
-                        else:
-                            no_exception = True
-                        if not 'no_exception' in locals():
-                            sys.exit(1)
+                            error_message += ("ERROR: The name '"
+                                            + str(leaf.name)
+                                            + "' does not exists in the table"
+                                            + " file '" + biogeo_tab + "'.\n")
 
             # add new areagram
             areagram_dict[phylogeny2] = index
@@ -517,6 +516,12 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
 
             if verbose:
                 print(new_tree_line)
+
+    if error_message:
+        print(error_message)
+        print("Operation aborted.")
+        sys.exit(1)
+
 
     print("Characters standardised")
 
@@ -591,6 +596,7 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
 
     character_dict = dict()  # trees without polytomies
     temp_character_dict = dict()  # trees with polytomies (raw data)
+    error_message = ""
 
     # read matrix
     if not path.isfile(infile):
@@ -637,7 +643,7 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
              sys.exit(1)
 
     print("Hierarchical matrix loaded")
-    print("Treefication of the hierarchical matrix.")
+    print("Treefication of the hierarchical matrix")
 
     # construction of character trees backbone
     i = 1
@@ -683,7 +689,6 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
 
     # fill characters
     for char, ind in temp_character_dict.items():  # for each character
-
         # mark branches to delete at the end
         delnodes = []  # list of leaves to delete
         for leaf in char.iter_leaves():
@@ -711,14 +716,10 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
                             charstate)[0].get_ancestors()[0]
                         branchnode.add_child(name=taxa)
                     except:
-                        print("ERROR: The instance '" + str(ind2)
-                                         + "' of leaf " + taxa + " in column "
-                                         + str(ind) + " does not match.\n"
-                                         +"Operation aborted.")
-                    else:
-                        no_exception = True
-                    if not 'no_exception' in locals():
-                        sys.exit(1)
+                        error_message += "ERROR: The instance '"
+                        error_message += str(charstate) + "' of leaf " + taxa
+                        error_message += " in column " + str(ind)
+                        error_message += " does not match\n"
 
         # deletion of state branches
         for delnode in delnodes:
@@ -728,12 +729,15 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
         char.ladderize()
         character_dict[char] = str(value)
 
+    if error_message:
+        print(error_message)
+        sys.exit(1)
+
     # save resulting tree file
-    if prefix:
-        with open(prefix+".hmatrix", "w") as treefile:
+    elif prefix:
+        with open(prefix+".tre", "w") as treefile:
             for char, charnum in character_dict.items():
-                treefile.write(str(charnum) + " : "
-                               + char.write(format=9) + "\n")
+                treefile.write(char.write(format=9) + "\n")
 
     print("{} characters computed from the matrix".format(
                                                     str(len(character_dict))))
@@ -1528,6 +1532,8 @@ def helper(command):
               """)
 
     else:
-        sys.exit(print("""This command does not exist. Available commands:
-              analysis, tripdec, ri, chartest, convert, fp, consensus,
-              describetree, standardisation, hmatrix."""))
+        print("""This command does not exist. Available commands:
+              analysis, tripdec, support, chartest, convert, fp, consensus,
+              describetree, standardisation, hmatrix.""")
+
+    sys.exit(1)

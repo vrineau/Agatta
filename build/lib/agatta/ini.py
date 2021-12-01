@@ -134,8 +134,9 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
                            "format. \nNexus files must have the .nex " +
                            "extension.\nNexml files must have the .nexml " +
                            "extension.\nThe Lisbeth input files must have " +
-                           "the .3ia extension.\nAll other extension are " +
-                           "considered as newick files containing only " +
+                           "the .3ia extension.\nHierarchical matrices have" +
+                           " the .hmatrix extension.\nAll other extensions " +
+                           "are considered as newick files containing only " +
                            "newick strings (one on each line).")
         else:
             no_exception = True
@@ -591,6 +592,7 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
 
     character_dict = dict()  # trees without polytomies
     temp_character_dict = dict()  # trees with polytomies (raw data)
+    error_message = ""
 
     # read matrix
     if not path.isfile(infile):
@@ -637,7 +639,7 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
              sys.exit(1)
 
     print("Hierarchical matrix loaded")
-    print("Treefication of the hierarchical matrix.")
+    print("Treefication of the hierarchical matrix")
 
     # construction of character trees backbone
     i = 1
@@ -683,7 +685,6 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
 
     # fill characters
     for char, ind in temp_character_dict.items():  # for each character
-
         # mark branches to delete at the end
         delnodes = []  # list of leaves to delete
         for leaf in char.iter_leaves():
@@ -711,14 +712,10 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
                             charstate)[0].get_ancestors()[0]
                         branchnode.add_child(name=taxa)
                     except:
-                        print("ERROR: The instance '" + str(ind2)
-                                         + "' of leaf " + taxa + " in column "
-                                         + str(ind) + " does not match.\n"
-                                         +"Operation aborted.")
-                    else:
-                        no_exception = True
-                    if not 'no_exception' in locals():
-                        sys.exit(1)
+                        error_message += "ERROR: The instance '"
+                        error_message += str(charstate) + "' of leaf " + taxa
+                        error_message += " in column " + str(ind)
+                        error_message += " does not match\n"
 
         # deletion of state branches
         for delnode in delnodes:
@@ -728,12 +725,15 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
         char.ladderize()
         character_dict[char] = str(value)
 
+    if error_message:
+        print(error_message)
+        sys.exit(1)
+
     # save resulting tree file
-    if prefix:
-        with open(prefix+".hmatrix", "w") as treefile:
+    elif prefix:
+        with open(prefix+".tre", "w") as treefile:
             for char, charnum in character_dict.items():
-                treefile.write(str(charnum) + " : "
-                               + char.write(format=9) + "\n")
+                treefile.write(char.write(format=9) + "\n")
 
     print("{} characters computed from the matrix".format(
                                                     str(len(character_dict))))
@@ -1528,6 +1528,8 @@ def helper(command):
               """)
 
     else:
-        sys.exit(print("""This command does not exist. Available commands:
-              analysis, tripdec, ri, chartest, convert, fp, consensus,
-              describetree, standardisation, hmatrix."""))
+        print("""This command does not exist. Available commands:
+              analysis, tripdec, support, chartest, convert, fp, consensus,
+              describetree, standardisation, hmatrix.""")
+
+    sys.exit(1)

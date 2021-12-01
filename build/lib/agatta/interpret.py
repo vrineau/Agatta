@@ -488,11 +488,11 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
     Returns
     -------
     float
-        Resolving power in percentage.. Amount of information present in the
+        Resolving power in percentage. Amount of information present in the
         compared tree present in the reference tree divided by the total
         information of the reference tree (Grand et al. 2014).
     float
-        Artefactual resolution in percentage.. Amount of information present in
+        Artefactual resolution in percentage. Amount of information present in
         the compared tree not present in the reference tree divided by the
         total information of the tree to be compared (Grand et al. 2014).
     float
@@ -541,7 +541,7 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
     ITRI_efficiency = (ITRI_power - ITRI_arte + 100 ) / 2
 
     if prefix:
-        with open(prefix+".txt", "w") as itrifile:
+        with open(prefix+".itri", "w") as itrifile:
             itrifile.write("power : " + str(round(ITRI_power, 3))
                            + "\n")
             itrifile.write("artefact : " + str(round(ITRI_arte, 3))
@@ -623,7 +623,7 @@ def triplet_distance(t1, t2, prefix,
         ITRIsym = efficiency12 * efficiency21
 
     if prefix:
-        with open(prefix+".txt", "w") as itrifile:
+        with open(prefix+".dist", "w") as itrifile:
             itrifile.write(str(round(ITRIsym,3)))
 
     print("Symmetrical ITRI value :"+str(round(ITRIsym,3)))
@@ -928,7 +928,7 @@ def character_states_test(cladogram_dict, character_dict,
         with open(prefix+".chartest", "a") as results_file:
             results_file.write("#Character states tests")
             results_file.write(("\n#Legend: #character.state / state accepted"
-                               "or rejected / node(s) characterized by the"
+                               " or rejected / node(s) characterised by the"
                                " state (if one: synapomorphy)"))
             results_file.write("\n" + cladogram.write(format=8) + "\n")
 
@@ -1237,11 +1237,12 @@ def describe_forest(character_dict, prefix, showtaxanames=False):
                 for taxa in taxalist:
                     describefile.write(taxa+"\n")
 
-
     i = 0
     for dtree in character_dict.keys():
         i += 1
         describe_tree(dtree, prefix+".dt", nb=i, showtaxanames=showtaxanames)
+
+    print("Forest described")
 
 
 def chartest(cladopath, charpath, taxarep1=False, taxarep2=False,

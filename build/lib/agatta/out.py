@@ -825,7 +825,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
 
     """
 
-    print("Starting analysis.")
+    print("Starting analysis")
 
     with open(prefix+".log", "w") as log_file:
         log_file.write("Agatta parameters\n\n")
@@ -877,10 +877,10 @@ def agatta_analysis(file_path, software_path, software="tnt",
 
         f_path = os.path.split(file_path)[0]
 
-        character_dict = hmatrix(file_path, f_path + "agatta_character_trees",
-                                 prefix)
+        character_dict = hmatrix(file_path, os.path.join(f_path,
+                                                         prefix + ".input"))
 
-        file_path = os.path.split(file_path)[0]+"agatta_character_trees.tre"
+        file_path = os.path.join(f_path, prefix + ".input.tre")
 
     else:
         character_dict = character_extraction(file_path, taxa_replacement)
@@ -946,7 +946,13 @@ def agatta_analysis(file_path, software_path, software="tnt",
             if software == "tnt":
                     tstreelist = treeswift.read_tree_nexus(prefix + ".tre")
             elif software == "paup":
-                tstreelist = treeswift.read_tree_newick(prefix + ".tre")
+                try:
+                    tstreelist = treeswift.read_tree_newick(prefix + ".tre")
+                except RuntimeError:
+                    print("ERROR: PAUP* can fail to find a tree in bandb " +
+                          "with fractional weights (FW, FWNL, MW).\nConsider" +
+                          "to set the analysis to heuristic using " +
+                          "--analysis=heuristic")
 
             if not isinstance(tstreelist, list):
                 tstreelist = [tstreelist]

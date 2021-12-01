@@ -31,7 +31,9 @@ setup(
     install_requires= ["docopt",
                        "ete3",
                        "tqdm",
-                       "treeswift"],
+                       "treeswift",
+                       "six",
+                       "numpy"],
 
     include_package_data=True,
 

@@ -488,11 +488,11 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
     Returns
     -------
     float
-        Resolving power in percentage.. Amount of information present in the
+        Resolving power in percentage. Amount of information present in the
         compared tree present in the reference tree divided by the total
         information of the reference tree (Grand et al. 2014).
     float
-        Artefactual resolution in percentage.. Amount of information present in
+        Artefactual resolution in percentage. Amount of information present in
         the compared tree not present in the reference tree divided by the
         total information of the tree to be compared (Grand et al. 2014).
     float
@@ -928,7 +928,7 @@ def character_states_test(cladogram_dict, character_dict,
         with open(prefix+".chartest", "a") as results_file:
             results_file.write("#Character states tests")
             results_file.write(("\n#Legend: #character.state / state accepted"
-                               "or rejected / node(s) characterized by the"
+                               " or rejected / node(s) characterised by the"
                                " state (if one: synapomorphy)"))
             results_file.write("\n" + cladogram.write(format=8) + "\n")
 
@@ -1237,11 +1237,12 @@ def describe_forest(character_dict, prefix, showtaxanames=False):
                 for taxa in taxalist:
                     describefile.write(taxa+"\n")
 
-
     i = 0
     for dtree in character_dict.keys():
         i += 1
         describe_tree(dtree, prefix+".dt", nb=i, showtaxanames=showtaxanames)
+
+    print("Forest described")
 
 
 def chartest(cladopath, charpath, taxarep1=False, taxarep2=False,
