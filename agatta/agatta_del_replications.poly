@@ -1,0 +1,22 @@
+[1.1] (WesternGondwana_L,Cordillerian_L ,(Uralian_L,Rhenish_Bohemian_M));
+[1.2] ((WesternGondwana_L,Rhenish_Bohemian_M),(Cordillerian_L ,Uralian_L));
+[2] (Rhenish_Bohemian_E,(Cordillerian_E ,Uralian_E));
+[3.1] (East_Americas_Realm_L,WesternGondwana_L,Cordillerian_L ,EAR_M,(EAR_E,Cordillerian_E ));
+[3.2] (Cordillerian_E ,(EAR_E,(East_Americas_Realm_L,WesternGondwana_L),(Cordillerian_L ,EAR_M)));
+[4] (Mardoowarra_EM,(Cordillerian_M ,WesternGondwana_L));
+[5] no informative tree
+[6] no informative tree
+[7.1] (Rhenish_Bohemian_E,Malvinokaffric_E,Cordillerian_E ,(Tasman_Em,EAR_E));
+[7.2] (EAR_E,Rhenish_Bohemian_E,Malvinokaffric_E,(Cordillerian_E ,Tasman_Em));
+[7.3] (Rhenish_Bohemian_E,Malvinokaffric_E,(Tasman_Em,EAR_E,Cordillerian_E ));
+[7.4] (Tasman_Em,Rhenish_Bohemian_E,Cordillerian_E ,(Malvinokaffric_E,EAR_E));
+[7.5] (Rhenish_Bohemian_E,(Tasman_Em,EAR_E,Cordillerian_E ,Malvinokaffric_E));
+[7.6] (EAR_E,Cordillerian_E ,Malvinokaffric_E,(Tasman_Em,Rhenish_Bohemian_E));
+[8.1] (Cordillerian_E,Tasman_Em,Mardoowarra_EM,Cordillerian_L,WesternGondwana_L,Uralian_E ,(Malvinokaffric_E,Rhenish_Bohemian_E));
+[8.2] (Cordillerian_E,Mardoowarra_EM,Cordillerian_L,Malvinokaffric_E,(WesternGondwana_L,(Uralian_E ,(Tasman_Em,Rhenish_Bohemian_E))));
+[8.3] (Cordillerian_E,Rhenish_Bohemian_E,Cordillerian_L,Malvinokaffric_E,WesternGondwana_L,Uralian_E ,(Tasman_Em,Mardoowarra_EM));
+[8.4] (Cordillerian_E,Mardoowarra_EM,(Cordillerian_L,(Malvinokaffric_E,Rhenish_Bohemian_E,WesternGondwana_L,Uralian_E ,Tasman_Em)));
+[8.5] (Cordillerian_E,(Tasman_Em,Mardoowarra_EM,Cordillerian_L,Malvinokaffric_E,Rhenish_Bohemian_E,WesternGondwana_L,Uralian_E ));
+[9] no informative tree
+[10.1] (EAR_M,East_Americas_Realm_L,(WesternGondwana_L,Rhenish_Bohemian_M));
+[10.2] (Rhenish_Bohemian_M,(WesternGondwana_L,(EAR_M,East_Americas_Realm_L)));

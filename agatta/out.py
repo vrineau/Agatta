@@ -901,7 +901,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
                                                  prefix=prefix,
                                                  verbose=verbose)
 
-    prefix_path = os.getcwd() + "/" + prefix
+    prefix_path = os.path.join(os.getcwd(), prefix)
 
     if software == "agatta":
         triplet_dict = main_tripdec(character_dict, prefix, taxa_replacement,

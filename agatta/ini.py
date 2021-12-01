@@ -345,7 +345,7 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
     standardisation is used to convert phylogenies in areagrams in cladistic
     biogeography.
     MAST are automatically removed.
-    A file named prefix.std is generated at the end.
+    A file named prefix.stand is generated at the end.
 
     Parameters
     ----------
@@ -361,7 +361,7 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
         path of table with semicolon separators and two columns, taxa in
         the left column and corresponding areas in the right column.
     prefix : str, optional
-        prefix of the .std file to save.
+        prefix of the .stand file to save.
     verbose : bool, optional
         If true, print in the terminal the resulting areagrams and informations
         on taxa, areas, MASTs (Multiple Area Single Taxa) and repetitions.
@@ -435,7 +435,6 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
                  sys.exit(1)
 
         for line in table:
-            print(line)
             # detection of MASTs (if taxon already in list)
             if line[0] in taxa:  # if taxa already recorded = MAST
                 biogeo_dict[line[0]].append(line[1])
@@ -481,7 +480,7 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
     error_message = ""
 
     # for each tree
-    with open(prefix + ".std", "w") as area_file:
+    with open(prefix + ".stand", "w") as area_file:
         for phylogeny, index in character_dict.items():
 
             phylogeny2 = phylogeny.copy()
@@ -512,6 +511,7 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
             new_tree_line += phylogeny2.write(format=9)
             new_tree_line += "    "
             new_tree_line += phylogeny.write(format=9)
+            new_tree_line += "\n"
 
             area_file.write(new_tree_line)
 
@@ -956,7 +956,7 @@ def helper(command):
             path given as argument. The csv file is a table with two columns,
             one with the name of the tree leaves and the second with their
             corresponding names to be switched. The results of the
-            standardisation are writen in the file prefix.std.
+            standardisation are writen in the file prefix.stand.
             --softpath=<path>  Path of the software declared in --software.
             --software=<type>  Choose how to perform the three-item analysis.
             The analysis can be performed using the built-in branch and bound
@@ -1497,7 +1497,7 @@ def helper(command):
 
     Output:
 
-        One output newick file prefix.std containing the trees after
+        One output newick file prefix.stand containing the trees after
         leaf replacement.
               """)
 

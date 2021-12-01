@@ -169,8 +169,10 @@ def del_replications(treerep, method="TMS", verbose=False):
                             if child.is_leaf:
                                 if child.name in cardr:
                                     paralog_but_leaf = True
-                                    print(""""ortholog repetition (on symmetric
-                                          node):{}""".format(child.name))
+                                    if verbose:
+                                        print("ortholog repetition (on "
+                                              + "symmetric node):{}".format(
+                                                  child.name))
                                     child.delete()
 
                     # special case: leaves on paralog
@@ -290,7 +292,7 @@ def del_replications(treerep, method="TMS", verbose=False):
 
         return treelistrepclearcopy, treelistnorep
 
-    listundone, listdone = del_replications_node(treerep, method, verbose)
+    listundone, listdone = del_replications_node(treerep, method)
 
     if listundone:  # if repetitions
         while listundone:  # while until listundone contains trees to analyse
@@ -298,7 +300,7 @@ def del_replications(treerep, method="TMS", verbose=False):
             listdone1 = []
 
             for treerep2 in listundone:
-                LU, LD = del_replications_node(treerep2, method, verbose)
+                LU, LD = del_replications_node(treerep2, method)
                 listundone1 += LU
                 listdone1 += LD
 
@@ -401,8 +403,8 @@ def del_replications_forest(character_dict, method="TMS",
                 logfile.write("[" + str(treeid) + "] no informative tree\n")
 
     if output_trees != 0:
-        print("Polymorphism removed. "
-              "{} polymorphism free informative subtrees computed.".format(
+        print("Polymorphism removed: "
+              "{} polymorphism free informative subtrees computed".format(
                   str(output_trees)))
     else:
         print("Polymorphism removed. No polymorphism free "

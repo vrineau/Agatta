@@ -901,7 +901,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
                                                  prefix=prefix,
                                                  verbose=verbose)
 
-    prefix_path = os.getcwd() + "/" + prefix
+    prefix_path = os.path.join(os.getcwd(), prefix)
 
     if software == "agatta":
         triplet_dict = main_tripdec(character_dict, prefix, taxa_replacement,
@@ -913,6 +913,8 @@ def agatta_analysis(file_path, software_path, software="tnt",
 
     # compute triplets and weights from the tree list and save a nex/tnt file
     else:
+        if rep_detector(character_dict):
+            print("probleme deja ici")
         convert(character_dict,
                 "trees",
                 prefix,
