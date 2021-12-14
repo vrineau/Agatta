@@ -668,6 +668,12 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
     treeliststr = hmatrix[0]
     del treeliststr[0]
 
+    if [i for i in ''.join(treeliststr) if not (i in ["(",")",",","0","1",
+                                                      "2","3","4","5","6",
+                                                      "7","8","9"])]:
+        print("ERROR: first line of the matrix is incorrect or missing")
+        sys.exit(1)
+
     for char in treeliststr:
         try:
             temp_character_dict[Tree(char+";")] = str(i)
