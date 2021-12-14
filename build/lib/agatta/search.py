@@ -26,20 +26,22 @@ with warnings.catch_warnings():
     from ete3 import Tree
 
 
-def search_pipeline(path_infile, software_path=False, software="paup"):
+def search_pipeline(path_infile, software_path=False, software="paup",
+                    prefix=False):
     """
-    Function to run automatically a nexus file or a tnt file on PAUP or TNT
-    respectivelly. The software to be used must be installed and accessible.
+    Function to run automatically a nexus file or a tnt file on PAUP, TNT, or
+    WQFM respectivelly. The software to be used must be installed and
+    accessible.
 
     Parameters
     ----------
     path_infile : string
         path of the nexus or tnt file.
     software_path : string
-        path of the software chosen, paup or tnt. Not necessari if paup is
+        path of the software chosen, paup, tnt, wqfm. Not necessari if paup is
         installed in a windows os.
     software : string, optional
-        paup or tnt. The default is "paup".
+        paup, tnt, wqfm. The default is "paup".
 
     Returns
     -------
@@ -72,6 +74,9 @@ def search_pipeline(path_infile, software_path=False, software="paup"):
 
         elif software == "tnt":
             os.system(software_path+" proc "+path_infile)
+        elif software == "wqfm":
+            os.system(("java -jar " + software_path + " -i \"" +
+                      path_infile + "\" -o \"" + prefix + ".tre\""))
 
     print("Three-item analysis done")
 

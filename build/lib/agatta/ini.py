@@ -793,7 +793,8 @@ def checkargs(arguments):
                            "--chartest"))
 
         if (arguments["--software"] == "paup" or
-            arguments["--software"] == "tnt"):
+            arguments["--software"] == "tnt" or
+            arguments["--software"] == "wqfm"):
             if (not arguments.get("--softpath", False)
                 and platform.system() != "Windows"):
                 sys.exit(print("ERROR: For PAUP and TNT, the path of the " +
@@ -801,18 +802,17 @@ def checkargs(arguments):
 
         elif arguments["--software"] != "agatta":
             sys.exit(print("ERROR: --software flag must be one of: 'paup', " +
-                           "'tnt', 'agatta'"))
+                           "'tnt', 'wqfm', 'agatta'"))
+
+        if (arguments["--software"] == "wqfm"
+            and not arguments["--analysis"] == "heuristic"):
+            sys.exit(print("ERROR: WQFM works only in heuristic mode"))
 
     if arguments["convert"]:
 
         if not arguments["--filetype"] in ["trees","triplets"]:
             sys.exit(print("ERROR: --filetype flag must be one of: 'trees', " +
                            "'triplets'"))
-
-        try:
-            int(arguments["--multiplier"])
-        except ValueError:
-            sys.exit(print("ERROR: --multiplier flag must be an integer"))
 
     if arguments["convert"] or arguments["analysis"]:
 
@@ -921,8 +921,9 @@ def helper(command):
             --analysis=<type>  Type of tree search analysis between an exact
             branch and bound ('bandb') or an heuristic tree search
             ('heuristic'). The heuristic search is only available through
-            PAUP* and TNT, thus it is mandatory to add the flag --software=tnt
-            or --software=paup (and the flag --softpath accordingly).
+            PAUP*, TNT, and WQFM, thus it is mandatory to add the flag
+            --software=tnt, --software=paup, or --software=wqfm (and the flag
+            --softpath accordingly).
             By default the analysis is in branch and bound below 15 terminals
             and heuristic otherwise.
             --chartest  Test and locates all character states on the cladogram.
@@ -987,11 +988,13 @@ def helper(command):
             --software=<type>  Choose how to perform the three-item analysis.
             The analysis can be performed using the built-in branch and bound
             in Agatta ('agatta'). 'paup' and 'tnt' can be used for branch and
-            bound or heuristic search. By default the analysis is made using
-            built-in branch and bound. However it works only with very few
-            terminals. User should consider to switch the software is the
+            bound or heuristic search. 'wqfm' works only with heuristic.
+            By default the analysis is made using built-in branch and bound.
+            However it works only with very few terminals.
+            User should consider to switch the software is the
             analysis time appears to be too long. A prefix.nex file is
-            generated if 'paup', and a prefix.tnt file for 'tnt'.
+            generated if 'paup', a prefix.tnt file for 'tnt', and a
+            prefix.wqfm for 'wqfm'.
             --taxarep1=<path>  If the user wants to replace identifiers by real
             leaf names in the result files, this flag can be used with a path
             to a csv file with two columns, the first with the identifiers in
@@ -1252,7 +1255,7 @@ def helper(command):
     convert
 
     The convert command is intended to compute a triplet matrix readable by an
-    external software (currently PAUP* and TNT are implemented) from a file
+    external software (currently PAUP*, TNT, WQFM are implemented) from a file
     containing a hierarchical matrix, a list of trees, or a list of triplets.
 
     Usage:
@@ -1270,7 +1273,7 @@ def helper(command):
               - A newick file with a single newick tree on each line,
               - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
-            THe following url give more information on how to build input
+            The following url give more information on how to build input
             files: URL.
             The user can also use as input file a triplet file generated from
             the Agatta tripdec command.
@@ -1289,7 +1292,7 @@ def helper(command):
             a list of triplets ('triplets') generated using the Agatta tripdec
             command.
             --log  Add a line in the output file to generate a log file during
-            the PAUP* our TNT analysis.
+            the PAUP* or TNT analysis.
             --parallel=<type>  Option for choosing if the triplet decomposition
             is made using multiprocessing or not. This argument can be:
               - 'no' if the user does not want to use multiprocessing.
@@ -1308,11 +1311,13 @@ def helper(command):
             --software=<type>  Choose how to perform the three-item analysis.
             The analysis can be performed using the built-in branch and bound
             in Agatta ('agatta'). 'paup' and 'tnt' can be used for branch and
-            bound or heuristic search. By default the analysis is made using
+            bound or heuristic search. 'wqfm' can be used for heuristic search
+            only. By default the analysis is made using
             built-in branch and bound. However it works only with very few
             terminals. User should consider to switch the software is the
             analysis time appears to be too long. A prefix.nex file is
-            generated if 'paup', and a prefix.tnt file for 'tnt'.
+            generated if 'paup', a prefix.tnt file for 'tnt', and a prefix.wqfm
+            for 'wqfm'.
             --taxarep1=<path>  If the user wants to replace identifiers by real
             leaf names in the result files, this flag can be used with a path
             to a csv file with two columns, the first with the identifiers in
@@ -1334,7 +1339,7 @@ def helper(command):
     Output:
 
         A triplet matrix file with weights that can be analysed using
-        PAUP* or TNT.
+        PAUP* or TNT or a triplet file with weights for WQFM.
               """)
 
     elif command == "fp":

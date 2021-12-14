@@ -420,13 +420,12 @@ def triplet_tmc_file(triplet_dict, character_dict, prefix=None,
         TMC_file.write(tmcstring)
 
 
-def triplet_wqfm_file(triplet_dict, prefix, multiplier=1000000,
-                      weighting="FW"):
+def triplet_wqfm_file(triplet_dict, prefix, weighting="FW", precision=7):
     """
     Outputs a three-item analysis file readable by wqfm (Mahbub et al., 2021)
     from a dictionary of triplets and their corresponding weights.
     To allow a three-item analysis with quartets, each quartet possesses a leaf
-    which is considered as the root.
+    which is the root.
 
     Mahbub, M., Wahab, Z., Reaz, R., Rahman, M. S., & Bayzid, M. (2021).
     wQFM: Highly Accurate Genome-scale Species Tree Estimation from Weighted
@@ -438,13 +437,12 @@ def triplet_wqfm_file(triplet_dict, prefix, multiplier=1000000,
         Dictionary of triplets (keys) and weights (values).
     prefix : str, optional
         Prefix of the saving wqfm file.
-    multiplier: int, optional.
-        As the weights must be integers in wqfm, multiplier argument allow to
-        choose the precision of the weights. Each weight is multiplied by
-        the value stated by multiplier befor rounding. The default is 1000000.
     weighting : str, optional
         Weighting scheme to use between FW, FWNL, MW, AW, NW.
         The default is "FW".
+    precision : int, optional
+        Number of decimals to keep when rounding fractional weights.
+        Increase this value for better precision.
 
     Returns
     -------
@@ -461,7 +459,7 @@ def triplet_wqfm_file(triplet_dict, prefix, multiplier=1000000,
                 wqfm_file.write("((" + list(triplet1.out_taxa)[0]
                                 + ",root),(" + list(triplet1.in_taxa)[0] + ","
                                 + list(triplet1.in_taxa)[1] + ")); "
-                                + str(round(float(FW) * int(multiplier)))
+                                + str(round(float(FW),precision))  # precision
                                 + "\n")
 
             # if weights are integers
@@ -473,15 +471,18 @@ def triplet_wqfm_file(triplet_dict, prefix, multiplier=1000000,
 
 
 def triplet_to_file(triplet_dict, character_dict, prefix, analysis="heuristic",
-                    nrep=1000, logfile=True, software="paup",
-                    weighting="FW", multiplier=1000000):
+                    nrep=1000, logfile=True, software="paup", weighting="FW"):
     """
-    Outputs a three-item analysis file readable by TNT (Goloboff et al. 2008)
-    or by PAUP* (Swofford, 2003) from a dictionary of triplets and their
-    corresponding weights.
+    Outputs a three-item analysis file readable by TNT (Goloboff et al. 2008),
+    by PAUP* (Swofford, 2003) or by WQFM (Mahbub et al. 2021) from a
+    dictionary of triplets and their corresponding weights.
 
     Goloboff, P. A., Farris, J. S., & Nixon, K. C. (2008). TNT, a free program
     for phylogenetic analysis. Cladistics, 24(5), 774-786.
+
+    Mahbub, M., Wahab, Z., Reaz, R., Rahman, M. S., & Bayzid, M. (2021).
+    wQFM: Highly Accurate Genome-scale Species Tree Estimation from Weighted
+    Quartets. Bioinformatics.
 
     Swofford, D. L. 2003. PAUP*. Phylogenetic Analysis Using Parsimony
     (*and Other Methods). Version 4. Sinauer Associates, Sunderland,
@@ -511,11 +512,6 @@ def triplet_to_file(triplet_dict, character_dict, prefix, analysis="heuristic",
         The default is "paup".
     weighting : str
         Weighting scheme to use between FW, FWNL, MW, AW, NW.
-    multiplier : int, optional
-        As the weights must be integers in wqfm, multiplier argument allow to
-        choose the precision of the weights. Each weight is multiplied by
-        the value stated by multiplier befor rounding. Only used for wqfm.
-        The default is 1000000.
     Returns
     -------
     None.
@@ -548,9 +544,9 @@ def triplet_to_file(triplet_dict, character_dict, prefix, analysis="heuristic",
 
     # elif software == "tmc":
     #     triplet_tmc_file(triplet_dict, character_dict, prefix, weighting)
-    #
-    # elif software == "wqfm":
-    #     triplet_wqfm_file(triplet_dict, prefix, multiplier, weighting)
+
+    elif software == "wqfm":
+        triplet_wqfm_file(triplet_dict, prefix, weighting)
 
     end = time.time()
     time_cptr = time.strftime('%H:%M:%S', time.gmtime(end - start))
@@ -559,10 +555,10 @@ def triplet_to_file(triplet_dict, character_dict, prefix, analysis="heuristic",
 
 def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
             analysis="heuristic", taxa_replacement=False, nreplicates=1000,
-            logfile=True, software="paup", verbose=True, multiplier=1000000):
+            logfile=True, software="paup", verbose=True):
     """
-    Outputs a three-item analysis file readable by TNT (Goloboff et al. 2008)
-    or by PAUP* (Swofford, 2003) from :
+    Outputs a three-item analysis file readable by TNT (Goloboff et al. 2008),
+    by PAUP* (Swofford, 2003), or by WQFM (Mahbub et al. 2021) from :
 
         * a dictionary of triplets and their corresponding
           weights, e.g., computed from main_tripdec.
@@ -571,6 +567,10 @@ def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
 
     Goloboff, P. A., Farris, J. S., & Nixon, K. C. (2008). TNT, a free program
     for phylogenetic analysis. Cladistics, 24(5), 774-786.
+
+    Mahbub, M., Wahab, Z., Reaz, R., Rahman, M. S., & Bayzid, M. (2021).
+    wQFM: Highly Accurate Genome-scale Species Tree Estimation from Weighted
+    Quartets. Bioinformatics.
 
     Swofford, D. L. 2003. PAUP*. Phylogenetic Analysis Using Parsimony
     (*and Other Methods). Version 4. Sinauer Associates, Sunderland,
@@ -620,7 +620,7 @@ def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
         IF true, Add a line to outputs a log file during the  analysis.
         The default is False.
     software : str, optional
-        Choose the software to use between 'paup' and 'tnt'.
+        Choose the software to use between 'paup', 'tnt', and 'wqfm'.
         The default is "paup".
     verbose : bool, optional
         Verbose mode if True. The default is True.
@@ -650,10 +650,10 @@ def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
                                     weighting, parallel, verbose)
 
     triplet_to_file(triplet_dict, character_dict, prefix, analysis,
-                    nreplicates, logfile, software, weighting, multiplier)
+                    nreplicates, logfile, software, weighting)
 
 
-def agatta_analysis(file_path, software_path, software="tnt",
+def agatta_analysis(file_path, software_path, software="paup",
                     taxa_replacement=False, method="TMS", weighting="FW",
                     parallel="auto", prefix="agatta_out", analysis="bandb",
                     nrep=1000, rosetta=False, chartest=False, ri=False,
@@ -738,7 +738,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
     software_path : TYPE
         Path of the software designated with the "software" argument.
     software : str, optional
-        Choose the software to use between 'paup' and 'tnt'.
+        Choose the software to use between 'paup', 'tnt', and 'wqfm'.
         The default is 'tnt'.
     taxa_replacement : str, optional
         Path of a table file containing two columns. The first column
@@ -926,7 +926,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
                 software,
                 verbose)
 
-        # three-item analysis using PAUP*, TNT, or Agatta
+        # three-item analysis using PAUP*, TNT, WQFM, or Agatta
         if software == "paup":
             prefix_end = prefix_path+".nex"
             search_pipeline(prefix_end,
@@ -938,13 +938,18 @@ def agatta_analysis(file_path, software_path, software="tnt",
                             software_path,
                             "tnt")
 
+        elif software == "wqfm":
+            search_pipeline(prefix+".wqfm",
+                            software_path,
+                            "wqfm", prefix)
+
         # extract trees from output file and delete root
         cladogram_dict = dict()
         i = 1
 
         with warnings.catch_warnings():  # rerooting func poorly tested
             warnings.filterwarnings("ignore", category=UserWarning)
-            if software == "tnt":
+            if software == "tnt" or software == "wqfm":
                     tstreelist = treeswift.read_tree_nexus(prefix + ".tre")
             elif software == "paup":
                 try:
