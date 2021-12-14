@@ -88,6 +88,8 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
                 ("Nexml files", "*.nexml")))
         root.withdraw()
 
+    infile = path.expanduser(infile)
+
     if not path.isfile(infile):
         print("ERROR: The file '" + infile + "' does not exist." +
                        "\nOperation aborted.")
@@ -226,8 +228,23 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
                 if not 'no_exception' in locals():
                     sys.exit(1)
 
-    # check if all characters are informative
+    if verbose:
+        print("{} characters loaded".format(str(len(character_dict))))
+
+    character_dict = infotree_checker(character_dict)
+
+    return character_dict
+
+
+def infotree_checker(character_dict, verbose=True):
+    """
+       Check if all characters are informative and returns a dictionary
+       without non-informative trees
+    """
+
     non_info_chars = []
+    info_character_dict = dict()
+
     for cladogram, a in character_dict.items():
         lroot = len(cladogram.get_leaf_names())
         non_info_chars.append(a)
@@ -235,22 +252,19 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
             for node in cladogram.traverse():
                 if not node.is_leaf() and not node.is_root():
                     lnode = len(node.get_leaf_names())
-                    if lnode > 1 and lnode < lroot:
+                    if lnode > 1 and lnode < lroot:  # if tree is informative
                         non_info_chars.remove(a)
+                        info_character_dict[cladogram] = a
                         break
-    if non_info_chars:
+
+    if non_info_chars and verbose:
         print("ERROR: the following input trees are non-informative:")
         for a in non_info_chars:
             non_info_tree = list(character_dict.keys())[list(
                 character_dict.values()).index(a)].write(format=9)
             print("[{}] {}".format(str(a),non_info_tree))
-        print("Operation aborted.")
-        sys.exit(1)
 
-    if verbose:
-        print("{} characters loaded".format(str(len(character_dict))))
-
-    return character_dict
+    return info_character_dict
 
 
 def taxa_extraction(character_dict):
@@ -413,6 +427,8 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
         MAST = set()    # set of detected MAST
         arearep = set()  # set repeated leaves
 
+        biogeo_tab = path.expanduser(biogeo_tab)
+
         with open(biogeo_tab, "r") as bt_file:
             try:
                 dialect = csv.Sniffer().sniff(bt_file.read())
@@ -523,7 +539,6 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
         print("Operation aborted.")
         sys.exit(1)
 
-
     print("Characters standardised")
 
     return areagram_dict
@@ -600,6 +615,8 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
     error_message = ""
 
     # read matrix
+    infile = path.expanduser(infile)
+
     if not path.isfile(infile):
         print("ERROR: The hierarchical matrix '" + infile
                                 + "' does not exist.\nOperation aborted.")
@@ -734,8 +751,11 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
         print(error_message)
         sys.exit(1)
 
+    character_dict = infotree_checker(character_dict)
+
     # save resulting tree file
-    elif prefix:
+    if prefix:
+        character_dict = infotree_checker(character_dict)
         with open(prefix+".tre", "w") as treefile:
             for char, charnum in character_dict.items():
                 treefile.write(char.write(format=9) + "\n")
@@ -976,6 +996,7 @@ def helper(command):
             The following schemes can be used:
                 - FW: Fractional weighting from Rineau et al. (2021),
                 - FWNL: Fractional weighting from Nelson and Ladiges (1992),
+                - UW: Uniform weighting from Nelson and Ladiges (1992),
                 - MW: Minimal weighting from Wilkinson et al. (2004),
                 - AW: Additive weighting : the weight of a triplet in additive
                   weighting corresponds to the number of trees in which the
@@ -1051,6 +1072,7 @@ def helper(command):
             The following schemes can be used:
                 - FW: Fractional weighting from Rineau et al. (2021),
                 - FWNL: Fractional weighting from Nelson and Ladiges (1992),
+                - UW: Uniform weighting from Nelson and Ladiges (1992),
                 - MW: Minimal weighting from Wilkinson et al. (2004),
                 - AW: Additive weighting : the weight of a triplet in additive
                   weighting corresponds to the number of trees in which the
@@ -1135,6 +1157,7 @@ def helper(command):
             The following schemes can be used:
                 - FW: Fractional weighting from Rineau et al. (2021),
                 - FWNL: Fractional weighting from Nelson and Ladiges (1992),
+                - UW: Uniform weighting from Nelson and Ladiges (1992),
                 - MW: Minimal weighting from Wilkinson et al. (2004),
                 - AW: Additive weighting : the weight of a triplet in additive
                   weighting corresponds to the number of trees in which the
@@ -1224,7 +1247,7 @@ def helper(command):
 
     The convert command is intended to compute a triplet matrix readable by an
     external software (currently PAUP* and TNT are implemented) from a file
-    containing a list of trees or a list of triplets.
+    containing a hierarchical matrix, a list of trees, or a list of triplets.
 
     Usage:
 
@@ -1294,6 +1317,7 @@ def helper(command):
             The following schemes can be used:
                 - FW: Fractional weighting from Rineau et al. (2021),
                 - FWNL: Fractional weighting from Nelson and Ladiges (1992),
+                - UW: Uniform weighting from Nelson and Ladiges (1992),
                 - MW: Minimal weighting from Wilkinson et al. (2004),
                 - AW: Additive weighting : the weight of a triplet in additive
                   weighting corresponds to the number of trees in which the

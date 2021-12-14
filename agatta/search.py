@@ -50,6 +50,8 @@ def search_pipeline(path_infile, software_path=False, software="paup"):
     print("Running analysis on " + software + " software")
     start = time.time()
 
+    software_path = os.path.expanduser(software_path)
+
     if software_path:
         if not os.path.isfile(software_path):
             print("ERROR: '" + software_path

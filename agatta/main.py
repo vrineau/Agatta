@@ -33,7 +33,7 @@ Options:
     --chartest            Compute hierarchical character states test
     --consensus=<type>    Specify type of consensus
     --directory=<dir>     Directory for output chartest files [default: ./]
-    --filetype=<type>     Choose a tree file or a triplet file [default: trees]
+    --filetype=<type>     Choose a tree/triplet/hmatrix file [default: trees]
     --index=<type>        Specify type of index to use [default: ri]
     --log                 Add a string to save an analysis log file
     --repetitions=<type>  Specify how to remove repetitions [default: TMS]

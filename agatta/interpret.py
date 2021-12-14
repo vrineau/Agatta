@@ -365,6 +365,8 @@ def RI(cladogram_dict, character_dict, weighting="FW", prefix=False):
                                        Rineau et al. 2021)
                                  * FWNL (Fractional weighting from
                                        Nelson and Ladiges),
+                                 * UW (Uniform weighting from
+                                       Nelson and Ladiges 1992),
                                  * MW (Minimal Weighting),
                                  * AW (Additive Weighting),
                                  * NW (No Weighting).
@@ -481,6 +483,8 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
                                        Rineau et al. 2021)
                                  * FWNL (Fractional weighting from
                                        Nelson and Ladiges),
+                                 * UW (Uniform weighting from
+                                       Nelson and Ladiges 1992),
                                  * MW (Minimal Weighting),
                                  * AW (Additive Weighting),
                                  * NW (No Weighting).
@@ -593,6 +597,8 @@ def triplet_distance(t1, t2, prefix,
                                        Rineau et al. 2021)
                                  * FWNL (Fractional weighting from
                                        Nelson and Ladiges),
+                                 * UW (Uniform weighting from
+                                       Nelson and Ladiges 1992),
                                  * MW (Minimal Weighting),
                                  * AW (Additive Weighting),
                                  * NW (No Weighting).
@@ -887,10 +893,10 @@ def character_states_test(cladogram_dict, character_dict,
                                            column=0,
                                            position='branch-right')
 
-        except ImportError as error:  # issue with ete3 imports
-            print("""Installing PyQt5 is requested to use this functionality\n
-                  To fix the issue, please read :
-                  https://github.com/etetoolkit/ete/issues/354""" + str(error))
+        except ImportError:  # issue with ete3 imports
+            print("Installing PyQt5 is requested to use this functionality\n"
+                  + "Please install using 'pip install "
+                  + "PyQt5'") # https://github.com/etetoolkit/ete/issues/354
 
     print("Initiating character state test procedure")
 
@@ -1292,6 +1298,9 @@ def chartest(cladopath, charpath, taxarep1=False, taxarep2=False,
     """
 
     print("Loading cladogram")
+
+    cladopath = os.path.expanduser(cladopath)
+    charpath = os.path.expanduser(charpath)
 
     cladogram_dict = character_extraction(cladopath, taxarep1, verbose=False)
 

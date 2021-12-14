@@ -15,6 +15,7 @@
 
 from .ini import character_extraction
 from .ini import taxa_to_numbers
+from .ini import infotree_checker
 from fractions import Fraction
 from itertools import combinations
 from itertools import product
@@ -318,7 +319,9 @@ def del_replications(treerep, method="TMS", verbose=False):
                 node.get_children()[0].delete()
 
         # retain tree only if more than one internal node
-        if len([t for t in infotree.traverse() if not t.is_leaf()]) > 1:
+        cdict = infotree_checker({infotree:1})
+        if cdict.keys():
+            infotree = list(cdict.keys())[0]
             infotree.ladderize()
             treelist.append(infotree)
 
@@ -459,6 +462,8 @@ def triplet_extraction(infile, taxa_replacement_file=False):
     print("Loading triplet set")
 
     triplet_dict = {}
+
+    infile = os.path.expanduser(infile)
 
     if not os.path.isfile(infile):
         print("ERROR: The file '" + infile + "' does not exist." +
@@ -634,6 +639,7 @@ def tripdec(weighting, character):
     a weighting scheme between:
 
         * Fractional weighting from Nelson and Ladiges (1992)
+        * Uniform weighting from Nelson and Ladiges (1992)
         * Minimal weighting from Wilkinson et al. (2004)
         * Additive weighting : the weight of a triplet in additive weighting
         corresponds to the number of trees in which the triplet is present.
@@ -651,6 +657,8 @@ def tripdec(weighting, character):
     weighting : str
         Weighting scheme to use between: * FWNL (Fractional weighting from
                                                Nelson and Ladiges),
+                                         * UW (Uniform weighting from Nelson
+                                               and Ladiges)
                                          * MW (Minimal Weighting),
                                          * AW (Additive Weighting),
                                          * NW (No Weighting).
@@ -721,6 +729,7 @@ def tripdec_allweights(weighting, character):
 
         * Fractional weighting from Rineau et al. (2021)
         * Fractional weighting from Nelson and Ladiges (1992)
+        * Uniform weighting from Nelson and Ladiges (1992)
         * Minimal weighting from Wilkinson et al. (2004)
         * Additive weighting : the weight of a triplet in additive weighting
         corresponds to the number of trees in which the triplet is present.
@@ -744,6 +753,8 @@ def tripdec_allweights(weighting, character):
                                                Rineau et al. 2021)
                                          * FWNL (Fractional weighting from
                                                Nelson and Ladiges),
+                                         * UW (Uniform weighting from
+                                               Nelson and Ladiges (1992)
                                          * MW (Minimal Weighting),
                                          * AW (Additive Weighting),
                                          * NW (No Weighting).
@@ -847,6 +858,8 @@ def standard_tripdec(character_dict, weighting, prefix=False, verbose=True):
                                                Rineau et al. 2021)
                                          * FWNL (Fractional weighting from
                                                Nelson and Ladiges),
+                                         * UW (Uniform weighting from
+                                               Nelson and Ladiges 1992)
                                          * MW (Minimal Weighting),
                                          * AW (Additive Weighting),
                                          * NW (No Weighting).
@@ -940,6 +953,8 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
                                                Rineau et al. 2021)
                                          * FWNL (Fractional weighting from
                                                Nelson and Ladiges),
+                                         * UW (Uniform weighting from
+                                               Nelson and Ladiges 1992),
                                          * MW (Minimal Weighting),
                                          * AW (Additive Weighting),
                                          * NW (No Weighting).
@@ -1060,6 +1075,7 @@ def main_tripdec(input_item, prefix, taxa_replacement, weighting, parallel,
 
         * Fractional weighting from Rineau et al. (2021)
         * Fractional weighting from Nelson and Ladiges (1992)
+        * Uniform weighting from Nelson and Ladiges (1992)
         * Minimal weighting from Wilkinson et al. (2004)
         * Additive weighting : the weight of a triplet in additive weighting
         corresponds to the number of trees in which the triplet is present.
@@ -1097,6 +1113,8 @@ def main_tripdec(input_item, prefix, taxa_replacement, weighting, parallel,
                                                Rineau et al. 2021)
                                          * FWNL (Fractional weighting from
                                                Nelson and Ladiges),
+                                         * UW (Uniform weighting from
+                                               Nelson and Ladiges 1992),
                                          * MW (Minimal Weighting),
                                          * AW (Additive Weighting),
                                          * NW (No Weighting).

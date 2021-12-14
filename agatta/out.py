@@ -757,6 +757,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
 
             * FW: Fractional weighting from Rineau et al. (2021)
             * FWNL: Fractional weighting from Nelson and Ladiges (1992)
+            * UW (Uniform weighting from Nelson and Ladiges 1992)
             * MW: Minimal weighting from Wilkinson et al. (2004)
             * AW: Additive weighting : the weight of a triplet in additive
               weighting corresponds to the number of trees in which the
@@ -833,7 +834,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
         now = datetime.datetime.now()
         log_file.write(now.strftime("%Y-%m-%d %H:%M:%S"))
         log_file.write("\n")
-        log_file.write("Input file path: "+file_path+"\n")
+        log_file.write("Input file path: "+os.path.expanduser(file_path)+"\n")
         log_file.write("Prefix: "+prefix+"\n")
         log_file.write("Taxa replacement file:"+str(taxa_replacement)+"\n")
         log_file.write("Method: "+method+"\n")
@@ -873,7 +874,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
         log_file.write("Verbose: "+str(verbose)+"\n")
 
     # if input is a matrix, use hmatrix to convert in a tree list
-    if "hmatrix" in file_path:
+    if file_path.endswith(".hmatrix"):
 
         f_path = os.path.split(file_path)[0]
 
@@ -951,7 +952,7 @@ def agatta_analysis(file_path, software_path, software="tnt",
                 except RuntimeError:
                     print("ERROR: PAUP* can fail to find a tree in bandb " +
                           "with fractional weights (FW, FWNL, MW).\nConsider" +
-                          "to set the analysis to heuristic using " +
+                          " to set the analysis to heuristic using " +
                           "--analysis=heuristic")
 
             if not isinstance(tstreelist, list):
