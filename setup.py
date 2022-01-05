@@ -33,7 +33,8 @@ setup(
                        "tqdm",
                        "treeswift",
                        "six",
-                       "numpy"],
+                       "numpy",
+                       "PyPDF2"],
 
     include_package_data=True,
 

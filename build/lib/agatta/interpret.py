@@ -22,6 +22,7 @@ from .analysis import rep_detector
 import os
 import sys
 import warnings
+from PyPDF2 import PdfFileMerger
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore",category=SyntaxWarning)
@@ -665,10 +666,9 @@ def character_states_test(cladogram_dict, character_dict,
         The trees must be the initial characters.
     prefix : str
         Prefix of the files to be computed.
-    pdf_files : str or bool, optional
-        This argument can be the path stating the location where to save one
-        pdf file for each character state for visualizing the results of the
-        character state procedure.
+    pdf_files : bool, optional
+        If true, save a pdf file with one page for each character state for
+        visualizing the results of the character state procedure.
         The default is False (no pdf files computed).
 
     Returns
@@ -820,6 +820,8 @@ def character_states_test(cladogram_dict, character_dict,
 
         return synapo_test, synapomorphies_set, results_test_dict, cladogram
 
+    pdfs = []
+
     if rep_detector(cladogram_dict):
         print("ERROR: Repeated leaves have been detected in the " +
                          "cladogram.\nOperation aborted.")
@@ -840,10 +842,6 @@ def character_states_test(cladogram_dict, character_dict,
 
     # activate stylenodes from ete3 if pdf option
     if pdf_files:
-        if not os.path.isdir(pdf_files):
-            print("ERROR: '" + pdf_files
-                           + "' folder does not exist.\nOperation aborted.")
-            sys.exit(1)
         try:
             from ete3 import NodeStyle, TreeStyle, faces, TextFace
 
@@ -896,7 +894,7 @@ def character_states_test(cladogram_dict, character_dict,
         except ImportError:  # issue with ete3 imports
             print("Installing PyQt5 is requested to use this functionality\n"
                   + "Please install using 'pip install "
-                  + "PyQt5'") # https://github.com/etetoolkit/ete/issues/354
+                  + "PyQt5'")  # https://github.com/etetoolkit/ete/issues/354
 
     print("Initiating character state test procedure")
 
@@ -1069,9 +1067,10 @@ def character_states_test(cladogram_dict, character_dict,
                         node_line_pdf, fsize=2), column=0)
 
                     # save pdf
-                    cladogram.render(pdf_files+char_states_names + ".pdf",
+                    cladogram.render(char_states_names + ".pdf",
                                      tree_style=synapomorphy_style)
 
+                    pdfs.append(char_states_names + ".pdf")
 
                 # append text file
                 with open(prefix+".chartest", "a") as results_file:
@@ -1120,6 +1119,19 @@ def character_states_test(cladogram_dict, character_dict,
                     for node_h in syn_dict[node_set]["rejected"]:
                         results_file_tree.write(str(node_h)+", ")
                 results_file_tree.write("\n")
+
+    if pdf_files:  # merge all pdfs
+
+        merger = PdfFileMerger()
+
+        for pdf in pdfs:
+            merger.append(pdf)
+
+        merger.write(prefix + ".pdf")
+        merger.close()
+
+        for pdf in pdfs:
+            os.remove(pdf)
 
     print("Character state test procedure ended successfully")
 

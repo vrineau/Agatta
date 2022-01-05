@@ -39,7 +39,7 @@ Options:
     --repetitions=<type>  Specify how to remove repetitions [default: TMS]
     --replicates=<int>    Number of replicates for an analysis [default: 1000]
     --parallel=<type>     Number of parallel cores to use [default: auto]
-    --pdf=<path>          Specifies a path were to save pdf files for chartest
+    --pdf                 Save a pdf file for chartest results
     --prefix=<name>       Prefix of the output file [default: agatta_out]
     --ri                  Calculate Retention Index (Kitching et al. 1998)
     --rosetta=<path>      Path of the file for taxa conversion
@@ -106,7 +106,7 @@ def main():
                             arguments["--chartest"],
                             arguments["--ri"],
                             arguments.get("--consensus", False),
-                            arguments.get("--pdf", False),
+                            arguments["--pdf"],
                             arguments.get("-v", False))
 
         # triplet decomposition
@@ -169,7 +169,7 @@ def main():
                      taxarep1=arguments.get("--taxarep1", False),
                      taxarep2=arguments.get("--taxarep2", False),
                      prefix=arguments["--prefix"],
-                     pdf_files=arguments.get("--pdf", False))
+                     pdf_files=arguments["--pdf"])
 
         # convert
         elif arguments["convert"]:

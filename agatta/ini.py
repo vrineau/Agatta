@@ -98,7 +98,10 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
     fileName, fileExtension = path.splitext(infile)
     a = 1
 
+    lisbethchecker = True
+
     if fileExtension == ".3ia":
+        brokennewick = ""
         with open(infile, "r") as file_tree :
             line_nb = 0
             for line in file_tree:
@@ -110,9 +113,9 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
                             character_dict[Tree(character_newick + ';')] = a
                             a += 1
                         except NewickError:
-                            print("ERROR: " +
-                                "Line {}: Broken newick structure.".format(
-                                str(line_nb)))
+                            brokennewick += ("ERROR: " +
+                                "Line " + str(line_nb) +
+                                ": Broken newick structure")
                         else:
                             no_exception = True
                         if not 'no_exception' in locals():
@@ -121,6 +124,13 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
                 if search(r"\s=\s", line):
                     taxa_dict[line.split(" = ")[0].split()[0]] = line.split(
                         " = ")[1].strip()
+                    lisbethchecker = False
+
+        if lisbethchecker:  # if not 3ia file
+            print("WARNING: the file doesn't seems to be a .3ia file." +
+                  " Please check the file extension.")
+
+        print(brokennewick)
 
     else:
         try:
@@ -220,9 +230,10 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
                 try:
                     leaf.name = taxa_dict[leaf.name]
                 except KeyError:
-                    print("ERROR: The name '" + str(leaf.name)
-                                   + "' cannot be replaced."
-                                   + "\nOperation aborted.")
+                    if not lisbethchecker:
+                        print("ERROR: The name '" + str(leaf.name)
+                                       + "' cannot be replaced."
+                                       + "\nOperation aborted.")
                 else:
                     no_exception = True
                 if not 'no_exception' in locals():
@@ -788,7 +799,7 @@ def checkargs(arguments):
     """
     if arguments["analysis"]:
 
-        if arguments.get("--pdf", False) and not arguments["--chartest"]:
+        if arguments["--pdf"] and not arguments["--chartest"]:
             sys.exit(print("ERROR: --pdf flag cannot be used without " +
                            "--chartest"))
 
@@ -897,7 +908,7 @@ def helper(command):
 
         agatta analysis <file> [-s -v --analysis=<type> --chartest
                                       --consensus=<type> --parallel=<int>
-                                      --pdf=<path> --prefix=<file>
+                                      --pdf --prefix=<file>
                                       --repetitions=<type> --replicates=<int>
                                       --ri --rosetta=<file> --softpath=<path>
                                       --software=<type> --taxarep1=<path>
@@ -948,11 +959,9 @@ def helper(command):
             cpu. This option can be used in the case of very large character
             tree that can saturate the RAM if too many parallel processing are
             active.
-            --pdf=<path>  Compute pdf files to visualise character states on
-            the cladogram if --chartest is used. One pdf for each state is
-            writen named prefix.character_name.character_state_number.pdf.
-            The flag's argument is the path where the user wants to save the
-            pdfs.
+            --pdf  Compute a pdf file to visualise character states on
+            the cladogram if --chartest is used. One page for each state is
+            writen. The file is named prefix.pdf.
             --prefix=<file>  Prefix of all saving files. The complete path can
             be used. By default, the prefix is 'agatta_out' and all files are
             saved in the directory of the first <file>.
@@ -1204,8 +1213,8 @@ def helper(command):
 
     Usage:
 
-        agatta chartest <file> <file> [-s -v --pdf=<path> --prefix=<file>
-                                       --taxarep1=<path> --taxarep2=<path>]
+        agatta chartest <file> <file> [-s -v --prefix=<file> --taxarep1=<path>
+                                             --taxarep2=<path>]
 
         Mandatory parameters:
 
@@ -1226,11 +1235,9 @@ def helper(command):
 
             -s  Silent mode.
             -v  Verbose mode.
-            --pdf=<path>  Compute pdf files to visualise character states on
-            the cladogram if --chartest is used. One pdf for each state is
-            writen named prefix.character_name.character_state_number.pdf.
-            The flag's argument is the path where the user wants to save the
-            pdfs.
+            --pdf  Compute a pdf file to visualise character states on
+            the cladogram if --chartest is used. One page for each state is
+            writen. The file is named prefix.pdf.
             --prefix=<file>  Prefix of all saving files. The complete path can
             be used. By default, the prefix is 'agatta_out' and all files are
             saved in the directory of the first <file>.
@@ -1246,8 +1253,8 @@ def helper(command):
         of the states on the cladogram and if the test is passed or not,
         sorted by state, and prefix.chartest_node gives the same
         information sorted by node. For better visualisation, the flag --pdf
-        allow to generate one pdf file for each character state with the
-        resulting location and results.
+        allow to generate a pdf file with a page for each character state with
+        the resulting location and results.
               """)
 
     elif command == "convert":

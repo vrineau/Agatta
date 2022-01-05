@@ -949,9 +949,9 @@ def agatta_analysis(file_path, software_path, software="paup",
 
         with warnings.catch_warnings():  # rerooting func poorly tested
             warnings.filterwarnings("ignore", category=UserWarning)
-            if software == "tnt" or software == "wqfm":
+            if software == "tnt":
                     tstreelist = treeswift.read_tree_nexus(prefix + ".tre")
-            elif software == "paup":
+            elif software == "paup" or software == "wqfm":
                 try:
                     tstreelist = treeswift.read_tree_newick(prefix + ".tre")
                 except RuntimeError:
