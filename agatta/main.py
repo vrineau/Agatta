@@ -28,7 +28,7 @@ Options:
     -h --help             Show general help information
     -s                    Silent mode
     -v                    Verbose mode
-    --analysis=<type>     Type of searching method [default: auto]
+    --analysis=<type>     Type of searching method [default: heuristic]
     --chardec             Decompose trees into components
     --chartest            Compute hierarchical character states test
     --consensus=<type>    Specify type of consensus
