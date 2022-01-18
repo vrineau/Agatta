@@ -487,13 +487,15 @@ def triplet_extraction(infile, taxa_replacement_file=False):
                 sys.exit(1)
 
         # build taxanames to id converter
-        with open(taxa_replacement_file, "r") as taxa_table2:
-            for line in taxa_table2:
-                line = line.strip()
-                idtax = line.split(dialect.delimiter)[0]
-                nametax = line.split(dialect.delimiter)[-1]
-                if line.strip() and idtax and nametax:
-                    taxa_dict[int(idtax)] = nametax
+        with open(taxa_replacement_file, "r") as taxa_table1:
+            data = csv.reader(taxa_table1, delimiter=dialect.delimiter)
+            taxa_table2 = list(data)
+
+            for rowlist in taxa_table2:  # remove trailing spaces
+                rowlist = [e.strip() for e in rowlist]
+
+            for idtax, nametax in taxa_table2:
+                taxa_dict[int(idtax)] = nametax
 
     # read triplet file and build triplet dictionary
     with open(infile, "r") as file_tree:

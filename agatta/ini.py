@@ -215,6 +215,10 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
         with open(taxa_replacement, "r") as taxa_table:
             tab_test = list(csv.reader(taxa_table,
                                        delimiter=dialect.delimiter))
+
+            for rowlist in tab_test:  # remove trailing spaces
+                rowlist = [e.strip() for e in rowlist]
+
             if not len({len(l) for l in tab_test}) == 1:
                  print("ERROR: The table file '"
                                    + taxa_replacement + "' is broken."
@@ -456,6 +460,10 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
 
             tab_test = csv.reader(bt_file, delimiter=dialect.delimiter)
             table = list(tab_test)
+
+            for rowlist in table:  # remove trailing spaces
+                rowlist = [e.strip() for e in rowlist]
+
             if not len({len(l) for l in table}) == 1:
                  print("ERROR: The table file '" + biogeo_tab +
                                   "' is broken.\nOperation aborted.")
@@ -666,6 +674,10 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
 
         data = csv.reader(f, delimiter=dialect.delimiter)
         hmatrix = list(data)
+
+        for rowlist in hmatrix:  # remove trailing spaces
+            rowlist = [e.strip() for e in rowlist]
+
         if not len({len(l) for l in hmatrix}) == 1:
              print("ERROR: the hierarchical matrix '" +
                             infile + "' is broken.\nOperation aborted.")

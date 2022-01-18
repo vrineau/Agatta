@@ -522,18 +522,6 @@ def triplet_to_file(triplet_dict, character_dict, prefix, analysis="heuristic",
 
     start = time.time()
 
-    if analysis == "auto":
-        if character_dict:
-            if len(taxa_extraction(character_dict)) > 15:
-                analysis = "heuristic"
-                print("Analysis automatically set to heuristic")
-            else:
-                analysis = "bandb"
-                print("Analysis automatically set to branch and bound")
-        else:
-            analysis = "bandb"
-            print("Analysis automatically set to branch and bound")
-
     if software == "paup":
         triplet_nexus_file(triplet_dict, character_dict, weighting, analysis,
                            prefix, nrep, logfile)
@@ -655,7 +643,7 @@ def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
 
 def agatta_analysis(file_path, software_path, software="paup",
                     taxa_replacement=False, method="TMS", weighting="FW",
-                    parallel="auto", prefix="agatta_out", analysis="bandb",
+                    parallel="auto", prefix="agatta_out", analysis="heuristic",
                     nrep=1000, rosetta=False, chartest=False, ri=False,
                     consensus=False, pdf_file=False, verbose=True):
     """
