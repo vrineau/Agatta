@@ -16,7 +16,7 @@ Usage:
     agatta fp               <file>        [options]
     agatta consensus        <file>        [options]
     agatta describetree     <file>        [options]
-    agatta hmatrix          <file>        [options]
+    agatta hmatrix          <file>...     [options]
     agatta support          <file> <file> [options]
     agatta chartest         <file> <file> [options]
     agatta standardisation  <file> <file> [options]
@@ -228,7 +228,7 @@ def main():
 
         # transform hierarchical matrix into a tree list
         elif arguments["hmatrix"]:
-            hmatrix(arguments["<file>"][0],
+            hmatrix(arguments["<file>"],  # list of paths
                     arguments["--prefix"],
                     arguments["--chardec"],
                     arguments["-v"])

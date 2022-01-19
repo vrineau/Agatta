@@ -563,11 +563,11 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
     return areagram_dict
 
 
-def hmatrix(infile, prefix=False, chardec=False, verbose=False):
+def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
     """
     Function that build ete3 trees from a file containing a hierarchical
-    matrix. The matrix must be a table text (e.g., a csv file) with semicolons
-    as separators.
+    matrix (or several matrices). The matrix must be a table text
+    (e.g., a csv file). The separator cannot be a comma.
 
     Format of the matrix:
 
@@ -611,8 +611,8 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
 
     Parameters
     ----------
-    infile : str
-        Path of the file containing the hierarchical matrix.
+    infilelist : list
+        List of paths of files containing hierarchical matrices.
     prefix : str, optional
         Prefix of the file to save. If prefix is set to false, no file is
         saved. The default is False.
@@ -627,64 +627,89 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
 
     """
 
+    def extracthmatrix(infile):
+        """
+        Extracts a hierarchical matrix from a csv file
+        """
+
+        if not path.isfile(infile):
+            print("ERROR: The hierarchical matrix '" + infile
+                                    + "' does not exist.\nOperation aborted.")
+            sys.exit(1)
+
+        with open(infile, 'rt') as f:
+            try:
+                dialect = csv.Sniffer().sniff(f.read())
+            except:
+                print("ERROR: The table file '" + infile +
+                      "' is probably broken. Could not determine" +
+                      "separator.\nOperation aborted.")
+            else:
+                no_exception = True
+            if not 'no_exception' in locals():
+                sys.exit(1)
+
+        with open(infile, 'rt') as f:
+            if dialect.delimiter == ",":
+                print("ERROR: ',' can't be a delimiter in the " +
+                               "hierarchical matrix format(usage restricted " +
+                               "for polymorphic instances)." +
+                               "\nOperation aborted.")
+                sys.exit(1)
+
+            if dialect.delimiter not in [",",";","\t"," ","|"]:
+                print("""ERROR: Error in the hierarchical matrix format.
+                                   The separator must be one of these:
+
+                                      - semicolon ';'
+                                      - tabulation '   '
+                                      - space ' '
+                                      - pipe '|'
+
+                                    Operation aborted.""")
+                sys.exit(1)
+
+            data = csv.reader(f, delimiter=dialect.delimiter)
+            hmatrix = list(data)
+
+            for rowlist in hmatrix:  # remove trailing spaces
+                rowlist = [e.strip() for e in rowlist]
+
+            if not len({len(l) for l in hmatrix}) == 1:
+                 print("ERROR: the hierarchical matrix '" +
+                                infile + "' is broken.\nOperation aborted.")
+                 sys.exit(1)
+
+        return hmatrix
+
+
     print("Loading hierarchical matrix")
 
     character_dict = dict()  # trees without polytomies
     temp_character_dict = dict()  # trees with polytomies (raw data)
     error_message = ""
 
-    # read matrix
-    infile = path.expanduser(infile)
+    # read first matrix
+    infilelist = [path.expanduser(l) for l in infilelist]
+    infile = infilelist[0]
+    hmatrix = extracthmatrix(infile)
 
-    if not path.isfile(infile):
-        print("ERROR: The hierarchical matrix '" + infile
-                                + "' does not exist.\nOperation aborted.")
-        sys.exit(1)
+    infilelist.remove(infile)
 
-    with open(infile, 'rt') as f:
-        try:
-            dialect = csv.Sniffer().sniff(f.read())
-        except:
-            print("ERROR: The table file '" + infile +
-                                  "' is probably broken. Could not determine" +
-                                  "separator.\nOperation aborted.")
-        else:
-            no_exception = True
-        if not 'no_exception' in locals():
-            sys.exit(1)
+    # if several matrices
+    if infilelist:
+        for infilesub in infilelist:
+            hmatrixsub = [l[1:] for l in extracthmatrix(infile)]
 
-    with open(infile, 'rt') as f:
-        if dialect.delimiter == ",":
-            print("ERROR: ',' can't be a delimiter in the " +
-                           "hierarchical matrix format(usage restricted for " +
-                           "polymorphic instances).\nOperation aborted.""")
-            sys.exit(1)
+            for i in range(len(hmatrix)):
+                hmatrix[i] += hmatrixsub[i]
 
-        if dialect.delimiter not in [",",";","\t"," ","|"]:
-            print("""ERROR: Error in the hierarchical matrix format.
-                               The separator must be one of these:
-
-                                  - semicolon ';'
-                                  - tabulation '   '
-                                  - space ' '
-                                  - pipe '|'
-
-                                Operation aborted.""")
-            sys.exit(1)
-
-        data = csv.reader(f, delimiter=dialect.delimiter)
-        hmatrix = list(data)
-
-        for rowlist in hmatrix:  # remove trailing spaces
-            rowlist = [e.strip() for e in rowlist]
-
-        if not len({len(l) for l in hmatrix}) == 1:
-             print("ERROR: the hierarchical matrix '" +
-                            infile + "' is broken.\nOperation aborted.")
-             sys.exit(1)
-
-    print("Hierarchical matrix loaded")
-    print("Treefication of the hierarchical matrix")
+    if infilelist:
+        print(str(len(infilelist) + 1) + "Hierarchical matrices loaded")
+        print("Treefication of the hierarchical matrices")
+    else:
+        print("Hierarchical matrix loaded")
+        print("Treefication of the hierarchical matrix")
 
     # construction of character trees backbone
     i = 1
