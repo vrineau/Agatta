@@ -18,19 +18,17 @@ Agatta works on Windows, Unix/Linux and macOS.
 
 This package requires Python version 3.7 or higher.
 
-To install Agatta, type the following command in the shell:
-```
-pip install agatta
-```
-The package implements a pipeline for efficient heuristic searches that requires the installation of a PAUP* command-line binary ([phylosolutions.com/paup-test/](phylosolutions.com/paup-test/)) or TNT ([http://www.lillo.org.ar/phylogeny/tnt/](http://www.lillo.org.ar/phylogeny/tnt/)).
+To install Agatta, you need to use the wheel file in the `dist` folder. Detailed explanations are available in the [tutorial](https://github.com/vrineau/Agatta/wiki/Tutorial).
+
+The package implements a pipeline for efficient heuristic searches that requires the installation of a PAUP* command-line binary ([phylosolutions.com/paup-test/](phylosolutions.com/paup-test/)) or TNT (http://www.lillo.org.ar/phylogeny/tnt/).
 
 ## Documentation and Support
 
-Documentation is available in the **URL WIKI PAGE**.
+A complete toturial is available in the [GitHub Wiki](https://github.com/vrineau/Agatta/wiki/Tutorial).
 
 An help for all commands is available directly using `agatta help`.
 
-If you have questions, feel free to pull requests on **GitHub Issues**.
+If you have questions, feel free to pull requests on [GitHub Issues](https://github.com/vrineau/Agatta/issues).
 
 ## Usage examples
 
@@ -44,7 +42,7 @@ The `--softpath` and `--software=paup` flags are required.
 
 ### Cladistic biogeography analysis
 
-To run a three-area analysis on a collection of rooted phylogenies stored in newick format in trees.txt with default parameters (PAUP* heuristic search, 1000 replicates, triplets weighted according to Rineau et al. (2021), Multiple-Area Single Taxa automatically removed, repetitions managed using Triplet Maximisation Subtrees algorithm; **ref**):
+To run a three-area analysis on a collection of rooted phylogenies stored in newick format in trees.txt with default parameters (PAUP* heuristic search, 1000 replicates, triplets weighted according to Rineau et al. (2021), Multiple-Area Single Taxa automatically removed, repetitions managed using Triplet Maximisation Subtrees algorithm):
 ```
 agatta analysis <file> --software=paup --softpath=/path/to/paup-executable  --rosetta=<mapfile>
 ```
@@ -55,7 +53,9 @@ The code is currently licensed under the GNU General Public License version 3.
 
 ## Citation
 
-When using Agatta, please cite **PREPRINT URL**
+When using Agatta, please cite us (temporarily) as
+
+> Rineau, V., Zaharias, P. (2022) Agatta (Version 0.7.10) [Software]. Github. https://github.com/vrineau/Agatta.
 
 ## References
 
