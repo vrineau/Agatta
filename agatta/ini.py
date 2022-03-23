@@ -1226,11 +1226,12 @@ def helper(command):
             - For ri, a global retention index stating the overall information
             content of all character trees retained in the cladogram is writen,
             plus a ri for each character.
-            - For itri, three values are computed, power (amount of triplets
-            shared between the trees / triplets of the reference tree),
-            artefact (amount of triplets from the reconstructed tree that
+            - For itri, two values are computed, Triplet true positives
+            (amount of triplets shared between the trees / triplets
+             of the reference tree), and Triplet false negatives
+            (amount of triplets from the reconstructed tree that
             are not present in the reference tree / triplets of the
-            reconstructed tree), and efficiency (power - artefact).
+            reconstructed tree).
             - For itrisym_sum and itrisym_product, the file contains the
             triplet distance between the two trees.
         All values are displayed as percentages excepted itrisym_product.

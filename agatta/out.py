@@ -32,6 +32,7 @@ from .search import search_pipeline
 from tkinter import Tk
 from tkinter import filedialog
 import os
+import sys
 import time
 import datetime
 import warnings
@@ -947,6 +948,10 @@ def agatta_analysis(file_path, software_path, software="paup",
                           "with fractional weights (FW, FWNL, MW).\nConsider" +
                           " to set the analysis to heuristic using " +
                           "--analysis=heuristic")
+                else:
+                    no_exception = True
+                if not 'no_exception' in locals():
+                    sys.exit(1)
 
             if not isinstance(tstreelist, list):
                 tstreelist = [tstreelist]

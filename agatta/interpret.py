@@ -493,15 +493,14 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
     Returns
     -------
     float
-        Resolving power in percentage. Amount of information present in the
-        compared tree present in the reference tree divided by the total
-        information of the reference tree (Grand et al. 2014).
+        Triplet true positives (percentage). Amount of information (triplets)
+        present in the compared tree present in the reference tree divided by
+        the total information of the reference tree (Grand et al. 2014).
     float
-        Artefactual resolution in percentage. Amount of information present in
-        the compared tree not present in the reference tree divided by the
-        total information of the tree to be compared (Grand et al. 2014).
-    float
-        Efficiency. Resolving power - artefactual resolution in percentage.
+        Triplet true negatives (in percentage). Amount of information
+        (triplets) present in the compared tree not present in the reference
+        tree divided by the total information of the tree to be compared
+        (artefacts in Grand et al. 2014).
 
     """
 
@@ -543,22 +542,24 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
     except ZeroDivisionError:
         ITRI_arte  = 0
 
-    ITRI_efficiency = (ITRI_power - ITRI_arte + 100 ) / 2
+    #ITRI_efficiency = (ITRI_power - ITRI_arte + 100 ) / 2
 
     if prefix:
         with open(prefix+".itri", "w") as itrifile:
-            itrifile.write("power : " + str(round(ITRI_power, 3))
+            itrifile.write("Triplet true positives : "
+                           + str(round(ITRI_power, 3))
                            + "\n")
-            itrifile.write("artefact : " + str(round(ITRI_arte, 3))
+            itrifile.write("Triplet true negatives : "
+                           + str(round(ITRI_arte, 3))
                            + "\n")
-            itrifile.write("efficiency : " + str(round(ITRI_efficiency, 3)))
+            #itrifile.write("efficiency : " + str(round(ITRI_efficiency, 3)))
 
     if not silent:
-        print("power : " + str(round(ITRI_power, 3)))
-        print("artefact : " + str(round(ITRI_arte, 3)))
-        print("efficiency : " + str(round(ITRI_efficiency, 3)))
+        print("Triplet true positives : " + str(round(ITRI_power, 3)))
+        print("Triplet false negatives : " + str(round(ITRI_arte, 3)))
+        #print("efficiency : " + str(round(ITRI_efficiency, 3)))
 
-    return ITRI_power, ITRI_arte, ITRI_efficiency
+    return ITRI_power, ITRI_arte #, ITRI_efficiency
 
 
 def triplet_distance(t1, t2, prefix,

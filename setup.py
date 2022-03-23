@@ -38,7 +38,7 @@ setup(
 
     include_package_data=True,
 
-    url='https://github.com/vrineau/agatta',
+    url='https://github.com/vrineau/Agatta',
 
     entry_points = {
         'console_scripts': [

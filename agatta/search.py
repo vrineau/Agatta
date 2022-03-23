@@ -59,17 +59,22 @@ def search_pipeline(path_infile, software_path=False, software="paup",
                            + "' folder does not exist.\nOperation aborted.")
             sys.exit(1)
 
+    if " " in path_infile:
+        print("ERROR: TNT software doesn't allow paths with spaces.\n" +
+              "The path \"" + path_infile + "\" contains spaces")
+        sys.exit(1)
+
     ostype = platform.system()  # os detection
 
     if ostype == "Windows":
         if software == "paup":
-            os.system("paup -n "+path_infile)
+            os.system("paup -n \""+path_infile+"\"")
 
         elif software == "tnt":
             os.system(software_path+" proc "+path_infile)
     else:
         if software == "paup":
-            os.system(software_path+" -n "+path_infile+" > /dev/null")
+            os.system(software_path+" -n \""+path_infile+"\" > /dev/null")
 
         elif software == "tnt":
             os.system(software_path+" proc "+path_infile)
