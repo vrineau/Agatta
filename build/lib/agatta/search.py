@@ -59,6 +59,16 @@ def search_pipeline(path_infile, software_path=False, software="paup",
                            + "' folder does not exist.\nOperation aborted.")
             sys.exit(1)
 
+    ostype = platform.system()  # os detection
+
+    if ostype == "Windows":
+        beginline = "paup"
+        endline = ">NUL"
+    else:
+        beginline = software_path
+        endline = "> /dev/null"
+
+
     if software == "tnt":
         print("WARNING: 3ia analysis using TNT is still under development.")
         if " " in path_infile:
@@ -66,23 +76,15 @@ def search_pipeline(path_infile, software_path=False, software="paup",
                   "The path \"" + path_infile + "\" contains spaces.")
             sys.exit(1)
 
+        os.system(software_path + " proc "+path_infile + endline)
 
     if software == "wqfm":
-        os.system(("java -jar \"" + software_path + "\" -i \"" +
-                  path_infile + "\" -o \"" + prefix + ".tre\""))
-
-    elif software == "tnt":
-        os.system(software_path + " proc "+path_infile)
+        os.system("java -jar \"" + software_path + "\" -i \"" +
+                  path_infile + "\" -o \"" + prefix + ".tre\"" + endline)
 
     elif software == "paup":
-        ostype = platform.system()  # os detection
-        if ostype == "Windows":
-            begincmdline = "paup"
-        else:
-            begincmdline = software_path
 
-        os.system(begincmdline + " -n \"" + path_infile + "\" > /dev/null")
-        print(begincmdline + " -n \"" + path_infile + "\" > /dev/null")
+        os.system(beginline + " -n \"" + path_infile + "\"" + endline)
 
     print("Three-item analysis done")
 
