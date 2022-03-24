@@ -29,14 +29,14 @@ with warnings.catch_warnings():
 def search_pipeline(path_infile, software_path=False, software="paup",
                     prefix=False):
     """
-    Function to run automatically a nexus file or a tnt file on PAUP, TNT, or
-    WQFM respectivelly. The software to be used must be installed and
-    accessible.
+    Function to run automatically a nexus file, a tnt file, or a text file on
+    PAUP, TNT, or WQFM respectivelly. The software to be used must be installed
+    and accessible.
 
     Parameters
     ----------
     path_infile : string
-        path of the nexus or tnt file.
+        path of the input file.
     software_path : string
         path of the software chosen, paup, tnt, wqfm. Not necessari if paup is
         installed in a windows os.
@@ -66,21 +66,23 @@ def search_pipeline(path_infile, software_path=False, software="paup",
                   "The path \"" + path_infile + "\" contains spaces.")
             sys.exit(1)
 
-    ostype = platform.system()  # os detection
 
     if software == "wqfm":
         os.system(("java -jar \"" + software_path + "\" -i \"" +
                   path_infile + "\" -o \"" + prefix + ".tre\""))
 
     elif software == "tnt":
-        os.system(software_path+" proc "+path_infile)
+        os.system(software_path + " proc "+path_infile)
 
     elif software == "paup":
+        ostype = platform.system()  # os detection
         if ostype == "Windows":
             begincmdline = "paup"
         else:
             begincmdline = software_path
-        os.system(begincmdline + " -n \""+path_infile+"\" > /dev/null")
+
+        os.system(begincmdline + " -n \"" + path_infile + "\" > /dev/null")
+        print(begincmdline + " -n \"" + path_infile + "\" > /dev/null")
 
     print("Three-item analysis done")
 
