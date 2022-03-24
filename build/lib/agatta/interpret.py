@@ -459,8 +459,8 @@ def RI(cladogram_dict, character_dict, weighting="FW", prefix=False):
 
 def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
     """
-    Compute the inter-tree retention index (ITRI; Grand et al. 2014,
-    which is an asymmetric distance between two trees, one
+    Compute the inter-tree retention index (ITRI; modified from
+    Grand et al. 2014, which is an asymmetric distance between two trees, one
     reference tree and one tree to be compared to the reference tree.
 
     Grand, A., Zaragüeta-Bagils, R., Velez, L. M., & Ung, V. (2014).
@@ -493,14 +493,13 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
     Returns
     -------
     float
-        Triplet true positives (percentage). Amount of information (triplets)
-        present in the compared tree present in the reference tree divided by
-        the total information of the reference tree (Grand et al. 2014).
+        Precision. Proportion of triplets from the reconstructed tree that are
+        true (equivalent to power in Grand et al. 2014).
     float
-        Triplet true negatives (in percentage). Amount of information
-        (triplets) present in the compared tree not present in the reference
-        tree divided by the total information of the tree to be compared
-        (artefacts in Grand et al. 2014).
+        Recall. Proportion of triplets from the true tree that have been
+        retrieved (inverse of artefact in Grand et al. 2014).
+    float
+        ITRI. F-score: harmonic mean of precision and recall.
 
     """
 
@@ -519,8 +518,8 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
                                       prefix=False,
                                       verbose=False)
 
-    RI_reconstructed_tree = Fraction(0, 1) #total reconstruted tree
-    RI_true_tree = Fraction(0, 1) #total true tree
+    RI_reconstructed_tree = Fraction(0, 1)  # total reconstruted tree
+    RI_true_tree = Fraction(0, 1)  # total true tree
     RI_intersect_reconstructed_tree = Fraction(0, 1)
     RI_intersect_true_tree = Fraction(0, 1)
 
@@ -534,39 +533,57 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
             RI_intersect_true_tree += FW
         RI_true_tree += FW
 
-    ITRI_power = float(Fraction(RI_intersect_true_tree, RI_true_tree)) * 100
+    Recall = float(Fraction(RI_intersect_true_tree, RI_true_tree))  # power
 
     try:
-        ITRI_arte = 100 - (float(Fraction(RI_intersect_reconstructed_tree,
-                                 RI_reconstructed_tree)) * 100)
+        Precision = float(Fraction(RI_intersect_reconstructed_tree,
+                               RI_reconstructed_tree))  # 1/artefact
     except ZeroDivisionError:
-        ITRI_arte  = 0
+        Precision  = 0
 
-    #ITRI_efficiency = (ITRI_power - ITRI_arte + 100 ) / 2
+    Fscore = (2 * Precision * Recall) / (Precision + Recall)  # ITRI
 
     if prefix:
         with open(prefix+".itri", "w") as itrifile:
-            itrifile.write("Triplet true positives : "
-                           + str(round(ITRI_power, 3))
+            itrifile.write("Triplet true positives (true tree) : " + str(round(
+                RI_intersect_true_tree, 3)) + "\n")
+            itrifile.write("Triplet true positives (reconstructed tree) : "
+                           + str(round(RI_intersect_reconstructed_tree, 3))
                            + "\n")
-            itrifile.write("Triplet true negatives : "
-                           + str(round(ITRI_arte, 3))
-                           + "\n")
-            #itrifile.write("efficiency : " + str(round(ITRI_efficiency, 3)))
+            itrifile.write("Triplet false positives : " + str(round(
+                Precision, 3)) + "\n")
+            itrifile.write("Triplets from reconstructed tree : " + str(round(
+                RI_reconstructed_tree, 3)) + "\n")
+            itrifile.write("Triplets from true tree : " + str(round(
+                RI_true_tree, 3)) + "\n")
+            itrifile.write("Precision : " + str(round(Precision, 3)) + "\n")
+            itrifile.write("Recall : " + str(round(Recall, 3)) + "\n")
+            itrifile.write("F-score : " + str(round(Fscore, 3)) + "\n")
 
     if not silent:
-        print("Triplet true positives : " + str(round(ITRI_power, 3)))
-        print("Triplet false negatives : " + str(round(ITRI_arte, 3)))
-        #print("efficiency : " + str(round(ITRI_efficiency, 3)))
+        print("Triplet true positives (true tree) : " + str(round(
+            RI_intersect_true_tree, 3)))
+        print("Triplet true positives (reconstructed tree) : " + str(round(
+            RI_intersect_reconstructed_tree, 3)))
+        print("Triplet false positives : " + str(round(
+            Precision, 3)))
+        print("Triplets from reconstructed tree : " + str(round(
+            RI_reconstructed_tree, 3)))
+        print("Triplets from true tree : " + str(round(
+            RI_true_tree, 3)))
+        print("Precision : " + str(round(Precision, 3)))
+        print("Recall : " + str(round(Recall, 3)))
+        print("F-score : " + str(round(Fscore, 3)))
 
-    return ITRI_power, ITRI_arte #, ITRI_efficiency
+    return Precision, Recall, Fscore  # Fscore is the ITRI
 
 
 def triplet_distance(t1, t2, prefix,
                      method="itrisym_sum", weighting="FW"):
     """
     Compute a weighted triplet distance between two trees. The triplet distance
-    is the number of triplet differing between two trees (weights can be used).
+    is the mean of the ITRI between the two trees (because the two trees can be
+    designed as the 'true tree'; weights can be used).
     The order between the two trees t1 and t2 is not important.
 
     Parameters
@@ -581,7 +598,7 @@ def triplet_distance(t1, t2, prefix,
         Prefix of the text file to be saved containing the resulting triplet
         distance. The complete path can be used. The default is False
         (no file saved).
-    method : TYPE, optional
+    method : str, optional
         Two methods are available to compute the triplet distance:
 
             * 'itrisym_sum': (ITRI t1->t2 + ITRI t2->t1) / 2
@@ -617,18 +634,18 @@ def triplet_distance(t1, t2, prefix,
                          "Operation aborted.")
         sys.exit(1)
 
-    power12, arte12, efficiency12 = ITRI(t1, t2, prefix=False,
+    Precision12, Recall12, Fscore12 = ITRI(t1, t2, prefix=False,
                                          weighting=weighting,
                                          silent=True)
-    power21, arte21, efficiency21 = ITRI(t2, t1, prefix=False,
+    Precision21, Recall21, Fscore21 = ITRI(t2, t1, prefix=False,
                                          weighting=weighting,
                                          silent=True)
 
     if method == "itrisym_sum":  # classic mean
-        ITRIsym = (efficiency12 + efficiency21) / 2
+        ITRIsym = 1 - ((Fscore12 + Fscore21) / 2)
 
     elif method == "itrisym_product":  # Grand et al. 2014 proposal
-        ITRIsym = efficiency12 * efficiency21
+        ITRIsym = (1 - Fscore12) * (1 - Fscore21)
 
     if prefix:
         with open(prefix+".dist", "w") as itrifile:

@@ -59,28 +59,28 @@ def search_pipeline(path_infile, software_path=False, software="paup",
                            + "' folder does not exist.\nOperation aborted.")
             sys.exit(1)
 
-    if " " in path_infile:
-        print("ERROR: TNT software doesn't allow paths with spaces.\n" +
-              "The path \"" + path_infile + "\" contains spaces")
-        sys.exit(1)
+    if software == "tnt":
+        print("WARNING: 3ia analysis using TNT is still under development.")
+        if " " in path_infile:
+            print("ERROR: TNT software doesn't allow paths with spaces.\n" +
+                  "The path \"" + path_infile + "\" contains spaces.")
+            sys.exit(1)
 
     ostype = platform.system()  # os detection
 
-    if ostype == "Windows":
-        if software == "paup":
-            os.system("paup -n \""+path_infile+"\"")
+    if software == "wqfm":
+        os.system(("java -jar \"" + software_path + "\" -i \"" +
+                  path_infile + "\" -o \"" + prefix + ".tre\""))
 
-        elif software == "tnt":
-            os.system(software_path+" proc "+path_infile)
-    else:
-        if software == "paup":
-            os.system(software_path+" -n \""+path_infile+"\" > /dev/null")
+    elif software == "tnt":
+        os.system(software_path+" proc "+path_infile)
 
-        elif software == "tnt":
-            os.system(software_path+" proc "+path_infile)
-        elif software == "wqfm":
-            os.system(("java -jar " + software_path + " -i \"" +
-                      path_infile + "\" -o \"" + prefix + ".tre\""))
+    elif software == "paup":
+        if ostype == "Windows":
+            begincmdline = "paup"
+        else:
+            begincmdline = software_path
+        os.system(begincmdline + " -n \""+path_infile+"\" > /dev/null")
 
     print("Three-item analysis done")
 
