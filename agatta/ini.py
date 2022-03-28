@@ -273,7 +273,7 @@ def infotree_checker(character_dict, verbose=True):
                         break
 
     if non_info_chars and verbose:
-        print("ERROR: the following input trees are non-informative:")
+        print("WARNING: the following input trees are non-informative:")
         for a in non_info_chars:
             non_info_tree = list(character_dict.keys())[list(
                 character_dict.values()).index(a)].write(format=9)

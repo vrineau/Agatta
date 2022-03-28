@@ -319,7 +319,7 @@ def del_replications(treerep, method="TMS", verbose=False):
                 node.get_children()[0].delete()
 
         # retain tree only if more than one internal node
-        cdict = infotree_checker({infotree:1})
+        cdict = infotree_checker({infotree:1}, verbose=False)
         if cdict.keys():
             infotree = list(cdict.keys())[0]
             infotree.ladderize()
@@ -385,7 +385,12 @@ def del_replications_forest(character_dict, method="TMS",
     output_trees = 0
 
     with open(prefix+".poly", "w") as logfile:
-        for treed, treeid in tqdm(character_dict.items()):
+        if verbose:
+            loopchar = character_dict.items()
+        else:
+            loopchar = tqdm(character_dict.items())
+
+        for treed, treeid in loopchar:
             treelist = del_replications(treed, method, verbose)
 
             if treelist:

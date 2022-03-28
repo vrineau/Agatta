@@ -1259,11 +1259,11 @@ def describe_forest(character_dict, prefix, showtaxanames=False):
 
             describefile.write("Dichotomies: {}; polytomies: {}\n".format(
                 str(dichotomies),str(polytomies)))
-            describefile.write("Repetitions:{}\n".format(str(repetitions)))
+            describefile.write("Repetitions: {}\n".format(str(repetitions)))
 
             if polytomies > 0:
-                describefile.write("""Polytomies - details
-                                   (level: number of occurences)\n""")
+                describefile.write("Polytomies - details\n" +
+                                   "(level: number of occurences)\n")
                 for poly in sorted(polytomiesd.keys()):
                     describefile.write("{} : {}\n".format(str(poly),
                                                     str(polytomiesd[poly])))
@@ -1272,6 +1272,8 @@ def describe_forest(character_dict, prefix, showtaxanames=False):
                 describefile.write("\nTaxa list:\n")
                 for taxa in taxalist:
                     describefile.write(taxa+"\n")
+
+            describefile.write("\n")
 
     i = 0
     for dtree in character_dict.keys():

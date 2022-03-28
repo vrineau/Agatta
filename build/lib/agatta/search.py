@@ -63,28 +63,30 @@ def search_pipeline(path_infile, software_path=False, software="paup",
 
     if ostype == "Windows":
         beginline = "paup"
-        endline = ">NUL"
+        #endline = ">NUL"
     else:
         beginline = software_path
-        endline = "> /dev/null"
+        #endline = "> /dev/null"
 
 
     if software == "tnt":
-        print("WARNING: 3ia analysis using TNT is still under development.")
+        print("WARNING: 3ia analysis using TNT is still under development.\n "
+              + "Searches using heuristics and fractional weights are not "
+              + "optimized.")
         if " " in path_infile:
             print("ERROR: TNT software doesn't allow paths with spaces.\n" +
                   "The path \"" + path_infile + "\" contains spaces.")
             sys.exit(1)
 
-        os.system(software_path + " proc "+path_infile + endline)
+        os.system(software_path + " proc "+path_infile)
 
     if software == "wqfm":
         os.system("java -jar \"" + software_path + "\" -i \"" +
-                  path_infile + "\" -o \"" + prefix + ".tre\"" + endline)
+                  path_infile + "\" -o \"" + prefix + ".tre\"")
 
     elif software == "paup":
 
-        os.system(beginline + " -n \"" + path_infile + "\"" + endline)
+        os.system(beginline + " -n \"" + path_infile + "\"")
 
     print("Three-item analysis done")
 

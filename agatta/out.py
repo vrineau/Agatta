@@ -196,7 +196,7 @@ def triplet_nexus_file(triplet_dict, character_dict, weighting, analysis,
         nexus_file.write("\nend;")
 
         if count_zeroweights > 0:
-            print("Warning, " + count_zeroweights +
+            print("WARNING, " + count_zeroweights +
                   " zero weight triplets deleted due to rounding")
 
 
@@ -339,7 +339,7 @@ def triplet_tnt_file(triplet_dict, character_dict, weighting, analysis,
     tntstring += "\nquit"
 
     if count_zeroweights > 0:
-        print("Warning: " + str(count_zeroweights) +
+        print("WARNING: " + str(count_zeroweights) +
               " zero weight triplets deleted due to rounding")
 
     with open(prefix+".tnt", "w") as tnt_file:
@@ -939,7 +939,25 @@ def agatta_analysis(file_path, software_path, software="paup",
         with warnings.catch_warnings():  # rerooting func poorly tested
             warnings.filterwarnings("ignore", category=UserWarning)
             if software == "tnt":
-                    tstreelist = treeswift.read_tree_nexus(prefix + ".tre")
+
+                with open(prefix + ".tre", "r") as tntfile:
+                    tntfile2 = []
+                    newickstring = False
+                    for line in tntfile:
+                        if "[&U] \n" in line or "[&R] \n" in line:
+                            tntfile2.append(line[:-2])  #remove tnt \n
+                            newickstring = True
+                        elif newickstring:
+                            tntfile2.append(line.replace(" ",""))
+                            newickstring = False
+                        else:
+                            tntfile2.append(line)
+                with open(prefix + ".tre", "w") as tntfile:
+                    for line in tntfile2:
+                        tntfile.write(line)
+
+                tstreelist = treeswift.read_tree_nexus(prefix + ".tre")
+
             elif software == "paup" or software == "wqfm":
                 try:
                     tstreelist = treeswift.read_tree_newick(prefix + ".tre")
@@ -959,7 +977,6 @@ def agatta_analysis(file_path, software_path, software="paup",
             for tstree in tstreelist:
                 if isinstance(tstree, dict):
                     for idt, tst in tstree.items():
-
                         nodedict = tst.label_to_node(selection='leaves')
                         tst.reroot(nodedict["root"])
                         tst.suppress_unifurcations()

@@ -273,7 +273,7 @@ def infotree_checker(character_dict, verbose=True):
                         break
 
     if non_info_chars and verbose:
-        print("ERROR: the following input trees are non-informative:")
+        print("WARNING: the following input trees are non-informative:")
         for a in non_info_chars:
             non_info_tree = list(character_dict.keys())[list(
                 character_dict.values()).index(a)].write(format=9)
@@ -700,6 +700,11 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
     if infilelist:
         for infilesub in infilelist:
             hmatrixsub = [l[1:] for l in extracthmatrix(infile)]
+
+        if len(hmatrixsub) != len(hmatrix):
+            print("ERROR: all hierarchical matrices must have the same"
+                  + " number of lines.")
+            sys.exit(1)
 
             for i in range(len(hmatrix)):
                 hmatrix[i] += hmatrixsub[i]
