@@ -50,6 +50,7 @@ def search_pipeline(path_infile, software_path=False, software="paup",
     """
 
     print("Running analysis on " + software + " software")
+    print("==================================================================")
     start = time.time()
 
     if software_path:
@@ -66,11 +67,11 @@ def search_pipeline(path_infile, software_path=False, software="paup",
         #endline = ">NUL"
     else:
         beginline = software_path
-        #endline = "> /dev/null"
+        endline = "> /dev/null"
 
 
     if software == "tnt":
-        print("WARNING: 3ia analysis using TNT is still under development.\n "
+        print("WARNING: 3ia analysis using TNT is still under development.\n"
               + "Searches using heuristics and fractional weights are not "
               + "optimized.")
         if " " in path_infile:
@@ -78,7 +79,7 @@ def search_pipeline(path_infile, software_path=False, software="paup",
                   "The path \"" + path_infile + "\" contains spaces.")
             sys.exit(1)
 
-        os.system(software_path + " proc "+path_infile)
+        os.system(software_path + " proc "+path_infile + endline)
 
     if software == "wqfm":
         os.system("java -jar \"" + software_path + "\" -i \"" +
@@ -88,7 +89,8 @@ def search_pipeline(path_infile, software_path=False, software="paup",
 
         os.system(beginline + " -n \"" + path_infile + "\"")
 
-    print("Three-item analysis done")
+    print("==================================================================")
+    print("Analysis done")
 
     end = time.time()
     time_cptr = time.strftime('%H:%M:%S', time.gmtime(end - start))

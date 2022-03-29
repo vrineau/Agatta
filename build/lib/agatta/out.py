@@ -962,13 +962,9 @@ def agatta_analysis(file_path, software_path, software="paup",
                 try:
                     tstreelist = treeswift.read_tree_newick(prefix + ".tre")
                 except RuntimeError:
-                    print("ERROR: PAUP* can fail to find a tree in bandb " +
-                          "with fractional weights (FW, FWNL, MW).\nConsider" +
-                          " to set the analysis to heuristic using " +
-                          "--analysis=heuristic")
-                else:
-                    no_exception = True
-                if not 'no_exception' in locals():
+                    print("ERROR: " + software + " failed to find a tree " +
+                          "due to an internal bug.\nConsider using another" +
+                          " software.")
                     sys.exit(1)
 
             if not isinstance(tstreelist, list):

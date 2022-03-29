@@ -486,9 +486,6 @@ def triplet_extraction(infile, taxa_replacement_file=False):
                                   + "file '" + taxa_replacement_file
                                   + "'. The table is probably broken."
                                   + "\nOperation aborted.")
-            else:
-                no_exception = True
-            if not 'no_exception' in locals():
                 sys.exit(1)
 
         # build taxanames to id converter
@@ -496,10 +493,9 @@ def triplet_extraction(infile, taxa_replacement_file=False):
             data = csv.reader(taxa_table1, delimiter=dialect.delimiter)
             taxa_table2 = list(data)
 
-            for rowlist in taxa_table2:  # remove trailing spaces
-                rowlist = [e.strip() for e in rowlist]
+            rowlist = [[i for i in row if i] for row in taxa_table2]
 
-            for idtax, nametax in taxa_table2:
+            for idtax, nametax in rowlist:
                 taxa_dict[int(idtax)] = nametax
 
     # read triplet file and build triplet dictionary
@@ -523,10 +519,8 @@ def triplet_extraction(infile, taxa_replacement_file=False):
                                            + "file '"
                                            + taxa_replacement_file
                                            + "'\nOperation aborted.")
-                        else:
-                            no_exception = True
-                        if not 'no_exception' in locals():
                             sys.exit(1)
+
                     convert_trip = triplet({taxa_dict[taxaint[1]],
                                             taxa_dict[taxaint[2]]},
                                            {taxa_dict[taxaint[0]]})

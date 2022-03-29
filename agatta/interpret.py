@@ -522,10 +522,13 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
     RI_true_tree = Fraction(0, 1)  # total true tree
     RI_intersect_reconstructed_tree = Fraction(0, 1)
     RI_intersect_true_tree = Fraction(0, 1)
+    false_positives = Fraction(0, 1)
 
     for trip, FW in rt_tripdic.items():
         if trip in tt_tripdic:
             RI_intersect_reconstructed_tree += FW
+        else:
+            false_positives += FW
         RI_reconstructed_tree += FW
 
     for trip, FW in tt_tripdic.items():
@@ -545,35 +548,35 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
 
     if prefix:
         with open(prefix+".itri", "w") as itrifile:
-            itrifile.write("Triplet true positives (true tree) : " + str(round(
-                RI_intersect_true_tree, 3)) + "\n")
-            itrifile.write("Triplet true positives (reconstructed tree) : "
-                           + str(round(RI_intersect_reconstructed_tree, 3))
-                           + "\n")
+            itrifile.write("Triplet true positives (true tree) : "
+                           + str(round(float(RI_intersect_true_tree), 3))
+                           + " (reconstructed tree: "
+                           + str(round(float(RI_intersect_reconstructed_tree),
+                                       3))
+                           +")\n")
             itrifile.write("Triplet false positives : " + str(round(
-                Precision, 3)) + "\n")
+                float(false_positives), 3)) + "\n")
             itrifile.write("Triplets from reconstructed tree : " + str(round(
                 RI_reconstructed_tree, 3)) + "\n")
             itrifile.write("Triplets from true tree : " + str(round(
                 RI_true_tree, 3)) + "\n")
             itrifile.write("Precision : " + str(round(Precision, 3)) + "\n")
             itrifile.write("Recall : " + str(round(Recall, 3)) + "\n")
-            itrifile.write("F-score : " + str(round(Fscore, 3)) + "\n")
+            itrifile.write("F1-score : " + str(round(Fscore, 3)) + "\n")
 
     if not silent:
-        print("Triplet true positives (true tree) : " + str(round(
-            RI_intersect_true_tree, 3)))
-        print("Triplet true positives (reconstructed tree) : " + str(round(
-            RI_intersect_reconstructed_tree, 3)))
-        print("Triplet false positives : " + str(round(
-            Precision, 3)))
+        print("Triplet true positives (true tree) : " + str(round(float(
+            RI_intersect_true_tree), 3)) + " (reconstructed tree: "
+        + str(round(float(RI_intersect_reconstructed_tree), 3)) +")")
+        print("Triplet false positives : " + str(round(float(
+            false_positives), 3)))
         print("Triplets from reconstructed tree : " + str(round(
             RI_reconstructed_tree, 3)))
         print("Triplets from true tree : " + str(round(
             RI_true_tree, 3)))
         print("Precision : " + str(round(Precision, 3)))
         print("Recall : " + str(round(Recall, 3)))
-        print("F-score : " + str(round(Fscore, 3)))
+        print("F1-score : " + str(round(Fscore, 3)))
 
     return Precision, Recall, Fscore  # Fscore is the ITRI
 

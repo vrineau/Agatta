@@ -143,8 +143,8 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
             else:  # newick files
                 tstreelist = treeswift.read_tree_newick(infile)
         except:
-            print("ERROR: The file is broken. Please check the " +
-                           "format. \nNexus files must have the .nex " +
+            print("ERROR: The file " + infile + "is broken. Please check " +
+                           "the format. \nNexus files must have the .nex " +
                            "extension.\nNexml files must have the .nexml " +
                            "extension.\nThe Lisbeth input files must have " +
                            "the .3ia extension.\nHierarchical matrices have" +
@@ -690,11 +690,15 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
     error_message = ""
 
     # read first matrix
-    infilelist = [path.expanduser(l) for l in infilelist]
-    infile = infilelist[0]
-    hmatrix = extracthmatrix(infile)
+    if isinstance(infilelist, list):
+        infilelist = [path.expanduser(l) for l in infilelist]
+        infile = infilelist[0]
+        infilelist.remove(infile)
+    else:
+        infile = infilelist
+        infilelist = False
 
-    infilelist.remove(infile)
+    hmatrix = extracthmatrix(infile)
 
     # if several matrices
     if infilelist:
@@ -1226,14 +1230,26 @@ def helper(command):
             - For ri, a global retention index stating the overall information
             content of all character trees retained in the cladogram is writen,
             plus a ri for each character.
-            - For itri, three values are computed, precision
-            (amount of triplets from the reconstructed tree that are true),
-            recall, (amount of true triplets that are present in the
-            reconstructed tree), and F-score (harmonic mean of precision and
-            recall).
+            - For itri, several values are computed given one true tree and one
+              reconstructed tree (the tree to evaluate):
+                * Triplet true positives : amount of triplets that are both
+                present in the true tree and the reconstructed tree (may vary
+                when fractional weights are used).
+                * Triplet false positives : amount of triplets that are present
+                in the reconstructed tree but not in the true tree.
+                * Triplets from reconstructed tree : amount of triplets that
+                are present in the reconstructed tree.
+                * Triplets from true tree : amount of triplets that are present
+                in the true tree.
+                * Precision : amount of triplets from the reconstructed tree
+                that are true.
+                * Recall : amount of true triplets that are present in the
+                reconstructed tree
+                * F-score : harmonic mean of precision and recall.
             - For itrisym_sum and itrisym_product, the file contains the
             triplet distance between the two trees.
-        All values are displayed as percentages excepted itrisym_product.
+        All calculations are made using a specific weighting scheme
+        (option --weighting).
               """)
 
     elif command == "chartest":
