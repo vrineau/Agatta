@@ -45,7 +45,7 @@ Options:
     --rosetta=<path>      Path of the file for taxa conversion
     --showtaxanames       Print the list of terminals
     --softpath=<path>     Path of the software used
-    --software=<type>     Software used for the pipeline [default: agatta]
+    --software=<type>     Software used for the pipeline [default: paup]
     --taxarep1=<path>     Table for leaves replacement for file 1
     --taxarep2=<path>     Table for leaves replacement for file 2
     --weighting=<type>    Specify the type of triplet weighting [default: FW]

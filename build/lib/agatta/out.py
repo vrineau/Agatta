@@ -27,7 +27,6 @@ from .interpret import RI
 from .interpret import rcc
 from .interpret import constrict
 from .interpret import character_states_test
-from .search import bandb
 from .search import search_pipeline
 from tkinter import Tk
 from tkinter import filedialog
@@ -728,7 +727,7 @@ def agatta_analysis(file_path, software_path, software="paup",
         Path of the software designated with the "software" argument.
     software : str, optional
         Choose the software to use between 'paup', 'tnt', and 'wqfm'.
-        The default is 'tnt'.
+        The default is 'paup'.
     taxa_replacement : str, optional
         Path of a table file containing two columns. The first column
         corresponds to the names of the terminals of the newick stored in
@@ -779,7 +778,7 @@ def agatta_analysis(file_path, software_path, software="paup",
     analysis : str
         Add a line in the nexus file to state the type of analysis between
         branch and bound ("bandb") or heuristic ("heuristic").
-        The default is 'bandb'.
+        The default is 'heuristic'.
     nrep : int, optional
         Add a line in the file to state the number of replicates in case
         of heuristic search. The default is 1000.
@@ -893,114 +892,105 @@ def agatta_analysis(file_path, software_path, software="paup",
 
     prefix_path = os.path.join(os.getcwd(), prefix)
 
-    if software == "agatta":
-        triplet_dict = main_tripdec(character_dict, prefix, taxa_replacement,
-                                    weighting, parallel, verbose)
-
-        optimal_score, results_dict = bandb(list(taxa_extraction(
-            character_dict)), triplet_dict)
-        cladogram_dict = {t: 1 for t in results_dict}
-
     # compute triplets and weights from the tree list and save a nex/tnt file
-    else:
-        convert(character_dict,
-                "trees",
-                prefix,
-                parallel,
-                weighting,
-                analysis,
-                taxa_replacement,
-                nrep,
-                True,  # logfile
-                software,
-                verbose)
+    convert(character_dict,
+            "trees",
+            prefix,
+            parallel,
+            weighting,
+            analysis,
+            taxa_replacement,
+            nrep,
+            True,  # logfile
+            software,
+            verbose)
 
-        # three-item analysis using PAUP*, TNT, WQFM, or Agatta
-        if software == "paup":
-            prefix_end = prefix_path+".nex"
-            search_pipeline(prefix_end,
-                            software_path,  # except if software_path == False
-                            "paup")
+    # three-item analysis using PAUP*, TNT, WQFM, or Agatta
+    if software == "paup":
+        prefix_end = prefix_path+".nex"
+        search_pipeline(prefix_end,
+                        software_path,  # except if software_path == False
+                        "paup")
 
-        elif software == "tnt":
-            search_pipeline(prefix+".tnt",
-                            software_path,
-                            "tnt")
+    elif software == "tnt":
+        search_pipeline(prefix+".tnt",
+                        software_path,
+                        "tnt")
 
-        elif software == "wqfm":
-            search_pipeline(prefix+".wqfm",
-                            software_path,
-                            "wqfm", prefix)
+    elif software == "wqfm":
+        search_pipeline(prefix+".wqfm",
+                        software_path,
+                        "wqfm", prefix)
 
-        # extract trees from output file and delete root
-        cladogram_dict = dict()
-        i = 1
+    # extract trees from output file and delete root
+    cladogram_dict = dict()
+    i = 1
 
-        with warnings.catch_warnings():  # rerooting func poorly tested
-            warnings.filterwarnings("ignore", category=UserWarning)
-            if software == "tnt":
+    with warnings.catch_warnings():  # rerooting func poorly tested
+        warnings.filterwarnings("ignore", category=UserWarning)
+        if software == "tnt":
 
-                with open(prefix + ".tre", "r") as tntfile:
-                    tntfile2 = []
-                    newickstring = False
-                    for line in tntfile:
-                        if "[&U] \n" in line or "[&R] \n" in line:
-                            tntfile2.append(line[:-2])  #remove tnt \n
-                            newickstring = True
-                        elif newickstring:
-                            tntfile2.append(line.replace(" ",""))
-                            newickstring = False
-                        else:
-                            tntfile2.append(line)
-                with open(prefix + ".tre", "w") as tntfile:
-                    for line in tntfile2:
-                        tntfile.write(line)
+            with open(prefix + ".tre", "r") as tntfile:
+                tntfile2 = []
+                newickstring = False
+                for line in tntfile:
+                    if "[&U] \n" in line or "[&R] \n" in line:
+                        tntfile2.append(line[:-2])  #remove tnt \n
+                        newickstring = True
+                    elif newickstring:
+                        tntfile2.append(line.replace(" ",""))
+                        newickstring = False
+                    else:
+                        tntfile2.append(line)
+            with open(prefix + ".tre", "w") as tntfile:
+                for line in tntfile2:
+                    tntfile.write(line)
 
-                tstreelist = treeswift.read_tree_nexus(prefix + ".tre")
+            tstreelist = treeswift.read_tree_nexus(prefix + ".tre")
 
-            elif software == "paup" or software == "wqfm":
-                try:
-                    tstreelist = treeswift.read_tree_newick(prefix + ".tre")
-                except RuntimeError:
-                    print("ERROR: " + software + " failed to find a tree " +
-                          "due to an internal bug.\nConsider using another" +
-                          " software.")
-                    sys.exit(1)
+        elif software == "paup" or software == "wqfm":
+            try:
+                tstreelist = treeswift.read_tree_newick(prefix + ".tre")
+            except RuntimeError:
+                print("ERROR: " + software + " failed to find a tree " +
+                      "due to an internal bug.\nConsider using another" +
+                      " software.")
+                sys.exit(1)
 
-            if not isinstance(tstreelist, list):
-                tstreelist = [tstreelist]
+        if not isinstance(tstreelist, list):
+            tstreelist = [tstreelist]
 
-            for tstree in tstreelist:
-                if isinstance(tstree, dict):
-                    for idt, tst in tstree.items():
-                        nodedict = tst.label_to_node(selection='leaves')
-                        tst.reroot(nodedict["root"])
-                        tst.suppress_unifurcations()
-                        newickstring = tst.newick().replace("root","")
-
-                        if (newickstring.startswith("[&R] ") or
-                            newickstring.startswith("[&U] ")):
-                            cladogram_dict[Tree(
-                                newickstring.split(" ")[1])] = idt
-                        else:
-                            cladogram_dict[Tree(newickstring)] = idt
-
-                else:
-                    nodedict = tstree.label_to_node(selection='leaves')
-                    tstree.reroot(nodedict["root"])
-                    tstree.suppress_unifurcations()
-                    newickstring = tstree.newick().replace("root","")
+        for tstree in tstreelist:
+            if isinstance(tstree, dict):
+                for idt, tst in tstree.items():
+                    nodedict = tst.label_to_node(selection='leaves')
+                    tst.reroot(nodedict["root"])
+                    tst.suppress_unifurcations()
+                    newickstring = tst.newick().replace("root","")
 
                     if (newickstring.startswith("[&R] ") or
                         newickstring.startswith("[&U] ")):
-                        cladogram_dict[Tree(newickstring.split(" ")[1])] = i
+                        cladogram_dict[Tree(
+                            newickstring.split(" ")[1])] = idt
                     else:
-                        cladogram_dict[Tree(newickstring)] = i
-                    i += 1
+                        cladogram_dict[Tree(newickstring)] = idt
 
-        with open(prefix + ".tre", "w") as result_file:
-            for tree in cladogram_dict.keys():
-                result_file.write(tree.write(format=9) + "\n")
+            else:
+                nodedict = tstree.label_to_node(selection='leaves')
+                tstree.reroot(nodedict["root"])
+                tstree.suppress_unifurcations()
+                newickstring = tstree.newick().replace("root","")
+
+                if (newickstring.startswith("[&R] ") or
+                    newickstring.startswith("[&U] ")):
+                    cladogram_dict[Tree(newickstring.split(" ")[1])] = i
+                else:
+                    cladogram_dict[Tree(newickstring)] = i
+                i += 1
+
+    with open(prefix + ".tre", "w") as result_file:
+        for tree in cladogram_dict.keys():
+            result_file.write(tree.write(format=9) + "\n")
 
     # consensus computation
     if consensus:

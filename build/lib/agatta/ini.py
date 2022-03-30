@@ -849,8 +849,8 @@ def checkargs(arguments):
             arguments["--software"] == "wqfm"):
             if (not arguments.get("--softpath", False)
                 and platform.system() != "Windows"):
-                sys.exit(print("ERROR: For PAUP and TNT, the path of the " +
-                      "software must be completed in --softpath"))
+                sys.exit(print("ERROR: the path of the " +
+                      "software is missing. Please use --softpath=file/path"))
 
         elif arguments["--software"] != "agatta":
             sys.exit(print("ERROR: --software flag must be one of: 'paup', " +

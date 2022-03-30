@@ -391,7 +391,13 @@ def del_replications_forest(character_dict, method="TMS",
             loopchar = tqdm(character_dict.items())
 
         for treed, treeid in loopchar:
+
+            if verbose:
+                print("Tree " + str(treeid))
+                print(treed.write(format=9))
+
             treelist = del_replications(treed, method, verbose)
+
 
             if treelist:
                 if len(treelist) == 1:
