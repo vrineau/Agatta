@@ -68,6 +68,9 @@ def constrict(treelist, prefix=False, silent=False):
     del treelist[0]
     kill_node_list = []  # list of nodes to delete at the end
 
+    if not treelist:
+        return constrict
+
     for node in constrict.traverse(strategy="preorder"):  # for each node
         if not node.is_leaf() and not node.is_root():  # check if exists in all
             for tree_compare in treelist:  # for each tree
@@ -167,6 +170,9 @@ def rcc(treelist, prefix=False, verbose=False):
 
 
     print("Reduced cladistic consensus (RCC) computation")
+
+    if len(treelist) == 1:
+        return [treelist[0]]
 
     if rep_detector(dict.fromkeys(treelist, 1)):
         print("ERROR: Repeated leaves have been detected.\n" +
@@ -395,10 +401,9 @@ def RI(cladogram_dict, character_dict, weighting="FW", prefix=False):
                 if not leaf in list(cladogram_dict.keys())[0].get_leaf_names():
                     print("ERROR: Character tree " + str(i)
                                    + ": leaf set must be equal"
-                                   + " or a subset of the cladogram \nleaf "
-                                   + "set.\nOperation aborted.")
+                                   + " or a subset of the cladogram\n"
+                                   + "leaf set. Operation aborted.")
                     sys.exit(1)
-
 
     c_triplet_dict = standard_tripdec(cladogram_dict,
                                       weighting,
@@ -447,12 +452,11 @@ def RI(cladogram_dict, character_dict, weighting="FW", prefix=False):
     # Write file
     if prefix:
         with open(prefix+".ri", "w") as RI_file:
-            RI_file.write("#Retention index\n")
-
             for keys, values in RI_char_dict.items():  # IR list
-                RI_string = str(keys)+": "+str(round((float(values)*100), 2))
+                RI_string = "[" + str(keys) + "] "
+                RI_string += str(round((float(values)*100), 2))
                 print(RI_string)
-                RI_file.write("\n"+RI_string)
+                RI_file.write(RI_string + "\n")
 
     return RI_char_dict
 
@@ -913,9 +917,9 @@ def character_states_test(cladogram_dict, character_dict,
                                            position='branch-right')
 
         except ImportError:  # issue with ete3 imports
-            print("Installing PyQt5 is requested to use this functionality\n"
-                  + "Please install using 'pip install "
-                  + "PyQt5'")  # https://github.com/etetoolkit/ete/issues/354
+            print("A manual instal of PyQt5 is requested to use the --pdf "
+                  + "functionality\nPlease install using 'pip install" +
+                  " PyQt5' and rerun the command line")
 
     print("Initiating character state test procedure")
 

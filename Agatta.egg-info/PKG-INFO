@@ -37,7 +37,7 @@ The package implements a pipeline for efficient heuristic searches that requires
 
 ## Documentation and Support
 
-A complete toturial is available in the [GitHub Wiki](https://github.com/vrineau/Agatta/wiki/Tutorial).
+A complete tutorial is available in the [GitHub Wiki](https://github.com/vrineau/Agatta/wiki/Tutorial).
 
 An help for all commands is available directly using `agatta help`.
 

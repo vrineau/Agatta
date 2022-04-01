@@ -952,9 +952,7 @@ def agatta_analysis(file_path, software_path, software="paup",
             try:
                 tstreelist = treeswift.read_tree_newick(prefix + ".tre")
             except RuntimeError:
-                print("ERROR: " + software + " failed to find a tree " +
-                      "due to an internal bug.\nConsider using another" +
-                      " software.")
+                print("ERROR: " + software + " failed to find a tree.")
                 sys.exit(1)
 
         if not isinstance(tstreelist, list):
@@ -992,6 +990,11 @@ def agatta_analysis(file_path, software_path, software="paup",
         for tree in cladogram_dict.keys():
             result_file.write(tree.write(format=9) + "\n")
 
+    if len(cladogram_dict.keys()) == 1:
+        print("1 optimal tree found")
+    else:
+        print(str(len(cladogram_dict.keys())) + " optimal trees found")
+
     # consensus computation
     if consensus:
 
@@ -1007,15 +1010,15 @@ def agatta_analysis(file_path, software_path, software="paup",
 
     # character states test on the strict consensus
     if chartest:
-        character_states_test(character_dict,
-                              {constrict(list(cladogram_dict.keys()),
+        character_states_test({constrict(list(cladogram_dict.keys()),
                                          silent=True): 1},
+                              character_dict,
                               prefix,
                               pdf_file)
 
     # retention index
     if ri:
-        RI(list(cladogram_dict.keys())[0],
+        RI(cladogram_dict,
            character_dict,
            weighting,
            prefix)

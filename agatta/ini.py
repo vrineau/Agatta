@@ -541,12 +541,11 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
 
             # add new areagram
             areagram_dict[phylogeny2] = index
-            new_tree_line = str(index)
-            new_tree_line += "    "
-            new_tree_line += phylogeny2.write(format=9)
-            new_tree_line += "    "
+            new_tree_line = "[" + str(index) + "] "
             new_tree_line += phylogeny.write(format=9)
-            new_tree_line += "\n"
+            new_tree_line += "\n    "
+            new_tree_line += phylogeny2.write(format=9)
+            new_tree_line += "\n\n"
 
             area_file.write(new_tree_line)
 
@@ -709,7 +708,7 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
                 hmatrix[i] += hmatrixsub[i]
 
     if infilelist:
-        print(str(len(infilelist) + 1) + "Hierarchical matrices loaded")
+        print(str(len(infilelist) + 1) + " hierarchical matrices loaded")
         print("Treefication of the hierarchical matrices")
     else:
         print("Hierarchical matrix loaded")
