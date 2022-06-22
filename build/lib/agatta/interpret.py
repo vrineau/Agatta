@@ -68,27 +68,25 @@ def constrict(treelist, prefix=False, silent=False):
     del treelist[0]
     kill_node_list = []  # list of nodes to delete at the end
 
-    if not treelist:
-        return constrict
-
-    for node in constrict.traverse(strategy="preorder"):  # for each node
-        if not node.is_leaf() and not node.is_root():  # check if exists in all
-            for tree_compare in treelist:  # for each tree
-                node_find = False
-                for node_tree_compare in tree_compare.traverse(
-                        strategy="preorder"):
-                    set1 = set([leaf.name for leaf in node.get_leaves()])
-                    set2 = set([leaf.name for leaf in
-                                node_tree_compare.get_leaves()])
-                    if set1 == set2:
-                        node_find = True
+    if treelist:
+        for node in constrict.traverse(strategy="preorder"):  # for each node
+            if not node.is_leaf() and not node.is_root():  # check if exists in all
+                for tree_compare in treelist:  # for each tree
+                    node_find = False
+                    for node_tree_compare in tree_compare.traverse(
+                            strategy="preorder"):
+                        set1 = set([leaf.name for leaf in node.get_leaves()])
+                        set2 = set([leaf.name for leaf in
+                                    node_tree_compare.get_leaves()])
+                        if set1 == set2:
+                            node_find = True
+                            break
+                    if node_find == False:
+                        kill_node_list.append(node)
                         break
-                if node_find == False:
-                    kill_node_list.append(node)
-                    break
 
-    for kill_node in kill_node_list:  # del nodes not present in all trees
-        kill_node.delete()
+        for kill_node in kill_node_list:  # del nodes not present in all trees
+            kill_node.delete()
 
     if prefix:
         with open(prefix+".constrict", "w") as constrictfile:
@@ -170,9 +168,6 @@ def rcc(treelist, prefix=False, verbose=False):
 
 
     print("Reduced cladistic consensus (RCC) computation")
-
-    if len(treelist) == 1:
-        return [treelist[0]]
 
     if rep_detector(dict.fromkeys(treelist, 1)):
         print("ERROR: Repeated leaves have been detected.\n" +
@@ -548,7 +543,10 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
     except ZeroDivisionError:
         Precision  = 0
 
-    Fscore = (2 * Precision * Recall) / (Precision + Recall)  # ITRI
+    try:
+        Fscore = (2 * Precision * Recall) / (Precision + Recall)  # ITRI
+    except ZeroDivisionError:
+        Fscore  = 0
 
     if prefix:
         with open(prefix+".itri", "w") as itrifile:
@@ -920,6 +918,7 @@ def character_states_test(cladogram_dict, character_dict,
             print("A manual instal of PyQt5 is requested to use the --pdf "
                   + "functionality\nPlease install using 'pip install" +
                   " PyQt5' and rerun the command line")
+            sys.exit(1)
 
     print("Initiating character state test procedure")
 
@@ -954,7 +953,7 @@ def character_states_test(cladogram_dict, character_dict,
     # character state test and adding node style
     results_test_dict = {}
     for cladogram in cladogram_dict:
-        with open(prefix+".chartest", "a") as results_file:
+        with open(prefix+".chartest", "w") as results_file:
             results_file.write("#Character states tests")
             results_file.write(("\n#Legend: #character.state / state accepted"
                                " or rejected / node(s) characterised by the"

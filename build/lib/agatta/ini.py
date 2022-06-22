@@ -143,7 +143,7 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
             else:  # newick files
                 tstreelist = treeswift.read_tree_newick(infile)
         except:
-            print("ERROR: The file " + infile + "is broken. Please check " +
+            print("ERROR: The file " + infile + " is broken. Please check " +
                            "the format. \nNexus files must have the .nex " +
                            "extension.\nNexml files must have the .nexml " +
                            "extension.\nThe Lisbeth input files must have " +
@@ -201,12 +201,12 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
 
         with open(taxa_replacement, "r") as taxa_table:
             try:
-                dialect = csv.Sniffer().sniff(taxa_table.read())
+                dialect = csv.Sniffer().sniff(taxa_table.readline(),
+                                              delimiters=[";","\t"," ","|"])
             except:
-                print("ERROR: Could not determine separator in the"
-                               + " table file '" + taxa_replacement
-                               + "'.\nThe table is probably broken."
-                               + "\nOperation aborted.")
+                print("ERROR: The table file '" + taxa_replacement
+                               + "' is not adequately formated."
+                               + "\n Operation aborted.")
             else:
                 no_exception = True
             if not 'no_exception' in locals():
@@ -446,11 +446,12 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
 
         with open(biogeo_tab, "r") as bt_file:
             try:
-                dialect = csv.Sniffer().sniff(bt_file.read())
+                dialect = csv.Sniffer().sniff(bt_file.readline(),
+                                              delimiters=[";","\t"," ","|"])
             except:
                 print("ERROR: The table file '" + biogeo_tab +
-                                  "' is probably broken. Could not determine" +
-                                  "separator.\nOperation aborted.")
+                                  "' is not adequately formated." +
+                                  "\n Operation aborted.")
             else:
                 no_exception = True
             if not 'no_exception' in locals():
@@ -466,7 +467,7 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
 
             if not len({len(l) for l in table}) == 1:
                  print("ERROR: The table file '" + biogeo_tab +
-                                  "' is broken.\nOperation aborted.")
+                                  "' is broken.\n Operation aborted.")
                  sys.exit(1)
 
         for line in table:
@@ -638,35 +639,17 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
 
         with open(infile, 'rt') as f:
             try:
-                dialect = csv.Sniffer().sniff(f.read())
+                dialect = csv.Sniffer().sniff(f.readline(),
+                                              delimiters=[";","\t"," ","|"])
             except:
                 print("ERROR: The table file '" + infile +
-                      "' is probably broken. Could not determine" +
-                      "separator.\nOperation aborted.")
+                      "' is not adequately formated.\n Operation aborted.")
             else:
                 no_exception = True
             if not 'no_exception' in locals():
                 sys.exit(1)
 
         with open(infile, 'rt') as f:
-            if dialect.delimiter == ",":
-                print("ERROR: ',' can't be a delimiter in the " +
-                               "hierarchical matrix format(usage restricted " +
-                               "for polymorphic instances)." +
-                               "\nOperation aborted.")
-                sys.exit(1)
-
-            if dialect.delimiter not in [",",";","\t"," ","|"]:
-                print("""ERROR: Error in the hierarchical matrix format.
-                                   The separator must be one of these:
-
-                                      - semicolon ';'
-                                      - tabulation '   '
-                                      - space ' '
-                                      - pipe '|'
-
-                                    Operation aborted.""")
-                sys.exit(1)
 
             data = csv.reader(f, delimiter=dialect.delimiter)
             hmatrix = list(data)

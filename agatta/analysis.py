@@ -1153,6 +1153,10 @@ def main_tripdec(input_item, prefix, taxa_replacement, weighting, parallel,
                           "\nOperation aborted.")
         sys.exit(1)
 
+    if not input_item:
+        print("ERROR: no informative character. Operation aborted.")
+        sys.exit(1)
+
     # compute triplet dictionary for each tree in parallel
     print("Starting triplet decomposition and " + weighting + " computation")
     start = time.time()
