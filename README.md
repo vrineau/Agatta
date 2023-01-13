@@ -47,6 +47,7 @@ To run a three-area analysis on a collection of rooted phylogenies stored in new
 agatta analysis <file> --software=paup --softpath=/path/to/paup-executable  --rosetta=<mapfile>
 ```
 This line is identical as for quick analysis plus a mapping file in csv  with two columns to give the correspondance between taxa (left column) and areas (right column). 
+
 ## License
 
 The code is currently licensed under the GNU General Public License version 3.
