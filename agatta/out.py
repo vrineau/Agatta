@@ -2,7 +2,7 @@
 """
 
     Agatta: Three-item analysis Python package
-    Contact: Valentin Rineau - valentin.rineau@gmail.com
+    Contact: Valentin Rineau - valentin.rineau@sorbonne-universite.fr
 
     Agatta is a set of tools in the cladistic framework to perform
     three-item analysis and associated operations in cladistics in python.
@@ -28,8 +28,6 @@ from .interpret import rcc
 from .interpret import constrict
 from .interpret import character_states_test
 from .search import search_pipeline
-from tkinter import Tk
-from tkinter import filedialog
 import os
 import sys
 import time
@@ -43,7 +41,7 @@ with warnings.catch_warnings():
 
 
 def triplet_nexus_file(triplet_dict, character_dict, weighting, analysis,
-                       prefix=None, nrep=1000, logfile=False):
+                       prefix, nrep=1000, logfile=False):
     """
     Outputs a three-item analysis file in nexus format readable by PAUP*4 from
     a dictionary of triplets and their corresponding weights.
@@ -63,10 +61,9 @@ def triplet_nexus_file(triplet_dict, character_dict, weighting, analysis,
     analysis : str
         Add a line in the nexus file to state the type of analysis between
         branch and bound ("bandb") or heuristic ("heuristic").
-    prefix : str, optional
+    prefix : str
         Prefix of the saving nexus file prefix.nex. The complete path can be
-        used. If set to none, a window appears to choose the location and name
-        of the prefix for the nexus file. The default is None.
+        used.
     nrep : int, optional
         Add a line in the nexus file to state the number of replicates in case
         of heuristic search. The default is 1000.
@@ -122,12 +119,12 @@ def triplet_nexus_file(triplet_dict, character_dict, weighting, analysis,
     else:
         taxa_list = taxa_triplet_extraction(triplet_dict)
 
-    if not prefix:
-        root = Tk()
-        prefix = filedialog.asksaveasfilename(
-            title="Save three-taxon analysis PAUP nexus file", filetypes=((
-                "nexus files", "*.nex"), ("all files", "*.*")))
-        root.withdraw()
+    # if not prefix:
+    #     root = Tk()
+    #     prefix = filedialog.asksaveasfilename(
+    #         title="Save three-taxon analysis PAUP nexus file", filetypes=((
+    #             "nexus files", "*.nex"), ("all files", "*.*")))
+    #     root.withdraw()
 
     # Nexus file computation
     with open(prefix+".nex", "w") as nexus_file:
@@ -200,7 +197,7 @@ def triplet_nexus_file(triplet_dict, character_dict, weighting, analysis,
 
 
 def triplet_tnt_file(triplet_dict, character_dict, weighting, analysis,
-                     prefix=None, nrep=1000, logfile=False):
+                     prefix, nrep=1000, logfile=False):
     """
     Outputs a three-item analysis file in TNT format (Goloboff et al. 2008)
     from a dictionary of triplets and their corresponding weights.
@@ -219,10 +216,9 @@ def triplet_tnt_file(triplet_dict, character_dict, weighting, analysis,
     analysis : str
         Add a line in the TNT file to state the type of analysis between
         branch and bound ("bandb") or heuristic ("heuristic").
-    output : str, optional
+    prefix : str
         Prefix of the saving TNT file prefix.tnt. The complete path can be
-        used. If set to none, a window appears to choose the location and name
-        of the prefix of the TNT file. The default is None.
+        used.
     nrep : int, optional
         Add a line in the TNT file to state the number of replicates in case
         of heuristic search. The default is 1000.
@@ -274,12 +270,12 @@ def triplet_tnt_file(triplet_dict, character_dict, weighting, analysis,
             triplet_dict.pop(trip)
 
     # computation of the TNT file
-    if prefix is None:
-        root = Tk()
-        prefix = filedialog.asksaveasfilename(
-            title="Save three-taxon analysis PAUP nexus file",
-            filetypes=(("nexus files", "*.nex"), ("all files", "*.*")))
-        root.withdraw()
+    # if prefix is None:
+    #     root = Tk()
+    #     prefix = filedialog.asksaveasfilename(
+    #         title="Save three-taxon analysis PAUP nexus file",
+    #         filetypes=(("nexus files", "*.nex"), ("all files", "*.*")))
+    #     root.withdraw()
 
     if character_dict:
         taxa_list = taxa_extraction(character_dict)
@@ -345,7 +341,7 @@ def triplet_tnt_file(triplet_dict, character_dict, weighting, analysis,
         tnt_file.write(tntstring)
 
 
-def triplet_tmc_file(triplet_dict, character_dict, prefix=None,
+def triplet_tmc_file(triplet_dict, character_dict, prefix,
                      weighting="FW"):
     """
     Outputs a three-item analysis file readable by Triplet MaxCut
@@ -361,10 +357,9 @@ def triplet_tmc_file(triplet_dict, character_dict, prefix=None,
         Dictionary of triplets (keys) and weights (values).
     character_dict : dict
         Dictionary containing newick trees (ete3 Tree objects) in keys.
-    prefix : str, optional
+    prefix : str
         Prefix of the saving TNT file prefix.tnt. The complete path can be
-        used. If set to none, a window appears to choose the location and name
-        of the prefix of the TNT file. The default is None.
+        used.
     weighting : str
         Weighting scheme to use between FW, FWNL, MW, AW, NW.
 
@@ -374,12 +369,12 @@ def triplet_tmc_file(triplet_dict, character_dict, prefix=None,
 
     """
 
-    if prefix is None:
-        root = Tk()
-        prefix = filedialog.asksaveasfilename(
-            title="Save three-taxon analysis TMC file", filetypes=((
-                "text files", "*.txt"), ("all files", "*.*")))
-        root.withdraw()
+    # if prefix is None:
+    #     root = Tk()
+    #     prefix = filedialog.asksaveasfilename(
+    #         title="Save three-taxon analysis TMC file", filetypes=((
+    #             "text files", "*.txt"), ("all files", "*.*")))
+    #     root.withdraw()
 
     # file for translating taxa names to numbers
     taxa_list = taxa_extraction(character_dict)

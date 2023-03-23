@@ -2,7 +2,7 @@
 """
 
     Agatta: Three-item analysis Python package
-    Contact: Valentin Rineau - valentin.rineau@gmail.com
+    Contact: Valentin Rineau - valentin.rineau@sorbonne-universite.fr
 
     Agatta is a set of tools in the cladistic framework to perform
     three-item analysis and associated operations in cladistics in python.
@@ -15,14 +15,16 @@
 
 from fractions import Fraction
 from itertools import combinations
+from .ini import hmatrix
 from .ini import taxa_extraction
 from .ini import character_extraction
 from .analysis import standard_tripdec
 from .analysis import rep_detector
+from .analysis import del_replications_forest
 import os
 import sys
 import warnings
-from PyPDF2 import PdfFileMerger
+from pypdf import PdfMerger
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore",category=SyntaxWarning)
@@ -341,7 +343,83 @@ def rcc(treelist, prefix=False, verbose=False):
     return profile
 
 
-def RI(cladogram_dict, character_dict, weighting="FW", prefix=False):
+def RI_path(cladopath, charpath, taxarep1=False, taxarep2=False, 
+       method="TMS", weighting="FW", prefix=False, verbose=False):
+    """
+    Compute the retention index for hierarchical characters (Kitching et al., 
+    1998) in the three-item analysis framework from two files.
+    The function write an output file in which is a global retention index
+    of the analysis and a retention index for each hierarchical character tree.
+
+          Kitching, I. J., Forey, P., Humphries, C., & Williams, D. (1998).
+          Cladistics: the theory and practice of parsimony analysis.
+          Oxford University Press.
+
+    Parameters
+    ----------
+    cladopath : str
+        Path to a newick file containing the cladogram. The tree must be the
+        optimal cladogram obtained from the cladistic analysis of character
+        trees stored in charpath.
+    charpath : str
+        Path to a file containing the initial character trees in newick or 
+        hmatrix format.
+    taxarep1 : str, optional
+        DESCRIPTION. The default is False.
+    taxarep2 : str, optional
+        DESCRIPTION. The default is False.
+    method : str, optional
+        One of the two implemented algorithms of free-paralogy subtree
+        analysis between "TMS" and "FPS" for removing polymorphism. 
+        The default is "TMS".
+    weighting : str, optional
+        Weighting scheme to use between:
+                                 * FW (Fractional weighting from
+                                       Rineau et al. 2021)
+                                 * FWNL (Fractional weighting from
+                                       Nelson and Ladiges),
+                                 * UW (Uniform weighting from
+                                       Nelson and Ladiges 1992),
+                                 * MW (Minimal Weighting),
+                                 * AW (Additive Weighting),
+                                 * NW (No Weighting).
+        The default is "FW".
+    prefix : str, optional
+        Prefix of the saving file. The complete path can be
+        used. The default is False (no file saved).
+
+    Returns
+    -------
+    RI_char_dict : dict.
+        Dictionary with character identifiers and global and per character RI.
+
+    """
+
+    print("Loading cladogram")
+
+    cladopath = os.path.expanduser(cladopath)
+    charpath = os.path.expanduser(charpath)
+
+    cladogram_dict = character_extraction(cladopath, taxarep1, verbose=False)
+
+    print("Cladogram loaded")
+    print("Loading character trees")
+
+    if os.path.splitext(charpath)[1] == '.hmatrix':
+        character_dict = hmatrix(charpath, prefix=False, chardec=False, 
+                                 verbose=False)
+    else:
+        character_dict = character_extraction(charpath,taxarep2, verbose=False)
+        
+    # Calls RI function
+    RI_char_dict = RI(cladogram_dict, character_dict, taxarep1, taxarep2, 
+           method, weighting, prefix, verbose)
+    
+    return RI_char_dict
+        
+
+def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False, 
+       method="TMS", weighting="FW", prefix=False, verbose=False):
     """
     Compute the retention index for hierarchical characters
     (Kitching et al., 1998) in the three-item analysis framework.
@@ -356,11 +434,18 @@ def RI(cladogram_dict, character_dict, weighting="FW", prefix=False):
     ----------
     cladogram_dict : dict
         Dictionary containing one newick tree (ete3 Tree objects) as key.
-        The tree must be the optimal cladogram obtained from the cladistic
-        analysis of character trees stored in the character_dict argument.
+        The trees is generally the optimal tree or the strict consensus.
     character_dict : dict
         Dictionary containing newick trees (ete3 Tree objects) in keys.
-        The trees must be the initial characters.
+        The trees are generally the initial characters.
+    taxarep1 : str, optional
+        DESCRIPTION. The default is False.
+    taxarep2 : str, optional
+        DESCRIPTION. The default is False.
+    method : str, optional
+        One of the two implemented algorithms of free-paralogy subtree
+        analysis between "TMS" and "FPS" for removing polymorphism. 
+        The default is "TMS".
     weighting : str, optional
         Weighting scheme to use between:
                                  * FW (Fractional weighting from
@@ -372,7 +457,8 @@ def RI(cladogram_dict, character_dict, weighting="FW", prefix=False):
                                  * MW (Minimal Weighting),
                                  * AW (Additive Weighting),
                                  * NW (No Weighting).
-        . The default is "FW".
+        The default is "FW". Note that retention index by character state 
+        in FW mode is equivalent to FWNL.
     prefix : str, optional
         Prefix of the saving file. The complete path can be
         used. The default is False (no file saved).
@@ -384,21 +470,27 @@ def RI(cladogram_dict, character_dict, weighting="FW", prefix=False):
 
     """
 
+    # remove automatically repetitions if detected (user message printed)
+    if rep_detector(character_dict):
+        character_dict = del_replications_forest(character_dict,
+                                                 method=method,
+                                                 prefix=prefix,
+                                                 verbose=verbose)
+
+    print(str(len(character_dict)) + " characters loaded")
     print("Computing retention index")
 
-    if rep_detector(cladogram_dict) or rep_detector(character_dict):
-        print("ERROR: Repeated leaves have been detected.\n" +
-                         "Operation aborted.")
-        sys.exit(1)
-    else:
-        for t, i in character_dict.items():
-            for leaf in t.get_leaf_names():
-                if not leaf in list(cladogram_dict.keys())[0].get_leaf_names():
-                    print("ERROR: Character tree " + str(i)
-                                   + ": leaf set must be equal"
-                                   + " or a subset of the cladogram\n"
-                                   + "leaf set. Operation aborted.")
-                    sys.exit(1)
+    str_character_dict = {}
+    for t, i in character_dict.items():
+        str_character_dict[t] = str(i)
+        
+        for leaf in t.get_leaf_names():
+            if not leaf in list(cladogram_dict.keys())[0].get_leaf_names():
+                print("ERROR: Character tree " + str(i)
+                               + ": leaf set must be equal"
+                               + " or a subset of the cladogram\n"
+                               + "leaf set. Operation aborted.")
+                sys.exit(1)
 
     c_triplet_dict = standard_tripdec(cladogram_dict,
                                       weighting,
@@ -410,7 +502,7 @@ def RI(cladogram_dict, character_dict, weighting="FW", prefix=False):
     RI_char_dict_denom = {}
 
     # computation of the global RI in the same time as RI per character
-    for chartree, keys in character_dict.items():
+    for chartree, keys in str_character_dict.items():
         RI_char_dict[keys] = 0
         RI_char_dict_num[keys] = 0
         RI_char_dict_denom[keys] = 0
@@ -430,33 +522,154 @@ def RI(cladogram_dict, character_dict, weighting="FW", prefix=False):
             RI_char_dict_denom[keys] += FW
             RI_tot[1] += FW
 
+
+    # computation of RI per character state
+    # This functionality is only able when using hmatrix, which gives specific 
+    # codes for each character state.
+    
+    for chartree, keys in str_character_dict.items():
+        
+        for node in chartree.traverse(strategy="preorder"):
+            if node.is_leaf() == False and node.is_root() == False:
+                try: 
+                    charstate_count = node.charstate_name
+
+                    # compute triplets for this single state
+                    charstate = chartree.copy('cpickle')
+                    for n in charstate.traverse(strategy="preorder"):
+                        if n.is_leaf() == False and n.is_root() == False:
+                            if not node.charstate_name == charstate_count:
+                                n.delete()
+                                
+                    keystate = str(keys.split('.')[0]) + "_" + str(
+                                                            charstate_count)
+                    RI_char_dict[keystate] = 0
+                    RI_char_dict_num[keystate] = 0
+                    RI_char_dict_denom[keystate] = 0
+                    
+                    state_triplet_dict = standard_tripdec({charstate: keys},
+                                                    weighting,
+                                                    prefix=False,
+                                                    verbose=False)
+
+                    for triplet1, FW in state_triplet_dict.items():  
+                        if triplet1 in c_triplet_dict:
+            
+                            #RI numerator
+                            RI_char_dict_num[keystate] += FW  # per state
+            
+                        #RI denominator
+                        RI_char_dict_denom[keystate] += FW
+            
+                except AttributeError:
+                    pass
+    
+    # merge all in RI_char_dict fractions dict and remove zero fractions
     for keys, values in RI_char_dict_num.items():
         if RI_char_dict_denom[keys] == 0:
-            RI_char_dict[keys] = Fraction(0, 1)
+            RI_char_dict[keys] = [0, 1]
         else:
-            RI_char_dict[keys] = Fraction(RI_char_dict_num[keys],
-                                          RI_char_dict_denom[keys])
+            RI_char_dict[keys] = [RI_char_dict_num[keys],
+                                    RI_char_dict_denom[keys]]
+
+    # computation of ri when free-paralogy subtrees (poly)
+    for keys, values in str_character_dict.items(): # build RI for entire chars
+        if '.' in str(values):
+            if not values.split('.')[0] in RI_char_dict:
+                RI_char_dict[values.split('.')[0]] = [0, 0]
+
+            RI_char_dict[values.split('.')[0]][0] += RI_char_dict[values][0]
+            RI_char_dict[values.split('.')[0]][1] += RI_char_dict[values][1]
 
     if RI_tot[1] == 0:
-        RI_char_dict["Total retention index"] = Fraction(0, 1)  # add global RI
+        RI_char_dict["Total"] = [0, 1]  # add global RI
     else:
-        RI_char_dict["Total retention index"] = Fraction(RI_tot[0], RI_tot[1])
+        RI_char_dict["Total"] = [RI_tot[0], RI_tot[1]]
 
     print("Retention index computed")
+
+    # computation of ri per state (results in FW are not equivalent between 
+    # states and characters because of the correction (Rineau et al. 2021).
+    #
+    # Rineau, V., Zaragüeta, R., & Bardin, J. (2021). Information content 
+    # of trees: three-taxon statements, inference rules and dependency. 
+    # Biological Journal of the Linnean Society, 133(4), 1152-1170.) 
 
     # Write file
     if prefix:
         with open(prefix+".ri", "w") as RI_file:
-            for keys, values in RI_char_dict.items():  # IR list
-                RI_string = "[" + str(keys) + "] "
-                RI_string += str(round((float(values)*100), 2))
-                print(RI_string)
-                RI_file.write(RI_string + "\n")
+            
+            def formatNumber(num): # remove zero after float
+                if num % 1 == 0:
+                    return int(num)
+                else:
+                    return num
 
+            def writeri(keys, values):
+                RI_string0 = "[" + str(keys) + "]"
+                RI_string1 = str(formatNumber(round((float(Fraction(values[0],
+                                                       values[1]))*100), 2)))
+                RI_string2 = str(formatNumber(round((float(values[0])), 2)))
+                RI_string3 = str(formatNumber(round((float(values[1])), 2)))
+                
+                RI_string = [RI_string0, RI_string1, RI_string2, RI_string3]
+                
+                print('\t'.join(RI_string).expandtabs(10))
+                RI_file.write((' '.join(RI_string) + "\n").expandtabs(10))
+            
+            RI_string = ['Chars', 'RI', 'Retained', 'Total']
+            
+            print('\t'.join(RI_string).expandtabs(10))
+            RI_file.write((' '.join(RI_string) + "\n").expandtabs(10))
+            
+            for keys, values in RI_char_dict.items():  # IR characters
+                if not '.' in keys and not '_' in keys:
+                    writeri(keys, values)
+                    
+            RI_string = ['\nStates', 'RI', 'Retained', 'Total']
+            
+            print('\t'.join(RI_string).expandtabs(10))
+            RI_file.write((' '.join(RI_string) + "\n").expandtabs(10))
+                    
+            statescodespresence = False
+            for keys, values in RI_char_dict.items():  # IR states
+                if not '.' in keys and '_' in keys:
+                    writeri(keys, values)
+                    statescodespresence = True
+                    
+            if not statescodespresence:
+                info_string = ("NA (hmatrix mandatory to set states codes)\n")
+                print(info_string)
+                RI_file.write(info_string)
+
+            RI_string = ['\nSubtrees', 'RI', 'Retained', 'Total']
+            
+            print('\t'.join(RI_string).expandtabs(10))
+            RI_file.write((' '.join(RI_string) + "\n").expandtabs(10))
+
+            polypresence = False
+            for keys, values in RI_char_dict.items():  # IR subtrees
+                if '.' in keys and not '_' in keys:
+                    writeri(keys, values)
+                    polypresence = True
+
+            if not polypresence:
+                info_string = "NA\n"
+                print(info_string)
+                RI_file.write(info_string)
+
+    # Codes for RI_char_dict
+    #
+    # 1 -   character
+    # 1.1 - character subtree coming from FPLSA
+    # 1_1 - character 1, state 1
+    #
+    
     return RI_char_dict
 
 
-def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
+def ITRI(true_tree, reconstructed_tree, prefix, method="TMS", weighting="FW", 
+         silent=False, verbose=False):
     """
     Compute the inter-tree retention index (ITRI; modified from
     Grand et al. 2014, which is an asymmetric distance between two trees, one
@@ -477,6 +690,10 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
     prefix : str
         Prefix of the text file to be saved containing the resulting ITRI.
         The complete path can be used. The default is False (no file saved).
+    method : str, optional
+        One of the two implemented algorithms of free-paralogy subtree
+        analysis between "TMS" and "FPS" for removing polymorphism. 
+        The default is "TMS".
     weighting : str, optional
         Weighting scheme to use between:
                                  * FW (Fractional weighting from
@@ -502,10 +719,18 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
 
     """
 
-    if rep_detector({true_tree:0, reconstructed_tree:0}):
-        print("ERROR: Repeated leaves have been detected.\n" +
-                         "Operation aborted.")
-        sys.exit(1)
+    # remove automatically repetitions if detected (user message printed)
+    if rep_detector({true_tree: 0}):
+        true_tree = del_replications_forest({true_tree: 0},
+                                                 method=method,
+                                                 prefix=prefix,
+                                                 verbose=verbose).items()[0]
+
+    if rep_detector({reconstructed_tree: 0}):
+        reconstructed_tree = del_replications_forest({reconstructed_tree: 0},
+                                                 method=method,
+                                                 prefix=prefix,
+                                                 verbose=verbose).items()[0]
 
     tt_tripdic = standard_tripdec({true_tree: 0},
                                       weighting,
@@ -583,8 +808,8 @@ def ITRI(true_tree, reconstructed_tree, prefix, weighting="FW", silent=False):
     return Precision, Recall, Fscore  # Fscore is the ITRI
 
 
-def triplet_distance(t1, t2, prefix,
-                     method="itrisym_sum", weighting="FW"):
+def triplet_distance(t1, t2, prefix, dist_method="itrisym_sum", method="TMS", 
+                     weighting="FW", verbose=False):
     """
     Compute a weighted triplet distance between two trees. The triplet distance
     is the mean of the ITRI between the two trees (because the two trees can be
@@ -603,7 +828,7 @@ def triplet_distance(t1, t2, prefix,
         Prefix of the text file to be saved containing the resulting triplet
         distance. The complete path can be used. The default is False
         (no file saved).
-    method : str, optional
+    dist_method : str, optional
         Two methods are available to compute the triplet distance:
 
             * 'itrisym_sum': (ITRI t1->t2 + ITRI t2->t1) / 2
@@ -615,6 +840,10 @@ def triplet_distance(t1, t2, prefix,
         Zootaxa, 3889(4), 525-552.
 
         The default is 'itrisym_sum'.
+    method : str, optional
+        One of the two implemented algorithms of free-paralogy subtree
+        analysis between "TMS" and "FPS" for removing polymorphism. 
+        The default is "TMS".
     weighting : str, optional
         Weighting scheme to use between:
                                  * FW (Fractional weighting from
@@ -634,10 +863,14 @@ def triplet_distance(t1, t2, prefix,
 
     """
 
-    if rep_detector({t1:0, t2:0}):
-        print("ERROR: Repeated leaves have been detected.\n" +
-                         "Operation aborted.")
-        sys.exit(1)
+    # remove automatically repetitions if detected (user message printed)
+    if rep_detector({t1: 0}):
+        t1 = del_replications_forest({t1: 0}, method=method, prefix=prefix,
+                                                 verbose=verbose).items()[0]
+
+    if rep_detector({t2: 0}):
+        t2 = del_replications_forest({t2: 0},method=method, prefix=prefix,
+                                                 verbose=verbose).items()[0]
 
     Precision12, Recall12, Fscore12 = ITRI(t1, t2, prefix=False,
                                          weighting=weighting,
@@ -646,10 +879,10 @@ def triplet_distance(t1, t2, prefix,
                                          weighting=weighting,
                                          silent=True)
 
-    if method == "itrisym_sum":  # classic mean
+    if dist_method == "itrisym_sum":  # classic mean
         ITRIsym = 1 - ((Fscore12 + Fscore21) / 2)
 
-    elif method == "itrisym_product":  # Grand et al. 2014 proposal
+    elif dist_method == "itrisym_product":  # Grand et al. 2014 proposal
         ITRIsym = (1 - Fscore12) * (1 - Fscore21)
 
     if prefix:
@@ -932,23 +1165,40 @@ def character_states_test(cladogram_dict, character_dict,
     character_component_dict = {}
     for character, values in character_dict.items():
         character_states = {}
-        character_states_count = 1
+        character_states_count = 0
+        value = str(values).split('.')[0] # remove artificial number from poly.
         for node in character.traverse(strategy="preorder"):
             if node.is_leaf() == False  and node.is_root() == False:
-                character_states["Character state #" + str(values) + "." + str(
+                
+                #find charstate names from hmatrix, new numbers if not present
+                try: 
+                    character_states_count = node.charstate_name
+                except AttributeError:
+                    character_states_count += 1
+                
+                character_states["Character state #" + str(value) + "." + str(
                            character_states_count)] = Tree.get_leaf_names(node)
-                character_states_count += 1
-        character_component_dict["Character_"+str(values)] = character_states
+                
+        character_component_dict["Character_"+str(value)  + "." + str(
+                                 character_states_count)] = character_states
+        
     # character cardinal
     character_cardinal_dict = {}
     for character, values in character_dict.items():
-        character_states_count = 1
+        character_states_count = 0
+        value = str(values).split('.')[0] # remove artificial number from poly.
         for node in character.traverse(strategy="preorder"):
             if node.is_leaf() == False  and node.is_root() == False:
-                character_cardinal_dict["Character state #" + str(values) + "."
+                
+                #find charstate names from hmatrix, new numbers if not present
+                try: 
+                    character_states_count = node.charstate_name
+                except AttributeError:
+                    character_states_count += 1
+                
+                character_cardinal_dict["Character state #" + str(value) + "."
                                         + str(character_states_count)] = set(
                                             Tree.get_leaf_names(character))
-                character_states_count += 1
 
     # character state test and adding node style
     results_test_dict = {}
@@ -1146,7 +1396,7 @@ def character_states_test(cladogram_dict, character_dict,
 
     if pdf_files:  # merge all pdfs
 
-        merger = PdfFileMerger()
+        merger = PdfMerger()
 
         for pdf in pdfs:
             merger.append(pdf)
@@ -1289,8 +1539,8 @@ def describe_forest(character_dict, prefix, showtaxanames=False):
     print("Forest described")
 
 
-def chartest(cladopath, charpath, taxarep1=False, taxarep2=False,
-             prefix="AGATTA_chartest", pdf_files=False):
+def chartest(cladopath, charpath, taxarep1=False, taxarep2=False, method="TMS", 
+             prefix="AGATTA_chartest", pdf_files=False, verbose=False):
     """
     Run the character states testing procedure for hierarchical characters
     defined by Cao (2008) and corrected by Rineau (2017). This procedure tests
@@ -1316,11 +1566,16 @@ def chartest(cladopath, charpath, taxarep1=False, taxarep2=False,
         optimal cladogram obtained from the cladistic analysis of character
         trees stored in charpath.
     charpath : str
-        Path to a newick file containing the initial character trees.
+        Path to a file containing the initial character trees in newick or 
+        hmatrix format.
     taxarep1 : str, optional
         DESCRIPTION. The default is False.
     taxarep2 : str, optional
         DESCRIPTION. The default is False.
+    method : str, optional
+        One of the two implemented algorithms of free-paralogy subtree
+        analysis between "TMS" and "FPS" for removing polymorphism. 
+        The default is "TMS".
     prefix : str
         Prefix of the files to be computed.
     pdf_files : str or bool, optional
@@ -1328,7 +1583,9 @@ def chartest(cladopath, charpath, taxarep1=False, taxarep2=False,
         pdf file for each character state for visualizing the results of the
         character state procedure.
         The default is False (no pdf files computed).
-
+    verbose : bool, optional
+        Verbose mode if True. The default is True.
+        
     Returns
     -------
     None.
@@ -1345,7 +1602,18 @@ def chartest(cladopath, charpath, taxarep1=False, taxarep2=False,
     print("Cladogram loaded")
     print("Loading character trees")
 
-    character_dict = character_extraction(charpath,taxarep2, verbose=False)
+    if os.path.splitext(charpath)[1] == '.hmatrix':
+        character_dict = hmatrix(charpath, prefix=False, chardec=False, 
+                                 verbose=False)
+    else:
+        character_dict = character_extraction(charpath,taxarep2, verbose=False)
+        
+    # remove automatically repetitions if detected (user message printed)
+    if rep_detector(character_dict):
+        character_dict = del_replications_forest(character_dict,
+                                                 method=method,
+                                                 prefix=prefix,
+                                                 verbose=verbose)
 
     print(str(len(character_dict)) + " characters loaded")
 

@@ -1,15 +1,15 @@
 Metadata-Version: 2.1
 Name: Agatta
-Version: 0.7.12
+Version: 0.7.13
 Summary: Three-item analysis python package
 Home-page: https://github.com/vrineau/Agatta
 Author: Valentin Rineau
 Author-email: valentin.rineau@gmail.com
 License: GNU GPLv3
-Platform: UNKNOWN
 Requires-Python: >=3.7.0
 Description-Content-Type: text/markdown
 License-File: LICENSE
+License-File: AUTHORS
 
 <img src="https://github.com/vrineau/agatta/blob/main/agatta/agatta.png?raw=true" alt="agatta_logotype" width="700"/>
 
@@ -60,6 +60,7 @@ To run a three-area analysis on a collection of rooted phylogenies stored in new
 agatta analysis <file> --software=paup --softpath=/path/to/paup-executable  --rosetta=<mapfile>
 ```
 This line is identical as for quick analysis plus a mapping file in csv  with two columns to give the correspondance between taxa (left column) and areas (right column). 
+
 ## License
 
 The code is currently licensed under the GNU General Public License version 3.
@@ -81,5 +82,3 @@ When using Agatta, please cite us (temporarily) as
 * Rineau, V., Zaragüeta i Bagils, R., & Bardin, J. (2021). Information content of trees: three-taxon statements, inference rules and dependency. *Biological Journal of the Linnean Society*, 133(4), 1152-1170.
 
 *Graphic chart by Malcolm T Sanders*
-
-

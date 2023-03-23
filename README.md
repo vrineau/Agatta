@@ -20,7 +20,7 @@ This package requires Python version 3.7 or higher.
 
 To install Agatta, you need to use the wheel file in the `dist` folder. Detailed explanations are available in the [tutorial](https://github.com/vrineau/Agatta/wiki/Tutorial).
 
-The package implements a pipeline for efficient heuristic searches that requires the installation of a PAUP* command-line binary ([phylosolutions.com/paup-test/](phylosolutions.com/paup-test/)) or TNT (http://www.lillo.org.ar/phylogeny/tnt/).
+The package implements a pipeline for efficient heuristic searches that requires the installation of WQFM (https://github.com/Mahim1997/wQFM-2020), TNT (http://www.lillo.org.ar/phylogeny/tnt/), or a PAUP* command-line binary (http://phylosolutions.com/paup-test).
 
 ## Documentation and Support
 
@@ -56,7 +56,7 @@ The code is currently licensed under the GNU General Public License version 3.
 
 When using Agatta, please cite us (temporarily) as
 
-> Rineau, V., Zaharias, P. (2022) Agatta (Version 0.7.10) [Software]. Github. https://github.com/vrineau/Agatta.
+> Rineau, V., Zaharias, P. (2022) Agatta (Version 0.7.14) [Software]. Github. https://github.com/vrineau/Agatta.
 
 ## References
 

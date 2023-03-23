@@ -2,7 +2,7 @@
 
 """
 Agatta: Three-item analysis Python package
-Contact: Valentin Rineau - valentin.rineau@gmail.com
+Contact: Valentin Rineau - valentin.rineau@sorbonne-universite.fr
 
 Agatta is a set of tools in the cladistic framework to perform
 three-item analysis and associated operations in cladistics in python.
@@ -59,7 +59,7 @@ from .ini import standardisation
 from .ini import character_extraction
 from .analysis import main_tripdec
 from .analysis import del_replications_forest
-from .interpret import RI
+from .interpret import RI_path
 from .interpret import ITRI
 from .interpret import rcc
 from .interpret import constrict
@@ -123,12 +123,11 @@ def main():
             # retention index
             if arguments["--index"] == "ri":
 
-                RI(character_extraction(arguments["<file>"][0],
-                                        arguments.get("--taxarep1", False),
-                                        verbose=False),
-                   character_extraction(arguments["<file>"][1],
-                                        arguments.get("--taxarep2", False),
-                                        verbose=False),
+                RI_path(arguments["<file>"][0],
+                   arguments["<file>"][1],
+                   arguments.get("--taxarep1", False),
+                   arguments.get("--taxarep2", False),
+                   arguments["--repetitions"],
                    arguments["--weighting"],
                    arguments["--prefix"]+".txt")
 
@@ -166,10 +165,12 @@ def main():
         elif arguments["chartest"]:
             chartest(arguments["<file>"][0],
                      arguments["<file>"][1],
-                     taxarep1=arguments.get("--taxarep1", False),
-                     taxarep2=arguments.get("--taxarep2", False),
-                     prefix=arguments["--prefix"],
-                     pdf_files=arguments["--pdf"])
+                     arguments.get("--taxarep1", False),
+                     arguments.get("--taxarep2", False),
+                     arguments["--repetitions"],
+                     arguments["--prefix"],
+                     arguments["--pdf"],
+                     arguments.get("-v", False))
 
         # convert
         elif arguments["convert"]:
@@ -192,7 +193,7 @@ def main():
                              arguments.get("--taxarep1", False)),
                              method=arguments["--repetitions"],
                              prefix=arguments["--prefix"],
-                             verbose=arguments["-v"])
+                             verbose=arguments.get("-v", False))
 
         # consensus
         elif arguments["consensus"]:
@@ -213,7 +214,8 @@ def main():
 
         # describe trees
         elif arguments["describetree"]:
-            describe_forest(character_extraction(arguments["<file>"][0]),
+            describe_forest(character_extraction(arguments["<file>"][0], 
+                                                 info_tree=False),
                             arguments["--prefix"],
                             arguments.get("--showtaxanames", False))
 

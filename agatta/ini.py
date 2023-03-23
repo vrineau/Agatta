@@ -2,7 +2,7 @@
 """
 
     Agatta: Three-item analysis Python package
-    Contact: Valentin Rineau - valentin.rineau@gmail.com
+    Contact: Valentin Rineau - valentin.rineau@sorbonne-universite.fr
 
     Agatta is a set of tools in the cladistic framework to perform
     three-item analysis and associated operations in cladistics in python.
@@ -16,8 +16,6 @@
 from os import path
 from re import search
 from re import findall
-from tkinter import Tk
-from tkinter import filedialog
 import csv
 import sys
 import warnings
@@ -30,7 +28,8 @@ with warnings.catch_warnings():
     from ete3.parser.newick import NewickError
 
 
-def character_extraction(infile=False, taxa_replacement=False, verbose=True):
+def character_extraction(infile=False, taxa_replacement=False, verbose=True,
+                         info_tree=True):
     """
     Extract newick rooted trees from a text file.
     The function extract lines begining with an open parenthesis and
@@ -41,7 +40,7 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
 
     Parameters
     ----------
-    infile : str, optional
+    infile : str
         Path of the file containing rooted trees in newick format
         (https://en.wikipedia.org/wiki/Newick_format). The input file must
         contain a single newick string on each line. Whitespaces are not
@@ -51,9 +50,7 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
             (a,b,(c,d,(e,f)));
             ((c,e),(a,(b,(d,f))));
 
-        The default is False (a selection window appears in this case).
-
-    taxa_replacement : str, optional
+    taxa_replacement : bool, optional
         Path of a table file containing two columns. The first column
         corresponds to the names of the terminals of the newick stored in
         infile, and the second column corresponds to their names the user wants
@@ -62,6 +59,10 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
              AB Valletia
              AC Monopleura
         The default is False (no replacement).
+    info_tree : bool, optional
+        Option that discard non-informative trees (at least, two terminals that 
+        are closer together relatively to a third one) when activated.
+        The default is True (non-informative trees are discarded).
 
     Returns
     -------
@@ -77,16 +78,16 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
     taxa_dict = {}  # taxa / symbol dictionary used if taxa_replacement == True
 
     # selection file window
-    if infile is None:
-        root = Tk()
-        infile = filedialog.askopenfilename(
-            title="Select file containing newick character trees",
-            filetypes=(
-                ("Newick files", "*.*"),
-                ("Lisbeth files", "*.3ia"),
-                ("Nexus files", "*.nex"),
-                ("Nexml files", "*.nexml")))
-        root.withdraw()
+    # if infile is None:
+    #     root = Tk()
+    #     infile = filedialog.askopenfilename(
+    #         title="Select file containing newick character trees",
+    #         filetypes=(
+    #             ("Newick files", "*.*"),
+    #             ("Lisbeth files", "*.3ia"),
+    #             ("Nexus files", "*.nex"),
+    #             ("Nexml files", "*.nexml")))
+    #     root.withdraw()
 
     infile = path.expanduser(infile)
 
@@ -246,7 +247,9 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True):
     if verbose:
         print("{} characters loaded".format(str(len(character_dict))))
 
-    character_dict = infotree_checker(character_dict)
+    # non-informative trees are discarded
+    if info_tree:
+        character_dict = infotree_checker(character_dict)
 
     return character_dict
 
@@ -751,9 +754,10 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
         delnodes = []  # list of leaves to delete
         for leaf in char.iter_leaves():
             delnodes.append(leaf)
+            leaf.get_ancestors()[0].add_feature("charstate_name", leaf.name)
             leaf.name = "_agatta_charstate_"+leaf.name  # for avoiding the
             # specific case where character state and taxa have the same name
-
+            
         # for each taxon
         for taxa in taxalist:
             if chardec:
@@ -1149,13 +1153,13 @@ def helper(command):
 
         agatta support <file> <file> [-s -v --index=<type> --prefix=<file>
                                        --taxarep1=<path> --taxarep2=<path>
-                                       --weighting=<type>]
+                                       --weighting=<type> --repetitions=<type>]
 
         Mandatory parameters:
 
             Two <file> arguments are requested which represents the path of
-            tree files. Both <file> must contain newick tree(s) (more on
-            accepted formats here INSERT_URL_HERE).
+            tree files. Both <file> must contain newick tree(s) (excepted in
+            ri mode, see below).
             The trees can be stored in newick files, nexus files (.nex), or
             nexml files (.nexml). Hierarchical matrices are not handled by the
             support command.
@@ -1164,7 +1168,7 @@ def helper(command):
                 characters. The first <file> contains one tree considered as
                 the optimal cladogram (or a consensus); the second <file>
                 contains the input character trees used to construct the
-                cladogram.
+                cladogram and can be a newick file or a hierarchical matrix.
                 --index=itri: the inter-tree retention index compares one tree
                 to a reference tree. It is an asymmetric measure, thus the
                 order of the file is important as for the ri. The first <file>
@@ -1205,6 +1209,18 @@ def helper(command):
                   triplet is present,
                 - NW: No weighting (all triplets have a weight of 1).
             By default 'FW' is used.
+            --repetitions=<type> The removal of repeated leaves in character
+            trees is made using the method of free-paralogy subtree.
+            Two algorithms are implemented, the original one from Nelson and
+            Ladiges (1996) ('FPS') for dealing with paralogy in cladistic
+            biogeography, and the algorithm of Rineau et al. (2021) ('TMS')
+            designed for all cases of repetitions (not only paralogy).
+            If the flag is not used and if repetitions are detected, they are
+            automatically removed using Rineau et al. algorithm's.
+            The repetition-free character trees are writen in prefix.poly and
+            each new tree receives an id, e.g. 1.2 corresponds to the second
+            repetition-free subtree computed from the 1st original character
+            tree. 
 
     Output:
 
@@ -1248,8 +1264,9 @@ def helper(command):
 
     Usage:
 
-        agatta chartest <file> <file> [-s -v --prefix=<file> --taxarep1=<path>
-                                             --taxarep2=<path>]
+        agatta chartest <file> <file> [-s -v --pdf --prefix=<file> 
+                                       --taxarep1=<path> --taxarep2=<path> 
+                                       --repetitions=<type>]
 
         Mandatory parameters:
 
@@ -1259,12 +1276,12 @@ def helper(command):
               - A newick file with a single newick tree on each line,
               - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
-            THe following url give more information on how to build input
+            The following url give more information on how to build input
             files: URL.
             The first <file> contains only one tree: the optimal cladogram or
             the consensus tree resulting from the analysis of a set of
-            character trees. THe second <file> contains the set of character
-            trees(more on accepted formats here INSERT_URL_HERE).
+            character trees. The second <file> contains the set of character
+            trees.
 
         Optionnal parameters:
 
@@ -1282,6 +1299,18 @@ def helper(command):
             the actual newick strings and the other with the names the user
             wants.
             --taxarep2=<path>  Idem as --taxarep1 for the second <file>.
+            --repetitions=<type>  The removal of repeated leaves in character
+            trees is made using the method of free-paralogy subtree.
+            Two algorithms are implemented, the original one from Nelson and
+            Ladiges (1996) ('FPS') for dealing with paralogy in cladistic
+            biogeography, and the algorithm of Rineau et al. (2021) ('TMS')
+            designed for all cases of repetitions (not only paralogy).
+            If the flag is not used and if repetitions are detected, they are
+            automatically removed using Rineau et al. algorithm's.
+            The repetition-free character trees are writen in prefix.poly and
+            each new tree receives an id, e.g. 1.2 corresponds to the second
+            repetition-free subtree computed from the 1st original character
+            tree.
     Output:
 
         Two output files are writen: prefix.chartest gives all locations

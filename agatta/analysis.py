@@ -2,7 +2,7 @@
 """
 
     Agatta: Three-item analysis Python package
-    Contact: Valentin Rineau - valentin.rineau@gmail.com
+    Contact: Valentin Rineau - valentin.rineau@sorbonne-universite.fr
 
     Agatta is a set of tools in the cladistic framework to perform
     three-item analysis and associated operations in cladistics in python.
@@ -286,10 +286,12 @@ def del_replications(treerep, method="TMS", verbose=False):
                 else:
                     treelistnorep.append(t)
 
-        # del atributes (main) : clean copy of all trees for recursion
+        # del features (main) in all trees for recursion
         treelistrepclearcopy = []
         for t in treelistrep:
-            treelistrepclearcopy.append(t.copy(method="newick"))
+            for node in t.traverse():
+                node.del_feature('FP')
+            treelistrepclearcopy.append(t.copy(method='cpickle'))
 
         return treelistrepclearcopy, treelistnorep
 
@@ -398,13 +400,35 @@ def del_replications_forest(character_dict, method="TMS",
 
             treelist = del_replications(treed, method, verbose)
 
-
             if treelist:
                 if len(treelist) == 1:
                     tree_dict[treelist[0]] = treeid
                     logfile.write("[" + str(treeid) + "] " +
                                   treelist[0].write(format=9) + "\n")
                 else:
+                    
+                    # function to sort trees with their minimal state number 
+                    def sorttreelist(character):
+                        """
+                        function to sort trees with their min state nb
+                        return empty list otherwise
+                        """
+                        statenb = []
+                        
+                        try: 
+                            for n in character.traverse(strategy="preorder"):
+                                if (n.is_leaf() == False and 
+                                    n.is_root() == False):
+                                    statenb.append(int(n.charstate_name))
+                            
+                            return min(statenb) 
+                        
+                        except AttributeError:
+                            return 1000
+                              
+                    #reorder list with state numbers if state numbers
+                    treelist.sort(key=sorttreelist)
+
                     i = 1
                     output_trees += len(treelist)
                     for treel in treelist:

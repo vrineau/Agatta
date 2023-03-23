@@ -20,7 +20,7 @@ setup(
 
     author="Valentin Rineau",
 
-    author_email="valentin.rineau@gmail.com",
+    author_email="valentin.rineau@sorbonne-universite.fr",
 
     description="Three-item analysis python package",
 
@@ -34,7 +34,7 @@ setup(
                        "treeswift",
                        "six",
                        "numpy",
-                       "PyPDF2"],
+                       "pypdf"],
 
     include_package_data=True,
 

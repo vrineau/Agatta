@@ -2,7 +2,7 @@
 """
 
     Agatta: Three-item analysis Python package
-    Contact: Valentin Rineau - valentin.rineau@gmail.com
+    Contact: Valentin Rineau - valentin.rineau@sorbonne-universite.fr
 
     Agatta is a set of tools in the cladistic framework to perform
     three-item analysis and associated operations in cladistics in python.
@@ -38,7 +38,7 @@ def search_pipeline(path_infile, software_path=False, software="paup",
     path_infile : string
         path of the input file.
     software_path : string
-        path of the software chosen, paup, tnt, wqfm. Not necessari if paup is
+        path of the software chosen, paup, tnt, wqfm. Not necessary if paup is
         installed in a windows os.
     software : string, optional
         paup, tnt, wqfm. The default is "paup".
