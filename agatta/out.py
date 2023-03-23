@@ -1015,7 +1015,7 @@ def agatta_analysis(file_path, software_path, software="paup",
     if ri:
         RI(cladogram_dict,
            character_dict,
-           weighting,
-           prefix)
+           weighting=weighting,
+           prefix=prefix)
 
     print('The analysis ended successfully')

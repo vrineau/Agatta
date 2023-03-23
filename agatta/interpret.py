@@ -619,7 +619,7 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
             
             RI_string = ['Chars', 'RI', 'Retained', 'Total']
             
-            print('\t'.join(RI_string).expandtabs(10))
+            print('\n' + '\t'.join(RI_string).expandtabs(10))
             RI_file.write((' '.join(RI_string) + "\n").expandtabs(10))
             
             for keys, values in RI_char_dict.items():  # IR characters
@@ -638,9 +638,9 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
                     statescodespresence = True
                     
             if not statescodespresence:
-                info_string = ("NA (hmatrix mandatory to set states codes)\n")
+                info_string = ("NA (hmatrix mandatory to set states codes)")
                 print(info_string)
-                RI_file.write(info_string)
+                RI_file.write(info_string + "\n")
 
             RI_string = ['\nSubtrees', 'RI', 'Retained', 'Total']
             
@@ -657,7 +657,7 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
                 info_string = "NA\n"
                 print(info_string)
                 RI_file.write(info_string)
-
+                
     # Codes for RI_char_dict
     #
     # 1 -   character
