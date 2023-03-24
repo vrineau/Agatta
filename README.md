@@ -18,11 +18,13 @@ Agatta works on Windows, Unix/Linux and macOS.
 
 This package requires Python version 3.7 or higher.
 
-To install Agatta, you need to use the wheel file in the `dist` folder. Detailed explanations are available in the [tutorial](https://github.com/vrineau/Agatta/wiki/Tutorial).
+Agatta and all its dependencies can be installed using `pip install Agatta`. Detailed explanations are available in the [tutorial](https://github.com/vrineau/Agatta/wiki/Tutorial).
 
 The package implements a pipeline for efficient heuristic searches that requires the installation of WQFM (https://github.com/Mahim1997/wQFM-2020), TNT (http://www.lillo.org.ar/phylogeny/tnt/), or a PAUP* command-line binary (http://phylosolutions.com/paup-test).
 
 ## Documentation and Support
+
+The official repository is on [GitHub](https://github.com/vrineau/Agatta)
 
 A complete tutorial is available in the [GitHub Wiki](https://github.com/vrineau/Agatta/wiki/Tutorial).
 

@@ -5,7 +5,20 @@ Summary: Three-item analysis python package
 Home-page: https://github.com/vrineau/Agatta
 Author: Valentin Rineau
 Author-email: valentin.rineau@sorbonne-universite.fr
-License: GNU GPLv3
+License: GNU General Public License v3 (GPLv3)
+Classifier: Development Status :: 4 - Beta
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: MacOS
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 3
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Other Audience
+Classifier: Natural Language :: English
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Bio-Informatics
+Classifier: Topic :: Scientific/Engineering :: Visualization
 Requires-Python: >=3.7.0
 Description-Content-Type: text/markdown
 License-File: LICENSE
@@ -31,11 +44,13 @@ Agatta works on Windows, Unix/Linux and macOS.
 
 This package requires Python version 3.7 or higher.
 
-To install Agatta, you need to use the wheel file in the `dist` folder. Detailed explanations are available in the [tutorial](https://github.com/vrineau/Agatta/wiki/Tutorial).
+Agatta and all its dependencies can be installed using `pip install Agatta`. Detailed explanations are available in the [tutorial](https://github.com/vrineau/Agatta/wiki/Tutorial).
 
 The package implements a pipeline for efficient heuristic searches that requires the installation of WQFM (https://github.com/Mahim1997/wQFM-2020), TNT (http://www.lillo.org.ar/phylogeny/tnt/), or a PAUP* command-line binary (http://phylosolutions.com/paup-test).
 
 ## Documentation and Support
+
+The official repository is on [GitHub](https://github.com/vrineau/Agatta)
 
 A complete tutorial is available in the [GitHub Wiki](https://github.com/vrineau/Agatta/wiki/Tutorial).
 
