@@ -4,3 +4,4 @@ tqdm
 treeswift
 six
 numpy
+pypdf
