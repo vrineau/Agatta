@@ -410,10 +410,11 @@ class Test_analysis:
 
     def test_retention_index(self):
 
-        RI_char_dict = RI(self.character_dict1, self.character_dict2)
+        RI_char_dict = RI(self.character_dict1, self.character_dict2, 
+                          verbose=True)
 
-        assert RI_char_dict == {1: Fraction(1, 1), 2: Fraction(1, 5),
-                      'Total retention index': Fraction(7, 15)}
+        assert RI_char_dict == {'1': Fraction(1, 1), '2': Fraction(1, 5),
+                      'Total': Fraction(7, 15)}
 
 
     def test_triplet_distance(self):

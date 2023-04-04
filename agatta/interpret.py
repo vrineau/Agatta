@@ -664,7 +664,11 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
     # 1_1 - character 1, state 1
     #
     
-    return RI_char_dict
+    RI_char_dict_return = {}
+    for keys, values in RI_char_dict.items():
+        RI_char_dict_return[keys] = Fraction(values[0], values[1])
+    
+    return RI_char_dict_return
 
 
 def triplet_distance(t1, t2, prefix, method="TMS", weighting="FW", 
