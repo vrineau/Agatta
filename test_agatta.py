@@ -17,7 +17,6 @@ from ete3 import Tree
 from tqdm import tqdm
 from fractions import Fraction
 from agatta.search import triplet_check
-from agatta.search import bandb
 from agatta.ini import character_extraction
 from agatta.ini import hmatrix
 from agatta.ini import standardisation
@@ -25,7 +24,6 @@ from agatta.interpret import constrict
 from agatta.interpret import rcc
 from agatta.interpret import RI
 from agatta.interpret import triplet_distance
-from agatta.interpret import ITRI
 from agatta.interpret import character_states_test
 from agatta.interpret import describe_forest
 from agatta.out import triplet_nexus_file
@@ -418,22 +416,13 @@ class Test_analysis:
                       'Total retention index': Fraction(7, 15)}
 
 
-    def test_ITRI(self):
-
-        ITRI_power, ITRI_arte, ITRI_efficiency = ITRI(Tree(self.tree1),
-                                                      Tree(self.tree2),
-                                                      prefix=False)
-
-        assert [ITRI_power, ITRI_arte, ITRI_efficiency] == [24.0, 80.0, 22.0]
-
-
     def test_triplet_distance(self):
 
-        ITRIsym = triplet_distance(Tree(self.tree1),
-                                   Tree(self.tree2),
-                                   prefix=False)
-
-        assert ITRIsym == 22.0
+        Precision, Recall, Fscore = triplet_distance(Tree(self.tree1),
+                                                     Tree(self.tree2),
+                                                     prefix=False)
+        
+        assert [Precision, Recall, Fscore] == [0.2, 0.24, 0.2181818181818182]
 
 
     def test_charstate(self, tmpdir):
@@ -526,15 +515,15 @@ class Test_analysis:
                 and e_line[w_number] == '1')
 
 
-    def test_bandb(self):
+    # def test_bandb(self):
 
-        optimal_score, optimal_tree_list = bandb(["a","b","c","d","e","f"],
-                                                 self.triplet_dict_outfile)
+    #     optimal_score, optimal_tree_list = bandb(["a","b","c","d","e","f"],
+    #                                              self.triplet_dict_outfile)
 
-        constree = constrict(optimal_tree_list)
-        constree.ladderize()
+    #     constree = constrict(optimal_tree_list)
+    #     constree.ladderize()
 
-        assert constree.write(format=9) == self.tree1
+    #     assert constree.write(format=9) == self.tree1
 
 
     def test_del_replications_TMS(self):

@@ -34,6 +34,7 @@ setup(
                        "treeswift",
                        "six",
                        "numpy",
+                       "pandas",
                        "pypdf"],
 
     include_package_data=True,

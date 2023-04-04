@@ -23,12 +23,8 @@ from .analysis import rep_detector
 from .analysis import del_replications_forest
 import os
 import sys
-import warnings
 from pypdf import PdfMerger
-
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore",category=SyntaxWarning)
-    from ete3 import Tree
+from ete3 import Tree
 
 
 def constrict(treelist, prefix=False, silent=False):
@@ -494,6 +490,7 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
 
     c_triplet_dict = standard_tripdec(cladogram_dict,
                                       weighting,
+                                      dec_detail=False,
                                       prefix=False,
                                       verbose=False)
     RI_tot = [0, 0]
@@ -508,6 +505,7 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
         RI_char_dict_denom[keys] = 0
         triplet_dict = standard_tripdec({chartree: keys},
                                         weighting,
+                                        dec_detail=False,
                                         prefix=False,
                                         verbose=False)
 
@@ -549,6 +547,7 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
                     
                     state_triplet_dict = standard_tripdec({charstate: keys},
                                                     weighting,
+                                                    dec_detail=False,
                                                     prefix=False,
                                                     verbose=False)
 
@@ -668,25 +667,34 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
     return RI_char_dict
 
 
-def ITRI(true_tree, reconstructed_tree, prefix, method="TMS", weighting="FW", 
-         silent=False, verbose=False):
+def triplet_distance(t1, t2, prefix, method="TMS", weighting="FW", 
+                     silent=False, verbose=False):
     """
-    Compute the inter-tree retention index (ITRI; modified from
-    Grand et al. 2014, which is an asymmetric distance between two trees, one
-    reference tree and one tree to be compared to the reference tree.
+    Compute several metrics between two hierarchical trees including the 
+    inter-tree retention index (ITRI; Grand et al. 2014, Rineau et al. 2015, 
+    which is an asymmetric distance between trees) and the triplet distance.
+    Can be used also in the specific case of comparing a reference tree to 
+    another tree.
 
     Grand, A., Zaragüeta-Bagils, R., Velez, L. M., & Ung, V. (2014).
     A cladistic re-analysis of the Gadiformes (Teleostei, Paracanthopterygii)
     using three-item analysis. Zootaxa, 3889(4), 525-552.
+    Rineau, V., Grand, A., Zaragüeta i Bagils, R., & Laurin, M. (2015). 
+    Experimental systematics : Sensitivity of cladistic methods to 
+    polarization and character ordering schemes. 
+    Contributions to Zoology, 84(2), 129‑148.
+
 
     Parameters
     ----------
-    true_tree : dict
+    t1 : dict
         Dictionary containing one newick tree (ete3 Tree object) as key.
-        The tree is the reference tree.
-    reconstructed_tree : dict
-        Dictionary containing one newick tree (ete3 Tree object) as key to
-        be compared to the reference tree.
+        If one want comparing a tree to a reference tree, t1 is the 
+        reference tree.
+    t2 : dict
+        Dictionary containing one newick tree (ete3 Tree object) as key.
+        If one want comparing a tree to a reference tree, t2 is the 
+        tree one wants to compare to the reference.
     prefix : str
         Prefix of the text file to be saved containing the resulting ITRI.
         The complete path can be used. The default is False (no file saved).
@@ -709,36 +717,48 @@ def ITRI(true_tree, reconstructed_tree, prefix, method="TMS", weighting="FW",
     Returns
     -------
     float
-        Precision. Proportion of triplets from the reconstructed tree that are
-        true (equivalent to power in Grand et al. 2014).
+        precision. ITRI(t1,t2) (Precision: (t1∩t2)/t2)) 
+        Computing the ITRI{t1,t2}, i.e. proportion of the FW of the  
+        3is of t1 that are also present in t2. If t1 is a reference tree, 
+        ITRI12 is the Precision: proportion of triplets from the reconstructed 
+        tree that are true (equivalent to power in Rineau et al. 2015).
     float
-        Recall. Proportion of triplets from the true tree that have been
-        retrieved (inverse of artefact in Grand et al. 2014).
+        recall. ITRI(t2,t1) (Recall: (t1∩t2)/t1))
+        Computing the ITRI{t1,t2}, i.e. proportion of the FW of the 3is 
+        of t2 that are also present in t1. If t1 is a reference tree, ITRI12 is
+        the recall.: proportion of triplets from the true tree that have been
+        retrieved (inverse of artefact in Rineau et al. 2015).
     float
-        ITRI. F-score: harmonic mean of precision and recall.
+        tripdistance. Harmonic mean of ITRI(t2,t1) and ITRI(t1,t2).
+        Harmonic mean between the two asymmetric ITRI values
+        computed. Gives a triplet distance between two trees.
+        If t1 is a reference tree, it is the F-score (harmonic mean of 
+        precision and recall).
 
     """
 
     # remove automatically repetitions if detected (user message printed)
-    if rep_detector({true_tree: 0}):
-        true_tree = del_replications_forest({true_tree: 0},
+    if rep_detector({t1: 0}):
+        t1 = del_replications_forest({t1: 0},
                                                  method=method,
                                                  prefix=prefix,
                                                  verbose=verbose).items()[0]
 
-    if rep_detector({reconstructed_tree: 0}):
-        reconstructed_tree = del_replications_forest({reconstructed_tree: 0},
+    if rep_detector({t2: 0}):
+        t2 = del_replications_forest({t2: 0},
                                                  method=method,
                                                  prefix=prefix,
                                                  verbose=verbose).items()[0]
 
-    tt_tripdic = standard_tripdec({true_tree: 0},
+    tt_tripdic = standard_tripdec({t1: 0},
                                       weighting,
+                                      dec_detail=False,
                                       prefix=False,
                                       verbose=False)
 
-    rt_tripdic = standard_tripdec({reconstructed_tree: 0},
+    rt_tripdic = standard_tripdec({t2: 0},
                                       weighting,
+                                      dec_detail=False,
                                       prefix=False,
                                       verbose=False)
 
@@ -747,6 +767,7 @@ def ITRI(true_tree, reconstructed_tree, prefix, method="TMS", weighting="FW",
     RI_intersect_reconstructed_tree = Fraction(0, 1)
     RI_intersect_true_tree = Fraction(0, 1)
     false_positives = Fraction(0, 1)
+    false_negatives = Fraction(0, 1)
 
     for trip, FW in rt_tripdic.items():
         if trip in tt_tripdic:
@@ -758,140 +779,71 @@ def ITRI(true_tree, reconstructed_tree, prefix, method="TMS", weighting="FW",
     for trip, FW in tt_tripdic.items():
         if trip in rt_tripdic:
             RI_intersect_true_tree += FW
+        else:
+            false_negatives += FW
         RI_true_tree += FW
 
-    Recall = float(Fraction(RI_intersect_true_tree, RI_true_tree))  # power
+    recall = float(Fraction(RI_intersect_true_tree, RI_true_tree))  # power
 
     try:
-        Precision = float(Fraction(RI_intersect_reconstructed_tree,
+        precision = float(Fraction(RI_intersect_reconstructed_tree,
                                RI_reconstructed_tree))  # 1/artefact
     except ZeroDivisionError:
-        Precision  = 0
+        precision  = 0
 
     try:
-        Fscore = (2 * Precision * Recall) / (Precision + Recall)  # ITRI
+        tripdistance = (2 * precision * recall) / (precision + recall)
     except ZeroDivisionError:
-        Fscore  = 0
+        tripdistance  = 0
 
+    # results list to display /save
+    itristr = []
+
+    itristr.append("Number of triplets in t1 (relevant elements) : "
+                   + str(round(float(RI_true_tree), 3)))
+    
+    itristr.append("Number of triplets in t2 (retreived elements) : " 
+                   + str(round(float(RI_reconstructed_tree), 3)))
+    
+    itristr.append("Number of triplets both in t1 and t2 " 
+                   + "(true positives) : " 
+                   + str(round(float(RI_intersect_true_tree), 3)) 
+                   + " (t1 also in t2) "
+                   + str(round(float(RI_intersect_reconstructed_tree), 3)) 
+                   + " (t2 also in t1)")
+    
+    itristr.append("Number of triplets in t2 but not in t1 " 
+                   + "(false positives) : " 
+                   + str(round(float(false_positives), 3)))
+    
+    itristr.append("Number of triplets in t1 but not in t2 " 
+                   + "(false negatives) : " 
+                   + str(round(float(false_negatives), 3)))
+
+    itristr.append("ITRI(t1,t2) (Precision: (t2 in t1)/t2)) : " 
+                   + str(round(precision, 3)))
+    
+    itristr.append("ITRI(t2,t1) (Recall: (t1 in t2)/t1)) : " 
+                   + str(round(recall, 3)))
+    
+    itristr.append("Triplet distance (F1-score: " 
+                   + "(2 * Precision * Recall) / " 
+                   + "(Precision + Recall)) : " 
+                   + str(round(tripdistance, 3)))
+
+    # save file
     if prefix:
         with open(prefix+".itri", "w") as itrifile:
-            itrifile.write("Triplet true positives (true tree) : "
-                           + str(round(float(RI_intersect_true_tree), 3))
-                           + " (reconstructed tree: "
-                           + str(round(float(RI_intersect_reconstructed_tree),
-                                       3))
-                           +")\n")
-            itrifile.write("Triplet false positives : " + str(round(
-                float(false_positives), 3)) + "\n")
-            itrifile.write("Triplets from reconstructed tree : " + str(round(
-                RI_reconstructed_tree, 3)) + "\n")
-            itrifile.write("Triplets from true tree : " + str(round(
-                RI_true_tree, 3)) + "\n")
-            itrifile.write("Precision : " + str(round(Precision, 3)) + "\n")
-            itrifile.write("Recall : " + str(round(Recall, 3)) + "\n")
-            itrifile.write("F1-score : " + str(round(Fscore, 3)) + "\n")
+            
+            for line in itristr:
+                itrifile.write(line + "\n")
 
+    # display
     if not silent:
-        print("Triplet true positives (true tree) : " + str(round(float(
-            RI_intersect_true_tree), 3)) + " (reconstructed tree: "
-        + str(round(float(RI_intersect_reconstructed_tree), 3)) +")")
-        print("Triplet false positives : " + str(round(float(
-            false_positives), 3)))
-        print("Triplets from reconstructed tree : " + str(round(
-            RI_reconstructed_tree, 3)))
-        print("Triplets from true tree : " + str(round(
-            RI_true_tree, 3)))
-        print("Precision : " + str(round(Precision, 3)))
-        print("Recall : " + str(round(Recall, 3)))
-        print("F1-score : " + str(round(Fscore, 3)))
-
-    return Precision, Recall, Fscore  # Fscore is the ITRI
-
-
-def triplet_distance(t1, t2, prefix, dist_method="itrisym_sum", method="TMS", 
-                     weighting="FW", verbose=False):
-    """
-    Compute a weighted triplet distance between two trees. The triplet distance
-    is the mean of the ITRI between the two trees (because the two trees can be
-    designed as the 'true tree'; weights can be used).
-    The order between the two trees t1 and t2 is not important.
-
-    Parameters
-    ----------
-    t1 : dict
-        Dictionary containing one newick tree (ete3 Tree object) as key.
-        First tree.
-    t2 : dict
-        Dictionary containing one newick tree (ete3 Tree object) as key.
-        Second tree.
-    prefix : str
-        Prefix of the text file to be saved containing the resulting triplet
-        distance. The complete path can be used. The default is False
-        (no file saved).
-    dist_method : str, optional
-        Two methods are available to compute the triplet distance:
-
-            * 'itrisym_sum': (ITRI t1->t2 + ITRI t2->t1) / 2
-            * 'itrisym_product': ITRI t1->t2 * ITRI t2->t1 (Grand et al. 2014)
-
-        Grand, A., Zaragüeta-Bagils, R., Velez, L. M., & Ung, V. (2014).
-        A cladistic re-analysis of the Gadiformes (Teleostei,
-        Paracanthopterygii) using three-item analysis.
-        Zootaxa, 3889(4), 525-552.
-
-        The default is 'itrisym_sum'.
-    method : str, optional
-        One of the two implemented algorithms of free-paralogy subtree
-        analysis between "TMS" and "FPS" for removing polymorphism. 
-        The default is "TMS".
-    weighting : str, optional
-        Weighting scheme to use between:
-                                 * FW (Fractional weighting from
-                                       Rineau et al. 2021)
-                                 * FWNL (Fractional weighting from
-                                       Nelson and Ladiges),
-                                 * UW (Uniform weighting from
-                                       Nelson and Ladiges 1992),
-                                 * MW (Minimal Weighting),
-                                 * AW (Additive Weighting),
-                                 * NW (No Weighting).
-        The default is "FW".
-    Returns
-    -------
-    ITRIsym : float
-        Distance between the two trees.
-
-    """
-
-    # remove automatically repetitions if detected (user message printed)
-    if rep_detector({t1: 0}):
-        t1 = del_replications_forest({t1: 0}, method=method, prefix=prefix,
-                                                 verbose=verbose).items()[0]
-
-    if rep_detector({t2: 0}):
-        t2 = del_replications_forest({t2: 0},method=method, prefix=prefix,
-                                                 verbose=verbose).items()[0]
-
-    Precision12, Recall12, Fscore12 = ITRI(t1, t2, prefix=False,
-                                         weighting=weighting,
-                                         silent=True)
-    Precision21, Recall21, Fscore21 = ITRI(t2, t1, prefix=False,
-                                         weighting=weighting,
-                                         silent=True)
-
-    if dist_method == "itrisym_sum":  # classic mean
-        ITRIsym = 1 - ((Fscore12 + Fscore21) / 2)
-
-    elif dist_method == "itrisym_product":  # Grand et al. 2014 proposal
-        ITRIsym = (1 - Fscore12) * (1 - Fscore21)
-
-    if prefix:
-        with open(prefix+".dist", "w") as itrifile:
-            itrifile.write(str(round(ITRIsym,3)))
-
-    print("Symmetrical ITRI value :"+str(round(ITRIsym,3)))
-
-    return ITRIsym
+        for line in itristr:
+            print(line)
+            
+    return precision, recall, tripdistance  # ITRI(T1,T2), ITRI(T2,T1), tripdst
 
 
 def character_states_test(cladogram_dict, character_dict,

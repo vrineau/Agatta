@@ -18,12 +18,8 @@ from .ini import taxa_extraction
 import os
 import sys
 import time
-import warnings
 import platform
-
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=SyntaxWarning)
-    from ete3 import Tree
+from ete3 import Tree
 
 
 def search_pipeline(path_infile, software_path=False, software="paup",

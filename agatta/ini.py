@@ -18,14 +18,10 @@ from re import search
 from re import findall
 import csv
 import sys
-import warnings
 import platform
 import treeswift
-
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=SyntaxWarning)
-    from ete3 import Tree
-    from ete3.parser.newick import NewickError
+from ete3 import Tree
+from ete3.parser.newick import NewickError
 
 
 def character_extraction(infile=False, taxa_replacement=False, verbose=True,
@@ -872,6 +868,12 @@ def checkargs(arguments):
             except ValueError:
                 sys.exit(print("ERROR: --parallel flag must be 'auto', 'no'" +
                       " or an integer specifying the number of cpu"))
+                
+        if arguments["--parallel"] != "no" and arguments["--detailed_tripdec"]:
+            print("WARNING: detailed output for triplet decomposition " +
+              "using the --detail flag is available only in " +
+              "non-parallel mode.\nTo compute the detailed output file," +
+              " please use --parallel=no.")
 
     if arguments["fp"] or arguments["analysis"]:
         if not arguments["--repetitions"] in ["TMS","FPS"]:
@@ -885,10 +887,9 @@ def checkargs(arguments):
                                "'strict', 'rcc'"))
 
     if arguments["support"]:
-        if not arguments["--index"] in ["ri","itri","itrisym_sum",
-                                        "itrisym_product"]:
+        if not arguments["--index"] in ["ri","tripdistance"]:
             sys.exit(print("ERROR: --index flag must be one of: 'ri', " +
-                               "'itri', 'itrisym_sum', 'itrisym_product"))
+                               "'tripdistance'"))
 
 
 def helper(command):
@@ -939,7 +940,7 @@ def helper(command):
                                       --repetitions=<type> --replicates=<int>
                                       --ri --rosetta=<file> --softpath=<path>
                                       --software=<type> --taxarep1=<path>
-                                      --weighting=<type>]
+                                      --weighting=<type> --detailed_tripdec]
 
         Mandatory parameters:
 
@@ -1048,6 +1049,11 @@ def helper(command):
                   triplet is present,
                 - NW: No weighting (all triplets have a weight of 1).
             By default 'FW' is used.
+            --detailed_tripdec Compute a detailed csv table showing the
+            link between triplet weights and character trees. Each column 
+            corresponds to one character (same order as <file>). Each line 
+            corresponds to a triplet. The last column and line give the sum
+            of all weights of the column or line, respectively.
 
     Output:
 
@@ -1077,8 +1083,9 @@ def helper(command):
 
     Usage:
 
-        agatta tripdec <file> [-s -v --parallel=<int> --prefix=<file>
-                                     --taxarep1=<path> --weighting=<type>]
+        agatta tripdec <file> [-s -v --parallel=<int> --prefix=<file> 
+                                     --taxarep1=<path> --weighting=<type>
+                                     --repetitions=<type> --detailed_tripdec]
 
         Mandatory parameters:
 
@@ -1124,6 +1131,23 @@ def helper(command):
                   triplet is present,
                 - NW: No weighting (all triplets have a weight of 1).
             By default 'FW' is used.
+            --detailed_tripdec Compute a detailed csv table showing the
+            link between triplet weights and character trees. Each column 
+            corresponds to one character (same order as <file>). Each line 
+            corresponds to a triplet. The last column and line give the sum
+            of all weights of the column or line, respectively.
+            --repetitions=<type>  The removal of repeated leaves in character
+            trees is made using the method of free-paralogy subtree.
+            Two algorithms are implemented, the original one from Nelson and
+            Ladiges (1996) ('FPS') for dealing with paralogy in cladistic
+            biogeography, and the algorithm of Rineau et al. (2021) ('TMS')
+            designed for all cases of repetitions (not only paralogy).
+            If the flag is not used and if repetitions are detected, they are
+            automatically removed using Rineau et al. algorithm's.
+            The repetition-free character trees are writen in prefix.poly and
+            each new tree receives an id, e.g. 1.2 corresponds to the second
+            repetition-free subtree computed from the 1st original character
+            tree.
 
     Output:
 
@@ -1169,28 +1193,18 @@ def helper(command):
                 the optimal cladogram (or a consensus); the second <file>
                 contains the input character trees used to construct the
                 cladogram and can be a newick file or a hierarchical matrix.
-                --index=itri: the inter-tree retention index compares one tree
-                to a reference tree. It is an asymmetric measure, thus the
-                order of the file is important as for the ri. The first <file>
-                contains the reference tree and the second file contains the
-                tree to compare. Generally used in simulation studies to
-                compare a reconstructed tree to a true tree.
-                --index=itrisym_sum or --index=itrisym_product:
-                triplet distance between two trees. As it
-                is a distance, this measure is symmetric. Thus the order
-                between the two <file> doesn't matter. Each file must include
-                one tree. itrisym_sum is the mean between the two asymmetric
-                ITRI, and itrisym_product is the product between the two ITRI.
+                --index=tripdistance: compute various measures for comparison 
+                between two trees t1 and t2. Can be used in simulation 
+                studies to compare a reconstructed tree to a true tree.
 
         Optionnal parameters:
 
             -s  Silent mode.
             -v  Verbose mode.
             --index  The index flag specifies which measure to use to compare
-            rooted trees between retention index ('ri'), inter-tree retention
-            index ('itri'), or triplet distance ('itrisym_sum' or
-            'itrisym_product'). More informations on the input file in the
-            mandatory parameters section.
+            rooted trees between retention index ('ri'), or inter-tree 
+            retention index/triplet distance ('tripdistance'). More 
+            informations on the input file in the mandatory parameters section.
             --taxarep1=<path>  If the user wants to replace identifiers by real
             leaf names in the result files, this flag can be used with a path
             to a csv file with two columns, the first with the identifiers in
@@ -1227,25 +1241,38 @@ def helper(command):
         One ouput file is writen the results of the tree comparisons:
             - For ri, a global retention index stating the overall information
             content of all character trees retained in the cladogram is writen,
-            plus a ri for each character.
-            - For itri, several values are computed given one true tree and one
-              reconstructed tree (the tree to evaluate):
-                * Triplet true positives : amount of triplets that are both
-                present in the true tree and the reconstructed tree (may vary
-                when fractional weights are used).
-                * Triplet false positives : amount of triplets that are present
-                in the reconstructed tree but not in the true tree.
-                * Triplets from reconstructed tree : amount of triplets that
-                are present in the reconstructed tree.
-                * Triplets from true tree : amount of triplets that are present
-                in the true tree.
-                * Precision : amount of triplets from the reconstructed tree
-                that are true.
-                * Recall : amount of true triplets that are present in the
-                reconstructed tree
-                * F-score : harmonic mean of precision and recall.
-            - For itrisym_sum and itrisym_product, the file contains the
-            triplet distance between the two trees.
+            plus a ri for each character, a ri for each character state, and a 
+            ri for each subtree if polymorphism allowing to cut tcharacter 
+            trees in subtrees present.
+            - For tripdistance, several values are computed given two trees t1 
+            (or reference/true tree) and t2 (or reconstructed tree) ('number of 
+            triplets' can refer to a sum of triplet weights depending of the
+            weighting scheme chosen). The interpetation differs if one wants to 
+            compare two equal topologies or if the comparison involves a 
+            reference tree and a tree to be compared with (in this case, the 
+            significance is added in parentheses):
+                
+                * Number of triplets in t1 (relevant elements)
+                
+                * Number of triplets in t2 (retreived elements)
+                
+                * Number of triplets both in t1 and t2 (true positives)
+                  Note that t1 triplets present in t2 and t2 triplets also in 
+                  t1 may differ because of the weighting)
+            
+                * Number of triplets in t2 but not in t1 (false positives) 
+                
+                * Number of triplets in t1 but not in t2 (false negatives) 
+                
+                * ITRI(t1,t2) (Precision: (t2 triplets present in t1)/t2) 
+                  amount of triplets from the reconstructed tree that are true.) 
+            
+                * ITRI(t2,t1) (Recall: (t1 triplets present in t2)/t1) amount 
+                  of true triplets that are present in the reconstructed tree) 
+            
+                * Triplet distance (F1-score: harmonic mean of precision and 
+                  recall (2 * Precision * Recall) / (Precision + Recall))
+
         All calculations are made using a specific weighting scheme
         (option --weighting).
               """)
@@ -1334,7 +1361,8 @@ def helper(command):
         agatta convert <file> [-s -v --analysis=<type> --filetype=<type> --log
                                       --parallel=<int> --prefix=<file>
                                       --replicates=<int> --software=<type>
-                                      --taxarep1=<path> --weighting=<type>]
+                                      --taxarep1=<path> --weighting=<type>
+                                      --repetitions=<type>]
 
         Mandatory parameters:
 
@@ -1406,6 +1434,18 @@ def helper(command):
                   triplet is present,
                 - NW: No weighting (all triplets have a weight of 1).
             By default 'FW' is used.
+            --repetitions=<type>  The removal of repeated leaves in character
+            trees is made using the method of free-paralogy subtree.
+            Two algorithms are implemented, the original one from Nelson and
+            Ladiges (1996) ('FPS') for dealing with paralogy in cladistic
+            biogeography, and the algorithm of Rineau et al. (2021) ('TMS')
+            designed for all cases of repetitions (not only paralogy).
+            If the flag is not used and if repetitions are detected, they are
+            automatically removed using Rineau et al. algorithm's.
+            The repetition-free character trees are writen in prefix.poly and
+            each new tree receives an id, e.g. 1.2 corresponds to the second
+            repetition-free subtree computed from the 1st original character
+            tree.
 
     Output:
 

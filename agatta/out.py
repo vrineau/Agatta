@@ -34,10 +34,7 @@ import time
 import datetime
 import warnings
 import treeswift
-
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=SyntaxWarning)
-    from ete3 import Tree
+from ete3 import Tree
 
 
 def triplet_nexus_file(triplet_dict, character_dict, weighting, analysis,
@@ -538,7 +535,8 @@ def triplet_to_file(triplet_dict, character_dict, prefix, analysis="heuristic",
 
 def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
             analysis="heuristic", taxa_replacement=False, nreplicates=1000,
-            logfile=True, software="paup", verbose=True):
+            logfile=True, software="paup", dec_detail=False, method="TMS", 
+            verbose=True):
     """
     Outputs a three-item analysis file readable by TNT (Goloboff et al. 2008),
     by PAUP* (Swofford, 2003), or by WQFM (Mahbub et al. 2021) from :
@@ -605,13 +603,15 @@ def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
     software : str, optional
         Choose the software to use between 'paup', 'tnt', and 'wqfm'.
         The default is "paup".
+    dec_detail : bool, optional
+        If true, save a detailed table in csv format named 
+        prefix.triplet_table.csv of triplet weights per character in addition 
+        to the .triplet file. The default is False.
+    method : str, optional
+        One of the two implemented algorithms of free-paralogy subtree
+        analysis between "TMS" and "FPS". The default is "TMS".
     verbose : bool, optional
         Verbose mode if True. The default is True.
-    multiplier : int, optional
-        As the weights must be integers in wqfm, multiplier argument allow to
-        choose the precision of the weights. Each weight is multiplied by
-        the value stated by multiplier befor rounding. Only used for wqfm.
-        The default is 1000000.
     Returns
     -------
     None.
@@ -630,7 +630,8 @@ def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
             character_dict = infile
 
         triplet_dict = main_tripdec(infile, prefix, taxa_replacement,
-                                    weighting, parallel, verbose)
+                                    weighting, parallel, dec_detail, 
+                                    method, verbose)
 
     triplet_to_file(triplet_dict, character_dict, prefix, analysis,
                     nreplicates, logfile, software, weighting)
@@ -640,7 +641,8 @@ def agatta_analysis(file_path, software_path, software="paup",
                     taxa_replacement=False, method="TMS", weighting="FW",
                     parallel="auto", prefix="agatta_out", analysis="heuristic",
                     nrep=1000, rosetta=False, chartest=False, ri=False,
-                    consensus=False, pdf_file=False, verbose=True):
+                    consensus=False, pdf_file=False, dec_detail=False, 
+                    verbose=True):
     """
     Main function of the Agatta python package. Allow to perform a three-item
     analysis (Nelson & Platnick, 1991), e.g., in the context of systematics
@@ -799,7 +801,10 @@ def agatta_analysis(file_path, software_path, software="paup",
         Can be used to compute pdf files if the character state procedure.
         pdf_file argument is a path to a floder where Agatta will write one pdf
         file for each character state. The default is False (no pdf generated).
-
+    dec_detail : bool
+        If true, save a detailed output table in csv format named 
+        prefix.triplet_table.csv of triplet weights per character in addition 
+        to the .triplet file. 
     verbose : bool, optional
         Verbose mode if True. The default is True.
 
@@ -898,6 +903,8 @@ def agatta_analysis(file_path, software_path, software="paup",
             nrep,
             True,  # logfile
             software,
+            dec_detail,
+            method,
             verbose)
 
     # three-item analysis using PAUP*, TNT, WQFM, or Agatta

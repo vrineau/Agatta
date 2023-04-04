@@ -33,6 +33,7 @@ Options:
     --chartest            Compute hierarchical character states test
     --consensus=<type>    Specify type of consensus
     --directory=<dir>     Directory for output chartest files [default: ./]
+    --detailed_tripdec    Compute a detailed table for triplet decomposition
     --filetype=<type>     Choose a tree/triplet/hmatrix file [default: trees]
     --index=<type>        Specify type of index to use [default: ri]
     --log                 Add a string to save an analysis log file
@@ -60,11 +61,10 @@ from .ini import character_extraction
 from .analysis import main_tripdec
 from .analysis import del_replications_forest
 from .interpret import RI_path
-from .interpret import ITRI
+from .interpret import triplet_distance
 from .interpret import rcc
 from .interpret import constrict
 from .interpret import describe_forest
-from .interpret import triplet_distance
 from .interpret import chartest
 from .out import agatta_analysis
 from .out import convert
@@ -107,6 +107,7 @@ def main():
                             arguments["--ri"],
                             arguments.get("--consensus", False),
                             arguments["--pdf"],
+                            arguments.get("--detailed_tripdec", False),
                             arguments.get("-v", False))
 
         # triplet decomposition
@@ -116,6 +117,8 @@ def main():
                          arguments.get("--taxarep1", False),
                          arguments["--weighting"],
                          arguments["--parallel"],
+                         arguments.get("--detailed_tripdec", False),
+                         arguments["--repetitions"],
                          arguments.get("-v", False))
 
         # retention index calculation
@@ -132,9 +135,9 @@ def main():
                    arguments["--prefix"]+".txt")
 
             # inter-tree retention index
-            elif arguments["--index"] == "itri":
+            elif arguments["--index"] == "tripdistance":
 
-                ITRI(list(character_extraction(
+                triplet_distance(list(character_extraction(
                     arguments["<file>"][0],
                     arguments.get("--taxarep1", False),
                     verbose=False).keys())[0],
@@ -144,22 +147,6 @@ def main():
                         verbose=False).keys())[0],
                     arguments["--prefix"],
                     arguments["--weighting"])
-
-            # triplet distance
-            elif (arguments["--index"] == "itrisym_sum" or
-                  arguments["--index"] == "itrisym_product"):
-
-                triplet_distance(list(character_extraction(
-                                arguments["<file>"][0],
-                                arguments.get("--taxarep1", False),
-                                verbose=False).keys())[0],
-                                list(character_extraction(
-                                arguments["<file>"][1],
-                                arguments.get("--taxarep2", False),
-                                verbose=False).keys())[0],
-                                arguments["--prefix"],
-                                arguments["--index"],
-                                arguments["--weighting"])
 
         # character states testing procedure
         elif arguments["chartest"]:
@@ -184,6 +171,8 @@ def main():
                     arguments["--replicates"],
                     arguments.get("--log", False),
                     arguments["--software"],
+                    False,
+                    arguments["--repetitions"],
                     arguments.get("-v", False))
 
         # free-subtree paralogy analysis
