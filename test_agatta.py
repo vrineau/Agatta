@@ -306,18 +306,7 @@ class Test_analysis:
                                                   weighting=weight))
 
                 if not triplet_dict_s == triplet_dict_p:
-                    for t, w in triplet_dict_s.items():
-                        if not triplet_check(t, cladogram):
-                            print(t)
-                            print("standard tripdec")
-
-                    for t, w in triplet_dict_p.items():
-                        if triplet_check(t, cladogram):
-                            print(t)
-                            print("parallel tripdec")
-
                     success = False
-                    break
 
         assert success == True
 

@@ -2,7 +2,7 @@
 
 # Agatta
 
-[![Build Status](https://app.travis-ci.com/vrineau/Agatta.svg?token=nhvCPs5vUaEvgro4jgU7&branch=main)](https://app.travis-ci.com/vrineau/Agatta)
+[![Python package](https://github.com/vrineau/Agatta/actions/workflows/python-package.yml/badge.svg)](https://github.com/vrineau/Agatta/actions/workflows/python-package.yml)
 
 ## Presentation
 
