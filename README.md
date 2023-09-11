@@ -2,7 +2,7 @@
 
 # Agatta
 
-[![Python package](https://github.com/vrineau/Agatta/actions/workflows/python-package.yml/badge.svg)](https://github.com/vrineau/Agatta/actions/workflows/python-package.yml)
+[![Build](https://github.com/vrineau/Agatta/actions/workflows/python-package.yml/badge.svg)](https://github.com/vrineau/Agatta/actions/workflows/python-package.yml)
 
 ## Presentation
 
@@ -58,7 +58,7 @@ The code is currently licensed under the GNU General Public License version 3.
 
 When using Agatta, please cite us (temporarily) as
 
-> Rineau, V., Zaharias, P. (2022) Agatta (Version 0.7.14) [Software]. Github. https://github.com/vrineau/Agatta.
+> Rineau, V., Zaharias, P. (2022) Agatta (Version 0.7.15) [Software]. Github. https://github.com/vrineau/Agatta.
 
 ## References
 
