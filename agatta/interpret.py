@@ -858,6 +858,17 @@ def cladogram_label(cladogram, clade_number_option, clade_type_option,
     """
     Label tree nodes for NRI and character state test.
     """
+    
+    #sometimes issues with pyqt installation
+    try:
+        from ete3 import NodeStyle, TreeStyle, faces
+        from ete3 import TextFace, COLOR_SCHEMES, CircleFace
+        
+    except ImportError:  # issue with ete3 imports
+        print("A manual instal of PyQt5 is requested to use the --pdf "
+              + "functionality\nPlease install using 'pip install" +
+              " PyQt5' and rerun the command line")
+        sys.exit(1)
 
     cladogram.ladderize()
 
