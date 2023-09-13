@@ -384,59 +384,68 @@ def del_replications_forest(character_dict, method="TMS",
     tree_dict = dict()
     output_trees = 0
 
-    with open(prefix+".poly", "w") as logfile:
+
+    if verbose:
+        loopchar = character_dict.items()
+    else:
+        loopchar = tqdm(character_dict.items())
+
+    for treed, treeid in loopchar:
+
         if verbose:
-            loopchar = character_dict.items()
-        else:
-            loopchar = tqdm(character_dict.items())
+            print("Tree " + str(treeid))
+            print(treed.write(format=9))
 
-        for treed, treeid in loopchar:
+        treelist = del_replications(treed, method, verbose)
 
-            if verbose:
-                print("Tree " + str(treeid))
-                print(treed.write(format=9))
-
-            treelist = del_replications(treed, method, verbose)
-
-            if treelist:
-                if len(treelist) == 1:
-                    tree_dict[treelist[0]] = treeid
-                    logfile.write("[" + str(treeid) + "] " +
-                                  treelist[0].write(format=9) + "\n")
-                else:
-                    
-                    # function to sort trees with their minimal state number 
-                    def sorttreelist(character):
-                        """
-                        function to sort trees with their min state nb
-                        return empty list otherwise
-                        """
-                        statenb = []
-                        
-                        try: 
-                            for n in character.traverse(strategy="preorder"):
-                                if (n.is_leaf() == False and 
-                                    n.is_root() == False):
-                                    statenb.append(int(n.charstate_name))
-                            
-                            return min(statenb) 
-                        
-                        except AttributeError:
-                            return 1000
-                              
-                    #reorder list with state numbers if state numbers
-                    treelist.sort(key=sorttreelist)
-
-                    i = 1
-                    output_trees += len(treelist)
-                    for treel in treelist:
-                        tree_dict[treel] = str(treeid) + "." + str(i)
-
-                        logfile.write("[" + str(treeid) + "." + str(i) + "] " +
-                                      treel.write(format=9) + "\n")
-                        i += 1
+        if treelist:
+            if len(treelist) == 1:
+                tree_dict[treelist[0]] = treeid
+                
+                if prefix:
+                    with open(prefix+".poly", "a") as logfile:
+                        logfile.write("[" + str(treeid) + "] " +
+                                      treelist[0].write(format=9) + "\n")
             else:
-                logfile.write("[" + str(treeid) + "] no informative tree\n")
+                
+                # function to sort trees with their minimal state number 
+                def sorttreelist(character):
+                    """
+                    function to sort trees with their min state nb
+                    return empty list otherwise
+                    """
+                    statenb = []
+                    
+                    try: 
+                        for n in character.traverse(strategy="preorder"):
+                            if (n.is_leaf() == False and 
+                                n.is_root() == False):
+                                statenb.append(int(n.charstate_name))
+                        
+                        return min(statenb) 
+                    
+                    except AttributeError:
+                        return 1000
+                          
+                #reorder list with state numbers if state numbers
+                treelist.sort(key=sorttreelist)
+
+                i = 1
+                output_trees += len(treelist)
+                for treel in treelist:
+                    tree_dict[treel] = str(treeid) + "." + str(i)
+
+
+                    if prefix:
+                        with open(prefix+".poly", "w") as logfile:
+                            logfile.write("[" + str(treeid) + "." + str(i) + 
+                                          "] " + treel.write(format=9) + "\n")
+                    i += 1
+        else:
+            if prefix:
+                with open(prefix+".poly", "w") as logfile:
+                    logfile.write("[" + str(treeid) + 
+                                  "] no informative tree\n")
 
     if output_trees != 0:
         print("Polymorphism removed: "

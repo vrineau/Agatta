@@ -19,6 +19,7 @@ Usage:
     agatta hmatrix          <file>...     [options]
     agatta support          <file> <file> [options]
     agatta chartest         <file> <file> [options]
+    agatta nri              <file> <file> [options]
     agatta standardisation  <file> <file> [options]
     agatta help             <command>
     agatta -h | --help
@@ -50,6 +51,10 @@ Options:
     --taxarep1=<path>     Table for leaves replacement for file 1
     --taxarep2=<path>     Table for leaves replacement for file 2
     --weighting=<type>    Specify the type of triplet weighting [default: FW]
+    --rnri_codes=<path>   Compute NRI with a split of characters given in csv       
+    --rnri_totaltree      Compute a pdf with absolute triplet support by node
+    --rnri_total_size     Size of nodes in rnri_totaltree [default: 0.05]  
+    --rnri_rescaling      Rescale values in rnri_totaltree
 
 """
 
@@ -66,6 +71,7 @@ from .interpret import rcc
 from .interpret import constrict
 from .interpret import describe_forest
 from .interpret import chartest
+from .interpret import NRI
 from .out import agatta_analysis
 from .out import convert
 from .__version__ import __version__
@@ -156,6 +162,23 @@ def main():
                      arguments.get("--taxarep2", False),
                      arguments["--repetitions"],
                      arguments["--prefix"],
+                     arguments["--pdf"],
+                     arguments.get("-v", False))
+
+        # nodal retention index
+        elif arguments["nri"]:
+            chartest(arguments["<file>"][0],
+                     arguments["<file>"][1],
+                     arguments.get("--taxarep1", False),
+                     arguments.get("--taxarep2", False),
+                     arguments["--prefix"],
+                     arguments.get("--rnri_codes", False),
+                     arguments["--weighting"],
+                     arguments["--repetitions"],
+                     arguments.get("--rnri_totaltree", True),
+                     arguments.get("--rnri_total_size", 0.05),
+                     arguments.get("--rescaling", True),
+                     arguments["--repetitions"],
                      arguments["--pdf"],
                      arguments.get("-v", False))
 

@@ -18,14 +18,17 @@ from itertools import combinations
 from .ini import hmatrix
 from .ini import taxa_extraction
 from .ini import character_extraction
+from .ini import hmatrix
 from .analysis import standard_tripdec
 from .analysis import rep_detector
 from .analysis import del_replications_forest
-import os
+from .analysis import main_tripdec
+import csv
+from os import path, devnull, remove
 import sys
 from pypdf import PdfMerger
+from fractions import Fraction
 from ete3 import Tree
-
 
 def constrict(treelist, prefix=False, silent=False):
     """
@@ -393,15 +396,15 @@ def RI_path(cladopath, charpath, taxarep1=False, taxarep2=False,
 
     print("Loading cladogram")
 
-    cladopath = os.path.expanduser(cladopath)
-    charpath = os.path.expanduser(charpath)
+    cladopath = path.expanduser(cladopath)
+    charpath = path.expanduser(charpath)
 
     cladogram_dict = character_extraction(cladopath, taxarep1, verbose=False)
 
     print("Cladogram loaded")
     print("Loading character trees")
 
-    if os.path.splitext(charpath)[1] == '.hmatrix':
+    if path.splitext(charpath)[1] == '.hmatrix':
         character_dict = hmatrix(charpath, prefix=False, chardec=False, 
                                  verbose=False)
     else:
@@ -850,6 +853,367 @@ def triplet_distance(t1, t2, prefix, method="TMS", weighting="FW",
     return precision, recall, tripdistance  # ITRI(T1,T2), ITRI(T2,T1), tripdst
 
 
+def cladogram_label(cladogram, clade_number_option, clade_type_option, 
+                    pdf_files=False):
+    """
+    Label tree nodes for NRI and character state test.
+    """
+
+    cladogram.ladderize()
+
+    if clade_number_option == "yes":  # label cladogram nodes
+        node_style_num_count = 1
+        for node in cladogram.traverse(strategy="preorder"):
+            if node.is_leaf() == False  and node.is_root() == False:
+                if pdf_files:
+                    style_num = TextFace(node_style_num_count, fsize=2)
+                    node.add_face(style_num, column=1,
+                                  position = "branch-bottom")
+                node.add_feature("clade_label", node_style_num_count)
+                node.name = node_style_num_count
+                node_style_num_count += 1
+            elif node.is_root() == True:
+                node.add_feature("clade_label", "root")
+            else:
+                node.add_feature("clade_label", node.name)
+
+    if clade_type_option == "yes":  # label cladogram node types
+        for node in cladogram.traverse(strategy="postorder"):
+            if node.is_leaf():
+                node.add_feature("clade_type", "leaf")
+            else:
+                i = len([child_node for child_node in node.get_children()
+                         if not child_node.is_leaf()])
+                if i >= 2:
+                    node.add_feature("clade_type", "paralog")
+                elif i == 1:
+                    node.add_feature("clade_type", "ortholog")
+                elif i == 0:
+                    node.add_feature("clade_type", "apical_node")
+
+    syn_dict = {}
+    for node_number in cladogram.traverse(strategy="postorder"):
+        syn_dict[str(node_number.clade_label)] = {
+            "accepted": [],"rejected": []}
+
+    return cladogram, syn_dict
+
+
+def NRI(cladopath, charpath, taxarep1=False, taxarep2=False, prefix="rnri", 
+        rnri_codes=False, weighting='FW', polymethod='TMS', totaltree=True, 
+        bubble_size=0.05, rescaled=True):
+    """
+    Compute the Nodal Retention Index and return a pdf with percentages of NRI
+    for each character (or for each set of characters if rnri_codes=True) 
+    plus a csv file and with the total amount of triplet weights by node.
+    
+    Nodal retention index: given a set of characters and a cladogram, gives the 
+    amount of triplet from each character in agreement with each node. Allows 
+    to see easily the relative support for each clade.
+
+    Parameters
+    ----------
+    cladopath : str
+        path of input file containing the cladogram (or consensus).
+    charpath : str
+        path of input file containing characters in hmatrix or newick format.
+    taxarep1 : str, optional
+        DESCRIPTION. The default is False.
+    taxarep2 : str, optional
+        DESCRIPTION. The default is False.
+    prefix : str
+        Prefix of the files prefix.nri (csv file + a newick tree with node 
+        names), prefix.pdf (percentages) and prefix.total.pdf (total triplet
+        weights) to be saved. 
+        The default is 'rnri'.
+    rnri_codes : bool
+        By default, the prefix.pdf file will display a tree with a piechart for 
+        each node representing the relative proportion of support from each 
+        character. The user can 
+    weighting : str, optional
+        Weighting scheme to use between FW, FWNL, MW, AW, NW. 
+        The default is 'FW'.
+    polymethod : str, optional
+        One of the two implemented algorithms of free-paralogy subtree
+        analysis between "TMS" and "FPS". The default is "TMS".
+    totaltree : bool, optional
+        If set to True, computes the prefix.total.pdf showing the support of 
+        each node given the relative amounts of character triplets in 
+        agreement. The default is True.
+    bubble_size : float, optional
+        Size of the nodes in prefix.total.pdf. The default is 0.05.
+    rescaled : bool, optional
+        If True, for prefix.total.pdf the absolute values will be be rescaled 
+        to avoid the symetry effect inherent to triplet decomposition. 
+        Because of this effect, a balanced character has a heavier weight
+        than an inbalanced character.
+        The default is True.
+
+    Returns
+    -------
+    pie_percentages1 : dict
+        dictionary with node names as keys and lists of percentages as values.
+        The list correspond all percentages displayed in the piechart tree.
+
+    """
+
+    #sometimes issues with pyqt installation
+    try:
+        from ete3 import NodeStyle, TreeStyle, faces
+        from ete3 import TextFace, COLOR_SCHEMES, CircleFace
+        
+    except ImportError:  # issue with ete3 imports
+        print("A manual instal of PyQt5 is requested to use the --pdf "
+              + "functionality\nPlease install using 'pip install" +
+              " PyQt5' and rerun the command line")
+        sys.exit(1)
+    
+    # reading matrix cladogram csv
+    fileName, fileExtension = path.splitext(charpath)
+    
+    if fileExtension == ".hmatrix":
+        character_dict = hmatrix(charpath, prefix=False, 
+                                 chardec=False, verbose=False)
+    else:
+        character_dict = character_extraction(charpath, taxarep1)
+        
+    cladogram_dict = character_extraction(cladopath, taxarep2, verbose=False)
+    
+    if rnri_codes:
+        
+        rnri_codes = path.expanduser(rnri_codes)
+        
+        with open(rnri_codes, "r") as rnri_file:
+            try:
+                dialect = csv.Sniffer().sniff(rnri_file.readline(),
+                                              delimiters=[";","\t"," ","|"])
+            except:
+                print("ERROR: The table file '" + rnri_codes +
+                                  "' is not adequately formated." +
+                                  "\n Operation aborted.")
+            else:
+                no_exception = True
+            if not 'no_exception' in locals():
+                sys.exit(1)
+        
+        with open(rnri_codes, "r") as rnri_file:
+        
+            char_list_raw = csv.reader(rnri_file, delimiter=dialect.delimiter)
+            rnri_codes = list(char_list_raw)
+        
+            if not len({len(l) for l in rnri_codes}) == 1:
+                 print("ERROR: The table file '" + rnri_codes +
+                                  "' is broken.\n Operation aborted.")
+                 sys.exit(1)
+    
+    # default function use : each character is represented in the piechart
+    else:
+        rnri_codes = []
+        for charname in character_dict.values():
+            rnri_codes.append(['', 'character ' + charname])
+            
+    # add names to internal nodes
+    cladogram = list(cladogram_dict.keys())[0]
+    cladogram.ladderize()
+    pie_percentages = dict() # dict int node name / percentage list for piech.
+    Node_weight = dict() # dict internal node name / percentage list for piech.
+    Node_weight_rescaled = dict() # dict with rescaling denominator
+    
+    categories_rnri = []
+    n = [categories_rnri.append(x) for x in [x[1] for x in rnri_codes] 
+     if x not in categories_rnri]
+    
+    node_style_num_count = 1
+    
+    card = len(cladogram.get_leaf_names())
+    rescaledtot = 0
+    for node in cladogram.traverse(strategy="preorder"):
+        if node.is_leaf() == False  and node.is_root() == False:
+            cardn = len(node.get_leaf_names())
+            rescaledtot += (cardn - 1)*(card - cardn)
+        
+    for node in cladogram.traverse(strategy="preorder"):
+        if node.is_leaf() == False  and node.is_root() == False:
+            node_style_num_countstr = str(node_style_num_count)
+            style_num = TextFace(node_style_num_countstr, fsize=2)
+            node.add_face(style_num, column=1,
+                          position = "branch-bottom")
+            node.add_feature("clade_label", node_style_num_countstr)
+            node.name = node_style_num_countstr
+            pie_percentages[node_style_num_countstr] = [
+                Fraction(0,1)] * len(set([x[1] for x in rnri_codes]))
+            Node_weight[node_style_num_countstr] = Fraction(0,1)
+        
+            node_style_num_count += 1
+            
+            # rescaling factor computation
+            cardn = len(node.get_leaf_names())
+            
+            Node_weight_rescaled[
+                node.name] = ((cardn - 1)*(card - cardn)) / rescaledtot
+            
+        else:
+            node.add_feature("clade_label", False)
+    
+    # RNRI computation : decompose each character in triplets with weights
+    # for each triplet : traverse the tree and check if agreement tree/triplet
+    # if yes add value to pie_percentages
+    
+    print("Starting detailed triplet decomposition and FW computation for NRI")
+    
+    for character, carnb in character_dict.items():  # for each character
+    
+        print("Decomposition: character " + str(carnb))
+        
+        #blockPrint()
+        triplist = main_tripdec({character : 1}, prefix=False, 
+                                taxa_replacement=False, weighting=weighting, 
+                                parallel='no', dec_detail=False, 
+                                method=polymethod, verbose=False)
+        #enablePrint()
+            
+        for triplet_rnri, FW in triplist.items():  # check if triplet is true
+            
+            in1name, in2name = list(triplet_rnri.in_taxa)
+            
+            in1 = cladogram.get_leaves_by_name(str(in1name))[0]
+            in2 = cladogram.get_leaves_by_name(str(in2name))[0] 
+            out = cladogram.get_leaves_by_name(list(
+                triplet_rnri.out_taxa)[0])[0]
+            
+            in_node = set(Tree.get_leaf_names(in1.get_common_ancestor(in2)))
+            nodeout1 = set(Tree.get_leaf_names(out.get_common_ancestor(in1)))
+            nodeout2 = set(Tree.get_leaf_names(out.get_common_ancestor(in2)))
+            
+            # check if triplet is valid
+            if (in_node.issubset(nodeout1) and in_node.issubset(nodeout2) and 
+                in_node != nodeout1 and in_node != nodeout2):
+                
+                # add value in result list
+                pie_percentages[in1.get_common_ancestor(in2).name][
+                    categories_rnri.index(rnri_codes[int(carnb)-1][1])] += FW
+                Node_weight[in1.get_common_ancestor(in2).name] += FW
+    
+    print("Triplet decomposition and FW computation completed")
+    
+    # round and compute percentages
+    
+    pie_percentages1 = dict()
+    Node_weight2 = dict()
+    
+    for node_name, values_list in pie_percentages.items():
+        
+        total = sum(pie_percentages[node_name])
+        pie_percentages1[node_name] = [
+            round((x / total) * 100) for x in values_list]
+        pie_percentages1[node_name].pop()
+        totalsub = sum(pie_percentages1[node_name])
+        pie_percentages1[node_name].append(100 - totalsub)
+    
+    for node_name, frac in Node_weight.items():
+        Node_weight2[node_name] = round((float(frac)), 5)
+    
+    # display pie-percentages
+    
+    # Basic tree style
+    ts = TreeStyle()
+    ts.show_leaf_name = True
+    ts.margin_top = 10
+    ts.margin_right = 10
+    ts.margin_left = 10
+    ts.margin_bottom = 10
+    ts.show_scale = False
+    colors=COLOR_SCHEMES["dark2"]
+    
+    #remove display nodes
+    for n in cladogram.traverse():
+       nstyle = NodeStyle()
+       nstyle["fgcolor"] = "black"
+       nstyle["size"] = 0
+       n.set_style(nstyle)
+       
+    #Associate the PieChartFace only with internal nodes
+    def pie_nodes(node):
+        if not node.is_leaf() and not node.is_root():
+            
+            F= faces.PieChartFace(pie_percentages1[node.name],
+                                  colors=colors, 
+                                  width=50, height=50)
+            F.border.width = None
+            F.opacity = 0.7
+            faces.add_face_to_node(F,node, 0, position="branch-right")
+    
+    ts.layout_fn = pie_nodes
+    
+    i = 0
+    for cat in categories_rnri:
+        ts.legend.add_face(CircleFace(10, colors[i]), column=0)
+        ts.legend.add_face(TextFace(cat, fsize=7), column=1)    
+    
+        i += 1 
+        
+    # if yes, save a pdf with node size reflecting overall triplet support
+    if totaltree:
+        
+        ts2 = TreeStyle()
+        ts2.show_leaf_name = True
+        ts2.margin_top = 10
+        ts2.margin_right = 10
+        ts2.margin_left = 10
+        ts2.margin_bottom = 10
+        ts2.show_scale = False
+        
+        bubble_cladogram = cladogram.copy()
+        
+        def bubble_layout(node):
+            if not node.is_leaf() and not node.is_root():
+                # Creates a sphere face whose size is proportional to weight
+                
+                if rescaled:
+                    radius = Node_weight2[node.name] / Node_weight_rescaled[
+                        node.name]
+                else:
+                    radius = Node_weight2[node.name]
+                    
+                C = CircleFace(radius=Node_weight2[node.name]*bubble_size, 
+                               color="RoyalBlue", style="sphere")
+                C.opacity = 0.3
+                faces.add_face_to_node(C, node, 0, position="float")
+    
+        ts2.layout_fn = bubble_layout
+        
+        bubble_cladogram.render(prefix + ".total.pdf", tree_style=ts2)
+    
+    # save results
+    cladogram.render(prefix + ".pdf", tree_style=ts)
+    
+    with open(prefix+".nri", "w") as results_file:
+        
+        results_file.write(' ')
+        for e in categories_rnri:
+            results_file.write(',' + e)
+        results_file.write(",total,total_rescaled\n")  
+        
+        for carname, percentage_list in pie_percentages1.items():
+            results_file.write('Node_' + carname)
+            for p in percentage_list: 
+                results_file.write(',' + str(p))
+    
+            radius = Node_weight2[carname]        
+            radius_rescaled = Node_weight2[carname] / Node_weight_rescaled[
+                carname]
+                
+            results_file.write("," + str(radius) + "," + 
+                               str(radius_rescaled) + "\n")  
+    
+            
+        results_file.write("\n" + cladogram.write(format=8) + "\n")
+            
+    print("Nodal Retention Index computation ended successfully")
+        
+    return pie_percentages1
+    
+
 def character_states_test(cladogram_dict, character_dict,
                           prefix, pdf_files=False):
     """
@@ -889,52 +1253,6 @@ def character_states_test(cladogram_dict, character_dict,
         Two dictionaries with the results of the procedure sorted in two ways.
 
     """
-
-    # label cladogram nodes (types and id)
-    def cladogram_label(cladogram, clade_number_option, clade_type_option):
-        """
-        Label tree nodes.
-        """
-
-        cladogram.ladderize()
-
-        if clade_number_option == "yes":  # label cladogram nodes
-            node_style_num_count = 1
-            for node in cladogram.traverse(strategy="preorder"):
-                if node.is_leaf() == False  and node.is_root() == False:
-                    if pdf_files:
-                        style_num = TextFace(node_style_num_count, fsize=2)
-                        node.add_face(style_num, column=1,
-                                      position = "branch-bottom")
-                    node.add_feature("clade_label", node_style_num_count)
-                    node.name = node_style_num_count
-                    node_style_num_count += 1
-                elif node.is_root() == True:
-                    node.add_feature("clade_label", "root")
-                else:
-                    node.add_feature("clade_label", node.name)
-
-        if clade_type_option == "yes":  # label cladogram node types
-            for node in cladogram.traverse(strategy="postorder"):
-                if node.is_leaf():
-                    node.add_feature("clade_type", "leaf")
-                else:
-                    i = len([child_node for child_node in node.get_children()
-                             if not child_node.is_leaf()])
-                    if i >= 2:
-                        node.add_feature("clade_type", "paralog")
-                    elif i == 1:
-                        node.add_feature("clade_type", "ortholog")
-                    elif i == 0:
-                        node.add_feature("clade_type", "apical_node")
-
-        syn_dict = {}
-        for node_number in cladogram.traverse(strategy="postorder"):
-            syn_dict[str(node_number.clade_label)] = {
-                "accepted": [],"rejected": []}
-
-        return cladogram, syn_dict
-
 
     def find_synapomorphy(leaf_syn):
         """
@@ -1115,7 +1433,8 @@ def character_states_test(cladogram_dict, character_dict,
     for cladogram in cladogram_dict:
         cladogram, syn_dict = cladogram_label(cladogram,
                                               clade_number_option="yes",
-                                              clade_type_option="yes")
+                                              clade_type_option="yes",
+                                              pdf_files=pdf_files)
 
     # list character, states, and taxa content
     character_component_dict = {}
@@ -1186,7 +1505,8 @@ def character_states_test(cladogram_dict, character_dict,
                     pruned_cladogram.prune(list(
                         character_cardinal_dict[char_states_names]))  #prune
                     pruned_cladogram, temp = cladogram_label(pruned_cladogram,
-                             clade_number_option="no", clade_type_option="yes")
+                             clade_number_option="no", clade_type_option="yes",
+                             pdf_files=pdf_files)
                     synapomorphy_test, synapomorphies_set, results_test_dict, \
                         pruned_cladogram = synapomorphy_test_placement(
                             pruned_cladogram, taxa_in_state, results_test_dict,
@@ -1361,7 +1681,7 @@ def character_states_test(cladogram_dict, character_dict,
         merger.close()
 
         for pdf in pdfs:
-            os.remove(pdf)
+            remove(pdf)
 
     print("Character state test procedure ended successfully")
 
@@ -1550,19 +1870,20 @@ def chartest(cladopath, charpath, taxarep1=False, taxarep2=False, method="TMS",
 
     print("Loading cladogram")
 
-    cladopath = os.path.expanduser(cladopath)
-    charpath = os.path.expanduser(charpath)
+    cladopath = path.expanduser(cladopath)
+    charpath = path.expanduser(charpath)
 
     cladogram_dict = character_extraction(cladopath, taxarep1, verbose=False)
 
     print("Cladogram loaded")
     print("Loading character trees")
 
-    if os.path.splitext(charpath)[1] == '.hmatrix':
+    if path.splitext(charpath)[1] == '.hmatrix':
         character_dict = hmatrix(charpath, prefix=False, chardec=False, 
                                  verbose=False)
     else:
-        character_dict = character_extraction(charpath,taxarep2, verbose=False)
+        character_dict = character_extraction(
+            charpath, taxarep2, verbose=False)
         
     # remove automatically repetitions if detected (user message printed)
     if rep_detector(character_dict):

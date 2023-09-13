@@ -26,6 +26,7 @@ from agatta.interpret import RI
 from agatta.interpret import triplet_distance
 from agatta.interpret import character_states_test
 from agatta.interpret import describe_forest
+from agatta.interpret import NRI
 from agatta.out import triplet_nexus_file
 from agatta.out import triplet_tnt_file
 from agatta.analysis import triplet
@@ -184,6 +185,8 @@ class Test_analysis:
                                       triplet({"c","f"},{"b"}): 1,
                                       triplet({"d","e"},{"b"}): 1,
                                       triplet({"d","f"},{"b"}): 1}
+
+        self.pie_percentages1 = {'1': [100], '2': [100], '3': [100]}
 
     def test_character_extraction(self, tmpdir):
 
@@ -528,3 +531,36 @@ class Test_analysis:
         subtrees = del_replications(Tree(self.treerep), method="FPS")
 
         assert [t.write(format=9) for t in subtrees] == self.noreptreeFPS
+
+
+    def test_nri(self, tmpdir):
+
+        folder = tmpdir.mkdir("subdir")
+        infile = str(folder.join("input.hmatrix"))
+        cladogramfile = str(folder.join("cladogram.txt"))
+
+
+        with open(infile, "w") as treefile:
+            treefile.write(";(0,(1,(2),(3)))\n")
+            treefile.write("Diceras;0\n")
+            treefile.write("Hippurites;1\n")
+            treefile.write("Radiolites;2\n")
+            treefile.write("Titanosarcolites;2,3\n")
+            treefile.write("Clinocaprina;3\n")
+            treefile.write("Vaccinites;3\n")
+
+        with open(cladogramfile, "w") as treefile2:
+            treefile2.write("(Diceras,(Hippurites,(Radiolites,Vaccinites),(Titanosarcolites,Clinocaprina)));\n")
+
+        pie_percentages1 = NRI(cladogramfile, infile, 
+            taxarep1=False, 
+            taxarep2=False, 
+            prefix="rnri", 
+            rnri_codes=False, 
+            weighting='FW', 
+            polymethod='TMS', 
+            totaltree=True, 
+            bubble_size=0.05, 
+            rescaled=True)
+        print(pie_percentages1)
+        assert pie_percentages1 == self.pie_percentages1

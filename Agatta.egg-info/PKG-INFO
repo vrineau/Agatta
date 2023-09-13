@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: Agatta
-Version: 0.7.15
+Version: 0.8.0
 Summary: Three-item analysis python package
 Home-page: https://github.com/vrineau/Agatta
 Author: Valentin Rineau
@@ -23,12 +23,20 @@ Requires-Python: >=3.7.0
 Description-Content-Type: text/markdown
 License-File: LICENSE
 License-File: AUTHORS
+Requires-Dist: docopt
+Requires-Dist: ete3
+Requires-Dist: tqdm
+Requires-Dist: treeswift
+Requires-Dist: six
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: pypdf
 
 <img src="https://github.com/vrineau/agatta/blob/main/agatta/agatta.png?raw=true" alt="agatta_logotype" width="700"/>
 
 # Agatta
 
-[![Build Status](https://app.travis-ci.com/vrineau/Agatta.svg?token=nhvCPs5vUaEvgro4jgU7&branch=main)](https://app.travis-ci.com/vrineau/Agatta)
+[![Build](https://github.com/vrineau/Agatta/actions/workflows/python-package.yml/badge.svg)](https://github.com/vrineau/Agatta/actions/workflows/python-package.yml)
 
 ## Presentation
 
@@ -84,7 +92,7 @@ The code is currently licensed under the GNU General Public License version 3.
 
 When using Agatta, please cite us (temporarily) as
 
-> Rineau, V., Zaharias, P. (2022) Agatta (Version 0.7.14) [Software]. Github. https://github.com/vrineau/Agatta.
+> Rineau, V., Zaharias, P. (2022) Agatta (Version 0.7.15) [Software]. Github. https://github.com/vrineau/Agatta.
 
 ## References
 
