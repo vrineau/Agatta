@@ -1,9 +1,8 @@
+numpy
+pandas
 docopt
 ete3
 tqdm
 treeswift
 six
-numpy
-pandas
 pypdf
-pyqt
