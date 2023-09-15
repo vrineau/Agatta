@@ -561,6 +561,7 @@ class Test_analysis:
             polymethod='TMS', 
             totaltree=True, 
             bubble_size=0.05, 
-            rescaled=True)
+            rescaled=True,
+            pdf_files=False)
 
         assert pie_percentages1 == self.pie_percentages1

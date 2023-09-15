@@ -41,7 +41,7 @@ Options:
     --repetitions=<type>  Specify how to remove repetitions [default: TMS]
     --replicates=<int>    Number of replicates for an analysis [default: 1000]
     --parallel=<type>     Number of parallel cores to use [default: auto]
-    --pdf                 Save a pdf file for chartest results
+    --pdf                 Save a pdf file for chartest or nri results
     --prefix=<name>       Prefix of the output file [default: agatta_out]
     --ri                  Calculate Retention Index (Kitching et al. 1998)
     --rosetta=<path>      Path of the file for taxa conversion
@@ -178,9 +178,7 @@ def main():
                      arguments.get("--rnri_totaltree", True),
                      arguments.get("--rnri_total_size", 0.05),
                      arguments.get("--rescaling", True),
-                     arguments["--repetitions"],
-                     arguments["--pdf"],
-                     arguments.get("-v", False))
+                     arguments["--pdf"])
 
         # convert
         elif arguments["convert"]:

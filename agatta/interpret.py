@@ -860,15 +860,16 @@ def cladogram_label(cladogram, clade_number_option, clade_type_option,
     """
     
     #sometimes issues with pyqt installation
-    try:
-        from ete3 import NodeStyle, TreeStyle, faces
-        from ete3 import TextFace, COLOR_SCHEMES, CircleFace
-        
-    except ImportError:  # issue with ete3 imports
-        print("A manual instal of PyQt5 is requested to use the --pdf "
-              + "functionality\nPlease install using 'pip install" +
-              " PyQt5' and rerun the command line")
-        sys.exit(1)
+    if pdf_files:
+        try:
+            from ete3 import NodeStyle, TreeStyle, faces
+            from ete3 import TextFace, COLOR_SCHEMES, CircleFace
+            
+        except ImportError:  # issue with ete3 imports
+            print("A manual instal of PyQt5 is requested to use the --pdf "
+                  + "functionality\nPlease install using 'pip install" +
+                  " PyQt5' and rerun the command line")
+            sys.exit(1)
 
     cladogram.ladderize()
 
@@ -912,7 +913,7 @@ def cladogram_label(cladogram, clade_number_option, clade_type_option,
 
 def NRI(cladopath, charpath, taxarep1=False, taxarep2=False, prefix="rnri", 
         rnri_codes=False, weighting='FW', polymethod='TMS', totaltree=True, 
-        bubble_size=0.05, rescaled=True):
+        bubble_size=0.05, rescaled=True, pdf_files=False):
     """
     Compute the Nodal Retention Index and return a pdf with percentages of NRI
     for each character (or for each set of characters if rnri_codes=True) 
@@ -969,15 +970,16 @@ def NRI(cladopath, charpath, taxarep1=False, taxarep2=False, prefix="rnri",
     """
 
     #sometimes issues with pyqt installation
-    try:
-        from ete3 import NodeStyle, TreeStyle, faces
-        from ete3 import TextFace, COLOR_SCHEMES, CircleFace
-        
-    except ImportError:  # issue with ete3 imports
-        print("A manual instal of PyQt5 is requested to use the --pdf "
-              + "functionality\nPlease install using 'pip install" +
-              " PyQt5' and rerun the command line")
-        sys.exit(1)
+    if pdf_files:
+        try:
+            from ete3 import NodeStyle, TreeStyle, faces
+            from ete3 import TextFace, COLOR_SCHEMES, CircleFace
+            
+        except ImportError:  # issue with ete3 imports
+            print("A manual instal of PyQt5 is requested to use the --pdf "
+                  + "functionality\nPlease install using 'pip install" +
+                  " PyQt5' and rerun the command line")
+            sys.exit(1)
     
     # reading matrix cladogram csv
     fileName, fileExtension = path.splitext(charpath)
@@ -1047,19 +1049,20 @@ def NRI(cladopath, charpath, taxarep1=False, taxarep2=False, prefix="rnri",
         if node.is_leaf() == False  and node.is_root() == False:
             node_style_num_countstr = str(node_style_num_count)
             style_num = TextFace(node_style_num_countstr, fsize=2)
-            node.add_face(style_num, column=1,
-                          position = "branch-bottom")
+            
+            if pdf_files:
+                node.add_face(style_num, column=1,
+                              position = "branch-bottom")
+                
             node.add_feature("clade_label", node_style_num_countstr)
             node.name = node_style_num_countstr
             pie_percentages[node_style_num_countstr] = [
                 Fraction(0,1)] * len(set([x[1] for x in rnri_codes]))
             Node_weight[node_style_num_countstr] = Fraction(0,1)
-        
             node_style_num_count += 1
             
             # rescaling factor computation
             cardn = len(node.get_leaf_names())
-            
             Node_weight_rescaled[
                 node.name] = ((cardn - 1)*(card - cardn)) / rescaledtot
             
@@ -1127,76 +1130,78 @@ def NRI(cladopath, charpath, taxarep1=False, taxarep2=False, prefix="rnri",
     # display pie-percentages
     
     # Basic tree style
-    ts = TreeStyle()
-    ts.show_leaf_name = True
-    ts.margin_top = 10
-    ts.margin_right = 10
-    ts.margin_left = 10
-    ts.margin_bottom = 10
-    ts.show_scale = False
-    colors=COLOR_SCHEMES["dark2"]
+    if pdf_files:
     
-    #remove display nodes
-    for n in cladogram.traverse():
-       nstyle = NodeStyle()
-       nstyle["fgcolor"] = "black"
-       nstyle["size"] = 0
-       n.set_style(nstyle)
-       
-    #Associate the PieChartFace only with internal nodes
-    def pie_nodes(node):
-        if not node.is_leaf() and not node.is_root():
-            
-            F= faces.PieChartFace(pie_percentages1[node.name],
-                                  colors=colors, 
-                                  width=50, height=50)
-            F.border.width = None
-            F.opacity = 0.7
-            faces.add_face_to_node(F,node, 0, position="branch-right")
-    
-    ts.layout_fn = pie_nodes
-    
-    i = 0
-    for cat in categories_rnri:
-        ts.legend.add_face(CircleFace(10, colors[i]), column=0)
-        ts.legend.add_face(TextFace(cat, fsize=7), column=1)    
-    
-        i += 1 
+        ts = TreeStyle()
+        ts.show_leaf_name = True
+        ts.margin_top = 10
+        ts.margin_right = 10
+        ts.margin_left = 10
+        ts.margin_bottom = 10
+        ts.show_scale = False
+        colors=COLOR_SCHEMES["dark2"]
         
-    # if yes, save a pdf with node size reflecting overall triplet support
-    if totaltree:
-        
-        ts2 = TreeStyle()
-        ts2.show_leaf_name = True
-        ts2.margin_top = 10
-        ts2.margin_right = 10
-        ts2.margin_left = 10
-        ts2.margin_bottom = 10
-        ts2.show_scale = False
-        
-        bubble_cladogram = cladogram.copy()
-        
-        def bubble_layout(node):
+        #remove display nodes
+        for n in cladogram.traverse():
+           nstyle = NodeStyle()
+           nstyle["fgcolor"] = "black"
+           nstyle["size"] = 0
+           n.set_style(nstyle)
+           
+        #Associate the PieChartFace only with internal nodes
+        def pie_nodes(node):
             if not node.is_leaf() and not node.is_root():
-                # Creates a sphere face whose size is proportional to weight
                 
-                if rescaled:
-                    radius = Node_weight2[node.name] / Node_weight_rescaled[
-                        node.name]
-                else:
-                    radius = Node_weight2[node.name]
-                    
-                C = CircleFace(radius=Node_weight2[node.name]*bubble_size, 
-                               color="RoyalBlue", style="sphere")
-                C.opacity = 0.3
-                faces.add_face_to_node(C, node, 0, position="float")
-    
-        ts2.layout_fn = bubble_layout
+                F= faces.PieChartFace(pie_percentages1[node.name],
+                                      colors=colors, 
+                                      width=50, height=50)
+                F.border.width = None
+                F.opacity = 0.7
+                faces.add_face_to_node(F,node, 0, position="branch-right")
         
-        bubble_cladogram.render(prefix + ".total.pdf", tree_style=ts2)
-    
-    # save results
-    cladogram.render(prefix + ".pdf", tree_style=ts)
+        ts.layout_fn = pie_nodes
+        
+        i = 0
+        for cat in categories_rnri:
+            ts.legend.add_face(CircleFace(10, colors[i]), column=0)
+            ts.legend.add_face(TextFace(cat, fsize=7), column=1)    
+        
+            i += 1 
+            
+        # if yes, save a pdf with node size reflecting overall triplet support
+        if totaltree:
+            
+            ts2 = TreeStyle()
+            ts2.show_leaf_name = True
+            ts2.margin_top = 10
+            ts2.margin_right = 10
+            ts2.margin_left = 10
+            ts2.margin_bottom = 10
+            ts2.show_scale = False
+            
+            bubble_cladogram = cladogram.copy()
+            
+            def bubble_layout(node):
+                if not node.is_leaf() and not node.is_root():
+                    # Creates a sphere face whose size is proportional to weight
+                    
+                    if rescaled:
+                        radius = Node_weight2[node.name] / Node_weight_rescaled[
+                            node.name]
+                    else:
+                        radius = Node_weight2[node.name]
+                        
+                    C = CircleFace(radius=Node_weight2[node.name]*bubble_size, 
+                                   color="RoyalBlue", style="sphere")
+                    C.opacity = 0.3
+                    faces.add_face_to_node(C, node, 0, position="float")
+        
+            ts2.layout_fn = bubble_layout
+            
+            bubble_cladogram.render(prefix + ".total.pdf", tree_style=ts2)
+        
+        # save results
+        cladogram.render(prefix + ".pdf", tree_style=ts)
     
     with open(prefix+".nri", "w") as results_file:
         
