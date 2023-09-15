@@ -1048,9 +1048,9 @@ def NRI(cladopath, charpath, taxarep1=False, taxarep2=False, prefix="rnri",
     for node in cladogram.traverse(strategy="preorder"):
         if node.is_leaf() == False  and node.is_root() == False:
             node_style_num_countstr = str(node_style_num_count)
-            style_num = TextFace(node_style_num_countstr, fsize=2)
             
             if pdf_files:
+                style_num = TextFace(node_style_num_countstr, fsize=2)            
                 node.add_face(style_num, column=1,
                               position = "branch-bottom")
                 
