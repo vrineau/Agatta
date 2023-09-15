@@ -6,3 +6,4 @@ six
 numpy
 pandas
 pypdf
+pyqt

@@ -555,12 +555,12 @@ class Test_analysis:
         pie_percentages1 = NRI(cladogramfile, infile, 
             taxarep1=False, 
             taxarep2=False, 
-            prefix="rnri", 
+            prefix=str(folder.join("rnri")), 
             rnri_codes=False, 
             weighting='FW', 
             polymethod='TMS', 
             totaltree=True, 
             bubble_size=0.05, 
             rescaled=True)
-        print(pie_percentages1)
+
         assert pie_percentages1 == self.pie_percentages1
