@@ -728,12 +728,12 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
         for char, ind in temp_character_dict.items():  # for each character
 
             # for each unrooted character state
-            for state in char.traverse(strategy="levelorder"):
+            for state in char.traverse(strategy="preorder"):
                 if state.is_leaf() and not state.get_ancestors()[0].is_root():
 
                     statetree = char.copy()
 
-                    for isolstate in statetree.traverse(strategy="levelorder"):
+                    for isolstate in statetree.traverse(strategy="preorder"):
                         if not isolstate.is_leaf() and not isolstate.is_root():
                             if not isolstate.get_children()[0].name == \
                                                                     state.name:
@@ -748,7 +748,9 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
     for char, ind in temp_character_dict.items():  # for each character
         # mark branches to delete at the end
         delnodes = []  # list of leaves to delete
+        statelist = []
         for leaf in char.iter_leaves():
+            statelist.append(leaf.name)
             delnodes.append(leaf)
             leaf.get_ancestors()[0].add_feature("charstate_name", leaf.name)
             leaf.name = "_agatta_charstate_"+leaf.name  # for avoiding the
@@ -779,6 +781,13 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
                         error_message += " in column " + str(ind)
                         error_message += " does not match\n"
 
+        # autapomorphy warning
+        slist = [row[int(ind)] for row in hmatrix[1:]]
+        for state in statelist:
+            if slist.count(state) <= 1:
+                print("WARNING: character " + str(ind) + ", state " 
+                      + str(state) + " non-informative")
+            
         # deletion of state branches
         for delnode in delnodes:
             delnode.delete()
@@ -786,7 +795,7 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
     for char, value in temp_character_dict.items():
         char.ladderize()
         character_dict[char] = str(value)
-
+        
     if error_message:
         print(error_message)
         sys.exit(1)

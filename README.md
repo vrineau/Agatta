@@ -58,7 +58,7 @@ The code is currently licensed under the GNU General Public License version 3.
 
 When using Agatta, please cite us (temporarily) as
 
-> Rineau, V., Zaharias, P. (2022) Agatta (Version 0.7.15) [Software]. Github. https://github.com/vrineau/Agatta.
+> Rineau, V., Zaharias, P. (2023) Agatta (Version 0.8.0) [Software]. Github. https://github.com/vrineau/Agatta.
 
 ## References
 

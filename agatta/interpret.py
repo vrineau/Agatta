@@ -539,7 +539,10 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
                     charstate = chartree.copy('cpickle')
                     for n in charstate.traverse(strategy="preorder"):
                         if n.is_leaf() == False and n.is_root() == False:
-                            if not node.charstate_name == charstate_count:
+                            try:
+                                if not n.charstate_name == charstate_count:
+                                    n.delete()
+                            except AttributeError:
                                 n.delete()
                                 
                     keystate = str(keys.split('.')[0]) + "_" + str(
@@ -1452,44 +1455,66 @@ def character_states_test(cladogram_dict, character_dict,
                                               clade_type_option="yes",
                                               pdf_files=pdf_files)
 
-    # list character, states, and taxa content
+    # list character, states, and taxa content + character cardinal
+    character_cardinal_dict = {}
     character_component_dict = {}
-    for character, values in character_dict.items():
+    
+    # for each character
+    for character, values in character_dict.items():  
         character_states = {}
         character_states_count = 0
         value = str(values).split('.')[0] # remove artificial number from poly.
+        
+        # for each character state
         for node in character.traverse(strategy="preorder"):
             if node.is_leaf() == False  and node.is_root() == False:
                 
+                checkstate = True
+                
                 #find charstate names from hmatrix, new numbers if not present
                 try: 
-                    character_states_count = node.charstate_name
+                    character_states_count = node.charstate_name  # hmatrix
                 except AttributeError:
-                    character_states_count += 1
+                    if type(character_states_count) == int:
+                        character_states_count += 1
+                        
+                    # case of states without names in hmatrix
+                    elif type(character_states_count) == str:
+                        childlist = []
+                        for children in node.children:
+                            try:
+                                childlist.append(children.charstate_name)
+                            except:
+                                pass
+                        
+                        character_states_count = "Unnamed?"
+                        character_states_count += '+'.join(childlist)
+                        
+                        character_states["Character state #" + str(value) + "." 
+                     + str(character_states_count)] = Tree.get_leaf_names(node)
+                        
+                        character_cardinal_dict["Character state #" 
+                     + str(value) + "." + str(character_states_count)] = set(
+                         Tree.get_leaf_names(character))
+                        
+                        checkstate = False
+                        
+                    else:
+                        print("ERROR: incorrect label for character states")
+                        sys.exit(1)
                 
-                character_states["Character state #" + str(value) + "." + str(
-                           character_states_count)] = Tree.get_leaf_names(node)
+                if checkstate:
+                
+                    character_states["Character state #" + str(value) + "." 
+                     + str(character_states_count)] = Tree.get_leaf_names(node)
+                    
+                    character_cardinal_dict["Character state #" + str(value) 
+                                             + "." + str(
+                                             character_states_count)] = set(
+                                             Tree.get_leaf_names(character))
                 
         character_component_dict["Character_"+str(value)  + "." + str(
                                  character_states_count)] = character_states
-        
-    # character cardinal
-    character_cardinal_dict = {}
-    for character, values in character_dict.items():
-        character_states_count = 0
-        value = str(values).split('.')[0] # remove artificial number from poly.
-        for node in character.traverse(strategy="preorder"):
-            if node.is_leaf() == False  and node.is_root() == False:
-                
-                #find charstate names from hmatrix, new numbers if not present
-                try: 
-                    character_states_count = node.charstate_name
-                except AttributeError:
-                    character_states_count += 1
-                
-                character_cardinal_dict["Character state #" + str(value) + "."
-                                        + str(character_states_count)] = set(
-                                            Tree.get_leaf_names(character))
 
     # character state test and adding node style
     results_test_dict = {}
