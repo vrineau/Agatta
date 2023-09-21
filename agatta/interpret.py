@@ -915,8 +915,8 @@ def cladogram_label(cladogram, clade_number_option, clade_type_option,
 
 
 def NRI(cladopath, charpath, taxarep1=False, taxarep2=False, prefix="rnri", 
-        rnri_codes=False, weighting='FW', polymethod='TMS', totaltree=True, 
-        bubble_size=0.05, rescaled=True, pdf_files=False):
+        rnri_codes=False, weighting='FW', polymethod='TMS', totaltree=True,
+        rescaled=True, pdf_files=False):
     """
     Compute the Nodal Retention Index and return a pdf with percentages of NRI
     for each character (or for each set of characters if rnri_codes=True) 
@@ -955,8 +955,6 @@ def NRI(cladopath, charpath, taxarep1=False, taxarep2=False, prefix="rnri",
         If set to True, computes the prefix.total.pdf showing the support of 
         each node given the relative amounts of character triplets in 
         agreement. The default is True.
-    bubble_size : float, optional
-        Size of the nodes in prefix.total.pdf. The default is 0.05.
     rescaled : bool, optional
         If True, for prefix.total.pdf the absolute values will be be rescaled 
         to avoid the symetry effect inherent to triplet decomposition. 
@@ -1142,7 +1140,29 @@ def NRI(cladopath, charpath, taxarep1=False, taxarep2=False, prefix="rnri",
         ts.margin_left = 10
         ts.margin_bottom = 10
         ts.show_scale = False
-        colors=COLOR_SCHEMES["dark2"]
+        colors=[
+                "#a73769",
+                "#5a822f",
+                "#df4b20",
+                "#104bc6",
+                "#846c0d",
+                "#51b367",
+                "#7cab1b",
+                "#ec717d",
+                "#c46ce8",
+                "#49329f",
+                "#689cf7",
+                "#917b1c",
+                "#6d87ed",
+                "#768726",
+                "#fcd286",
+                "#c3cdfa",
+                "#c2851a",
+                "#f5968c",
+                "#f1a3ec",
+                "#f56eb5",
+                "#33ec70"
+                ]
         
         #remove display nodes
         for n in cladogram.traverse():
@@ -1159,17 +1179,21 @@ def NRI(cladopath, charpath, taxarep1=False, taxarep2=False, prefix="rnri",
                                       colors=colors, 
                                       width=50, height=50)
                 F.border.width = None
-                F.opacity = 0.7
+                F.opacity = 0.6
                 faces.add_face_to_node(F,node, 0, position="branch-right")
         
         ts.layout_fn = pie_nodes
         
         i = 0
         for cat in categories_rnri:
-            ts.legend.add_face(CircleFace(10, colors[i]), column=0)
-            ts.legend.add_face(TextFace(cat, fsize=7), column=1)    
-        
-            i += 1 
+            if i > len(colors):
+                print("WARNING: too many categories, "
+                      +"piechart will be unreadable.")
+            else:
+                ts.legend.add_face(CircleFace(10, colors[i]), column=0)
+                ts.legend.add_face(TextFace(cat, fsize=7), column=1)    
+            
+                i += 1 
             
         # if yes, save a pdf with node size reflecting overall triplet support
         if totaltree:
@@ -1186,19 +1210,28 @@ def NRI(cladopath, charpath, taxarep1=False, taxarep2=False, prefix="rnri",
             
             def bubble_layout(node):
                 if not node.is_leaf() and not node.is_root():
-                    # Creates a sphere face whose size is proportional to weight
-                    
-                    if rescaled:
-                        radius = Node_weight2[node.name] / Node_weight_rescaled[
-                            node.name]
-                    else:
-                        radius = Node_weight2[node.name]
-                        
-                    C = CircleFace(radius=Node_weight2[node.name]*bubble_size, 
-                                   color="RoyalBlue", style="sphere")
-                    C.opacity = 0.3
+                    # Creates a sphere face whose size is proportion. to weight
+                    C = CircleFace(radius=radius[node.name], 
+                                   color="#6d87ed", style="sphere")
+                    C.opacity = 0.6
                     faces.add_face_to_node(C, node, 0, position="float")
-        
+                    
+            #réechelonner
+            radius = dict()
+            if rescaled:
+                radiusr = dict()
+                for nodename, val in Node_weight2.items():
+                    radiusr[nodename] = (Node_weight2[nodename] / 
+                                         Node_weight_rescaled[nodename])
+                for nodename, val in radiusr.items():
+                    radius[nodename] = (radiusr[nodename] / 
+                                        max(radiusr.values()))*20
+                    
+            else:
+                for nodename, val in Node_weight2.items():
+                    radius[nodename] = (Node_weight2[nodename] / 
+                                        max(Node_weight2.values()))*20
+                    
             ts2.layout_fn = bubble_layout
             
             bubble_cladogram.render(prefix + ".total.pdf", tree_style=ts2)

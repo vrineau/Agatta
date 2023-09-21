@@ -53,7 +53,6 @@ Options:
     --weighting=<type>    Specify the type of triplet weighting [default: FW]
     --rnri_codes=<path>   Compute NRI with a split of characters given in csv       
     --rnri_totaltree      Compute a pdf with absolute triplet support by node
-    --rnri_total_size     Size of nodes in rnri_totaltree [default: 0.05]  
     --rnri_rescaling      Rescale values in rnri_totaltree
 
 """
@@ -167,7 +166,7 @@ def main():
 
         # nodal retention index
         elif arguments["nri"]:
-            chartest(arguments["<file>"][0],
+            NRI(arguments["<file>"][0],
                      arguments["<file>"][1],
                      arguments.get("--taxarep1", False),
                      arguments.get("--taxarep2", False),
@@ -176,8 +175,7 @@ def main():
                      arguments["--weighting"],
                      arguments["--repetitions"],
                      arguments.get("--rnri_totaltree", True),
-                     arguments.get("--rnri_total_size", 0.05),
-                     arguments.get("--rescaling", True),
+                     arguments.get("--rescaling", False),
                      arguments["--pdf"])
 
         # convert

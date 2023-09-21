@@ -560,7 +560,6 @@ class Test_analysis:
             weighting='FW', 
             polymethod='TMS', 
             totaltree=True, 
-            bubble_size=0.05, 
             rescaled=True,
             pdf_files=False)
 
