@@ -843,7 +843,7 @@ def agatta_analysis(file_path, software_path, software="paup",
         log_file.write("Weighting triplets: "+weighting+"\n")
         log_file.write("Parallelisation: "+parallel+"\n")
 
-        if software == "wqfm": # always heuristic with wqfm
+        if software == "wqfm": # always heuristic using wqfm
             log_file.write("Analysis: heuristic")
         elif analysis == "heuristic":
             log_file.write("Analysis: heuristic with {} replicates\n".format(
