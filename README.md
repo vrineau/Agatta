@@ -36,7 +36,7 @@ If you have questions, feel free to pull requests on [GitHub Issues](https://git
 
 ### Quick analysis
 
-Agatta allows several input trees formats like newick, nexus, nexml, or character matrix format. A generic analysis to do a three-item analysis on a collection of rooted trees stored in trees.txt with default parameters (PAUP* heuristic search, 1000 replicates, triplets weighted using Fractional Weighting; Rineau et al. 2021) would be:
+Agatta allows several input trees formats like newick, nexus, nexml, or character matrix format. A generic analysis to do a three-item analysis on a collection of rooted trees stored in a file with default parameters (PAUP* heuristic search, 1000 replicates, triplets weighted using Fractional Weighting; Rineau et al. 2021) would be:
 ```
 agatta analysis <file> --software=paup --softpath=/path/to/paup-executable
 ```
@@ -44,11 +44,11 @@ The `--softpath` and `--software=paup` flags are required.
 
 ### Cladistic biogeography analysis
 
-To run a three-area analysis on a collection of rooted phylogenies stored in newick format in trees.txt with default parameters (PAUP* heuristic search, 1000 replicates, triplets weighted according to Rineau et al. (2021), Multiple-Area Single Taxa automatically removed, repetitions managed using Triplet Maximisation Subtrees algorithm):
+To run a three-area analysis on a collection of rooted phylogenies stored in newick format in a file with default parameters (PAUP* heuristic search, 1000 replicates, triplets weighted according to Rineau et al. (2021), Multiple-Area Single Taxa automatically removed, repetitions managed using Triplet Maximisation Subtrees algorithm):
 ```
 agatta analysis <file> --software=paup --softpath=/path/to/paup-executable  --rosetta=<mapfile>
 ```
-This line is identical as for quick analysis plus a mapping file in csv  with two columns to give the correspondance between taxa (left column) and areas (right column). 
+This line is identical as for quick analysis plus a mapping file (<mapfile>) in csv with two columns to give the correspondance between taxa (left column) and areas (right column). 
 
 ## License
 

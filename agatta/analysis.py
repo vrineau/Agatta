@@ -918,9 +918,6 @@ def standard_tripdec(character_dict, weighting, dec_detail=False,
 
     """
 
-    # replace taxa by numbers
-    taxa_dict, code_dict, taxa_convers = taxa_to_numbers(character_dict)
-
     triplet_output = dict()
     triplet_output_per_char = dict()
 
@@ -982,26 +979,27 @@ def standard_tripdec(character_dict, weighting, dec_detail=False,
                     
     if prefix:
         with open(prefix+".triplet", "w") as tdfile:
+            taxa_dict, code_dict, taxa_convers = taxa_to_numbers(
+                                                                character_dict)
             if weighting in ("FW", "FWNL", "MW"):
                 for trip, FW in triplet_output.items():
 
-                    trip2 = trip
-                    in_taxa = list(trip2.in_taxa)
-                    trip2.in_taxa = {taxa_dict[in_taxa[0]],
-                                     taxa_dict[in_taxa[1]]}
-                    trip2.out_taxa = {taxa_dict[list(trip.out_taxa)[0]]}
-                    tdfile.write("{};    {}    {}\n".format(trip, FW, round(
-                        float(FW), 4)))
+                    in_taxa = list(trip.in_taxa)
+                    tdfile.write("(" + str(taxa_dict[list(trip.out_taxa)[0]])
+                                 + ",("
+                                 + str(taxa_dict[in_taxa[0]]) + ","
+                                 + str(taxa_dict[in_taxa[1]]) + ")):    "
+                                 + str(FW) + "    "
+                                 + str(round(float(FW), 4))
+                                 + "\n")
 
             else:
                  for trip, FW in triplet_output.items():
 
-                    trip2 = trip
-                    in_taxa = list(trip2.in_taxa)
-                    trip2.in_taxa = {taxa_dict[in_taxa[0]],
-                                     taxa_dict[in_taxa[1]]}
-                    trip2.out_taxa = {taxa_dict[list(trip.out_taxa)[0]]}
-                    tdfile.write("{};    {}\n".format(trip, FW))
+                    in_taxa = list(trip.in_taxa)
+                    tdfile.write("(" + list(trip.out_taxa)[0] + ",("
+                                 + in_taxa[0] + "," + in_taxa[1] + "));    "
+                                 + str(FW) + "\n")
 
         with open(prefix+".taxabloc", "w") as taxa_bloc_file:
             for taxa, code in taxa_dict.items():
