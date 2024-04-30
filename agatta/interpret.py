@@ -1024,7 +1024,7 @@ def NRI(cladopath, charpath, taxarep1=False, taxarep2=False, prefix="rnri",
     else:
         rnri_codes = []
         for charname in character_dict.values():
-            rnri_codes.append(['', 'character ' + charname])
+            rnri_codes.append(['', 'character ' + str(charname)])
             
     # add names to internal nodes
     cladogram = list(cladogram_dict.keys())[0]
