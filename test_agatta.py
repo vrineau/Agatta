@@ -411,11 +411,16 @@ class Test_analysis:
 
     def test_triplet_distance(self):
 
-        Precision, Recall, Fscore = triplet_distance(Tree(self.tree1),
+        print(triplet_distance(Tree(self.tree1),
                                                      Tree(self.tree2),
-                                                     prefix=False)
+                                                     prefix=False))
+
+        output = triplet_distance(Tree(self.tree1),
+                                  Tree(self.tree2),
+                                  prefix=False)
         
-        assert [Precision, Recall, Fscore] == [0.2, 0.24, 0.2181818181818182]
+        assert output == (10.0, 20.0, 2.4, 4.0, 16.0, 7.6, 11.8, 3.2, 
+                          17.6, 6.0, 0.2, 0.24, 0.2181818181818182)
 
 
     def test_charstate(self, tmpdir):

@@ -412,17 +412,21 @@ def triplet_tmc_file(triplet_dict, character_dict, prefix,
         TMC_file.write(tmcstring)
 
 
-def triplet_wqfm_file(triplet_dict, prefix, weighting="FW", precision=7):
+def triplet_wqfm_wqtc_file(triplet_dict, prefix, weighting="FW", precision=7):
     """
     Outputs a three-item analysis file readable by wqfm (Mahbub et al., 2021)
-    from a dictionary of triplets and their corresponding weights.
-    To allow a three-item analysis with quartets, each quartet possesses a leaf
-    which is the root.
+    and wTREE-QMC (Han & Molloy, 2024) from a dictionary of triplets and their 
+    corresponding weights. To allow a three-item analysis with quartets, 
+    each quartet possesses a leaf which is the root.
+
+    Han and Molloy, 2024, Improved robustness to gene tree incompleteness, 
+    estimation errors, and systematic homology errors with weighted TREE-QMC, 
+    bioRxiv, https://doi.org/10.1101/2024.09.27.615467.
 
     Mahbub, M., Wahab, Z., Reaz, R., Rahman, M. S., & Bayzid, M. (2021).
     wQFM: Highly Accurate Genome-scale Species Tree Estimation from Weighted
     Quartets. Bioinformatics.
-
+    
     Parameters
     ----------
     triplet_dict : dict
@@ -442,8 +446,8 @@ def triplet_wqfm_file(triplet_dict, prefix, weighting="FW", precision=7):
 
     """
 
-    # core wqfm file
-    with open(prefix+".wqfm", "w") as wqfm_file:
+    # core wqfm or wTREE-QMC file
+    with open(prefix, "w") as wqfm_file:
         for triplet1, FW in triplet_dict.items():
 
             # if weights are fractions
@@ -466,12 +470,17 @@ def triplet_to_file(triplet_dict, character_dict, prefix, analysis="heuristic",
                     nrep=1000, logfile=True, software="paup", weighting="FW"):
     """
     Outputs a three-item analysis file readable by TNT (Goloboff et al. 2008),
-    by PAUP* (Swofford, 2003) or by WQFM (Mahbub et al. 2021) from a
-    dictionary of triplets and their corresponding weights.
+    by PAUP* (Swofford, 2003), by WQFM (Mahbub et al. 2021), or by wTREE-QMC 
+    (Han & Molloy, 2024) from a dictionary of triplets and their corresponding 
+    weights.
 
     Goloboff, P. A., Farris, J. S., & Nixon, K. C. (2008). TNT, a free program
     for phylogenetic analysis. Cladistics, 24(5), 774-786.
 
+    Han and Molloy, 2024, Improved robustness to gene tree incompleteness, 
+    estimation errors, and systematic homology errors with weighted TREE-QMC, 
+    bioRxiv, https://doi.org/10.1101/2024.09.27.615467.
+    
     Mahbub, M., Wahab, Z., Reaz, R., Rahman, M. S., & Bayzid, M. (2021).
     wQFM: Highly Accurate Genome-scale Species Tree Estimation from Weighted
     Quartets. Bioinformatics.
@@ -526,7 +535,10 @@ def triplet_to_file(triplet_dict, character_dict, prefix, analysis="heuristic",
     #     triplet_tmc_file(triplet_dict, character_dict, prefix, weighting)
 
     elif software == "wqfm":
-        triplet_wqfm_file(triplet_dict, prefix, weighting)
+        triplet_wqfm_wqtc_file(triplet_dict, prefix+".wqfm", weighting)
+        
+    elif software == "wtree-qmc":
+        triplet_wqfm_wqtc_file(triplet_dict, prefix+".wqtc", weighting)
 
     end = time.time()
     time_cptr = time.strftime('%H:%M:%S', time.gmtime(end - start))
@@ -539,7 +551,8 @@ def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
             verbose=True):
     """
     Outputs a three-item analysis file readable by TNT (Goloboff et al. 2008),
-    by PAUP* (Swofford, 2003), or by WQFM (Mahbub et al. 2021) from :
+    by PAUP* (Swofford, 2003), by WQFM (Mahbub et al. 2021), or by
+    wTREE-QMC (Han & Molloy, 2024) from :
 
         * a dictionary of triplets and their corresponding
           weights, e.g., computed from main_tripdec.
@@ -548,6 +561,10 @@ def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
 
     Goloboff, P. A., Farris, J. S., & Nixon, K. C. (2008). TNT, a free program
     for phylogenetic analysis. Cladistics, 24(5), 774-786.
+    
+    Han and Molloy, 2024, Improved robustness to gene tree incompleteness, 
+    estimation errors, and systematic homology errors with weighted TREE-QMC, 
+    bioRxiv, https://doi.org/10.1101/2024.09.27.615467.
 
     Mahbub, M., Wahab, Z., Reaz, R., Rahman, M. S., & Bayzid, M. (2021).
     wQFM: Highly Accurate Genome-scale Species Tree Estimation from Weighted
@@ -601,7 +618,7 @@ def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
         IF true, Add a line to outputs a log file during the  analysis.
         The default is False.
     software : str, optional
-        Choose the software to use between 'paup', 'tnt', and 'wqfm'.
+        Choose the software to use between 'paup', 'tnt', 'wqfm', 'wtree-qmc'.
         The default is "paup".
     dec_detail : bool, optional
         If true, save a detailed table in csv format named 
@@ -723,7 +740,8 @@ def agatta_analysis(file_path, software_path, software="paup",
     software_path : TYPE
         Path of the software designated with the "software" argument.
     software : str, optional
-        Choose the software to use between 'paup', 'tnt', and 'wqfm'.
+        Choose the software to use between 'paup', 'tnt', 'wqfm', 
+        and 'wtree-qmc'.
         The default is 'paup'.
     taxa_replacement : str, optional
         Path of a table file containing two columns. The first column
@@ -843,7 +861,7 @@ def agatta_analysis(file_path, software_path, software="paup",
         log_file.write("Weighting triplets: "+weighting+"\n")
         log_file.write("Parallelisation: "+parallel+"\n")
 
-        if software == "wqfm": # always heuristic using wqfm
+        if software == "wqfm" or software == "wtree-qmc": # always heuristic
             log_file.write("Analysis: heuristic")
         elif analysis == "heuristic":
             log_file.write("Analysis: heuristic with {} replicates\n".format(
@@ -909,7 +927,7 @@ def agatta_analysis(file_path, software_path, software="paup",
             method,
             verbose)
 
-    # three-item analysis using PAUP*, TNT, WQFM, or Agatta
+    # three-item analysis using PAUP*, TNT, WQFM, or wTREE-QMC
     if software == "paup":
         prefix_end = prefix_path+".nex"
         search_pipeline(prefix_end,
@@ -926,6 +944,11 @@ def agatta_analysis(file_path, software_path, software="paup",
                         software_path,
                         "wqfm", prefix)
 
+    elif software == "wtree-qmc":
+        search_pipeline(prefix+".wtqmc",
+                        software_path,
+                        "wtree-qmc", prefix)
+        
     # extract trees from output file and delete root
     cladogram_dict = dict()
     i = 1
@@ -952,7 +975,8 @@ def agatta_analysis(file_path, software_path, software="paup",
 
             tstreelist = treeswift.read_tree_nexus(prefix + ".tre")
 
-        elif software == "paup" or software == "wqfm":
+        elif (software == "paup" or software == "wqfm" or 
+              software == "wtree-qmc"):
             try:
                 tstreelist = treeswift.read_tree_newick(prefix + ".tre")
             except RuntimeError:
@@ -979,7 +1003,16 @@ def agatta_analysis(file_path, software_path, software="paup",
 
             else:
                 nodedict = tstree.label_to_node(selection='leaves')
-                tstree.reroot(nodedict["root"])
+                try:
+                    tstree.reroot(nodedict["root"])
+                except KeyError:
+                    print("ERROR: A problem occurred when rooting. "
+                          + "The problem may be due to old files left in the" 
+                          + " working directory. Please try to delete all "
+                          + "files in the folder other than input files and "
+                          + "restart the analysis. ")
+                    
+                    sys.exit(1)
                 tstree.suppress_unifurcations()
                 newickstring = tstree.newick().replace("root","")
 
@@ -990,15 +1023,38 @@ def agatta_analysis(file_path, software_path, software="paup",
                     cladogram_dict[Tree(newickstring)] = i
                 i += 1
 
+    # branch length computation
+    triplet_dict = triplet_extraction(prefix+'.triplet', 
+                                      taxa_replacement_file=prefix+'.taxabloc')
+    
+    for tree in cladogram_dict.keys():
+        for node in tree.traverse():
+            if not node.is_leaf() and not node.is_root():
+                
+                node.dist = 0  # set support value to 0
+                
+                # for each node, compute support values
+                for trip, FW in triplet_dict.items():
+                    
+                    in1, in2 = trip.in_taxa    
+                    out, = trip.out_taxa    
+                    
+                    if (in1 in node.get_leaf_names() 
+                        and in2 in node.get_leaf_names() 
+                        and out not in node.get_leaf_names()):
+                        
+                        node.dist += FW
+
+    # output file
     with open(prefix + ".tre", "w") as result_file:
         for tree in cladogram_dict.keys():
-            result_file.write(tree.write(format=9) + "\n")
+            result_file.write(tree.write(format=6) + "\n") #with support values
 
     if len(cladogram_dict.keys()) == 1:
         print("1 optimal tree found")
     else:
         print(str(len(cladogram_dict.keys())) + " optimal trees found")
-
+        
     # consensus computation
     if consensus:
 

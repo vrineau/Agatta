@@ -26,18 +26,18 @@ def search_pipeline(path_infile, software_path=False, software="paup",
                     prefix=False):
     """
     Function to run automatically a nexus file, a tnt file, or a text file on
-    PAUP, TNT, or WQFM respectivelly. The software to be used must be installed
-    and accessible.
+    PAUP, TNT, WQFM, or wTREE-QMC respectivelly. The software to be used must 
+    be installed and accessible.
 
     Parameters
     ----------
     path_infile : string
         path of the input file.
     software_path : string
-        path of the software chosen, paup, tnt, wqfm. Not necessary if paup is
-        installed in a windows os.
+        path of the software chosen: paup, tnt, wqfm, wtree-qmc. Not necessary 
+        if paup is installed in a windows os.
     software : string, optional
-        paup, tnt, wqfm. The default is "paup".
+        paup, tnt, wqfm, wtree-qmc. The default is "paup".
 
     Returns
     -------
@@ -79,6 +79,10 @@ def search_pipeline(path_infile, software_path=False, software="paup",
 
     if software == "wqfm":
         os.system("java -jar \"" + software_path + "\" -i \"" +
+                  path_infile + "\" -o \"" + prefix + ".tre\"")
+
+    elif software == "wtree-qmc":
+        os.system(software_path + "\" -i \"" +
                   path_infile + "\" -o \"" + prefix + ".tre\"")
 
     elif software == "paup":

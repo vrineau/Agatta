@@ -246,6 +246,24 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True,
     # non-informative trees are discarded
     if info_tree:
         character_dict = infotree_checker(character_dict)
+        
+    # empty nodes automatically removed
+    delnodes = []  # list of nodes to delete
+    for char, nb in character_dict.items():
+        error_empty = False
+        for node in char.traverse():
+            for childnode in node.get_children():
+                if (sorted(node.get_leaf_names()) == sorted(
+                        childnode.get_leaf_names())):
+                    delnodes.append(childnode)  #delete node
+                    error_empty = True
+        if error_empty:
+            print("WARNING: empty node(s) in character " + str(nb)
+                  + " detected and automatically removed.")
+                    
+    # deletion of state branches
+    for delnode in delnodes:
+        delnode.delete()
 
     return character_dict
 
@@ -712,7 +730,7 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
             temp_character_dict[Tree(char+";")] = str(i)
         except NewickError:
             print("ERROR: The newick tree " + char + " in column " +
-                               str(i+1) + "is broken\nOperation aborted.")
+                               str(i+1) + " is broken\nOperation aborted.")
         else:
             no_exception = True
         if not 'no_exception' in locals():
@@ -778,23 +796,35 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
                     except:
                         error_message += "ERROR: The instance '"
                         error_message += str(charstate) + "' of leaf " + taxa
-                        error_message += " in column " + str(ind)
+                        error_message += " in column " + str(ind2)
                         error_message += " does not match\n"
 
-        # autapomorphy warning
-        slist = [row[int(ind)] for row in hmatrix[1:]]
-        for state in statelist:
-            if slist.count(state) <= 1:
-                print("WARNING: character " + str(ind) + ", state " 
-                      + str(state) + " non-informative")
-            
         # deletion of state branches
         for delnode in delnodes:
             delnode.delete()
+            
+        # handling ete3 bug: deletion of states with two empty parent nodes
+        for leaf in char.traverse():
+            if leaf.is_leaf():
+                if not leaf.name:
+                    leaf.delete()
+        
+        # autapomorphic (non-informative) state detection and warning
+        for state in char.traverse():
+            if not state.is_leaf() and not state.is_root():
+                lnode = len(state.get_leaf_names())
+                if lnode < 2:
+                    print("WARNING: character " + str(ind2) 
+                          + ", state " + str(state.charstate_name) 
+                          + " non-informative")
 
     for char, value in temp_character_dict.items():
+        if chardec:
+            value2 = value.split(".")[0]
+        else:
+            value2 = value
         char.ladderize()
-        character_dict[char] = str(value)
+        character_dict[char] = str(value2)
         
     if error_message:
         print(error_message)
@@ -837,7 +867,8 @@ def checkargs(arguments):
 
         if (arguments["--software"] == "paup" or
             arguments["--software"] == "tnt" or
-            arguments["--software"] == "wqfm"):
+            arguments["--software"] == "wqfm" or
+            arguments["--software"] == "wtree-qmc"):
             if (not arguments.get("--softpath", False)
                 and platform.system() != "Windows"):
                 sys.exit(print("ERROR: the path of the " +
@@ -845,9 +876,13 @@ def checkargs(arguments):
 
         elif arguments["--software"] != "agatta":
             sys.exit(print("ERROR: --software flag must be one of: 'paup', " +
-                           "'tnt', 'wqfm', 'agatta'"))
+                           "'tnt', 'wqfm', 'wtree-qmc'"))
 
         if (arguments["--software"] == "wqfm"
+            and not arguments["--analysis"] == "heuristic"):
+            sys.exit(print("ERROR: WQFM works only in heuristic mode"))
+
+        if (arguments["--software"] == "wtree-qmc"
             and not arguments["--analysis"] == "heuristic"):
             sys.exit(print("ERROR: WQFM works only in heuristic mode"))
 
@@ -969,9 +1004,9 @@ def helper(command):
             --analysis=<type>  Type of tree search analysis between an exact
             branch and bound ('bandb') or an heuristic tree search
             ('heuristic'). The heuristic search is only available through
-            PAUP*, TNT, and WQFM, thus it is mandatory to add the flag
-            --software=tnt, --software=paup, or --software=wqfm (and the flag
-            --softpath accordingly).
+            PAUP*, TNT, WQFM, or wTREE-QMC thus it is mandatory to add the flag
+            --software=tnt, --software=paup, --software=wqfm, or 
+            software=wtree-qmc (and the flag --softpath accordingly).
             By default the analysis is in branch and bound below 15 terminals
             and heuristic otherwise.
             --chartest  Test and locates all character states on the cladogram.
@@ -1034,13 +1069,14 @@ def helper(command):
             --software=<type>  Choose how to perform the three-item analysis.
             The analysis can be performed using the built-in branch and bound
             in Agatta ('agatta'). 'paup' and 'tnt' can be used for branch and
-            bound or heuristic search. 'wqfm' works only with heuristic.
+            bound or heuristic search. 'wqfm' and 'wtree-qmc' are conceived to 
+            perform heuristic searches only.
             By default the analysis is made using built-in branch and bound.
             However it works only with very few terminals.
             User should consider to switch the software is the
             analysis time appears to be too long. A prefix.nex file is
-            generated if 'paup', a prefix.tnt file for 'tnt', and a
-            prefix.wqfm for 'wqfm'.
+            generated if 'paup', a prefix.tnt file for 'tnt', a
+            prefix.wqfm for 'wqfm', and a prefix.wqtc for 'wtree-qmc'.
             --taxarep1=<path>  If the user wants to replace identifiers by real
             leaf names in the result files, this flag can be used with a path
             to a csv file with two columns, the first with the identifiers in
@@ -1362,8 +1398,9 @@ def helper(command):
     convert
 
     The convert command is intended to compute a triplet matrix readable by an
-    external software (currently PAUP*, TNT, WQFM are implemented) from a file
-    containing a hierarchical matrix, a list of trees, or a list of triplets.
+    external software (currently PAUP*, TNT, WQFM, wTREE-QMC are implemented) 
+    from a file containing a hierarchical matrix, a list of trees, or a list of 
+    triplets.
 
     Usage:
 
@@ -1419,13 +1456,13 @@ def helper(command):
             --software=<type>  Choose how to perform the three-item analysis.
             The analysis can be performed using the built-in branch and bound
             in Agatta ('agatta'). 'paup' and 'tnt' can be used for branch and
-            bound or heuristic search. 'wqfm' can be used for heuristic search
-            only. By default the analysis is made using
+            bound or heuristic search. 'wqfm' and 'wtree-qmc' can be used for 
+            heuristic search only. By default the analysis is made using
             built-in branch and bound. However it works only with very few
             terminals. User should consider to switch the software is the
             analysis time appears to be too long. A prefix.nex file is
-            generated if 'paup', a prefix.tnt file for 'tnt', and a prefix.wqfm
-            for 'wqfm'.
+            generated if 'paup', a prefix.tnt file for 'tnt', a prefix.wqfm
+            for 'wqfm', and a prefix.wqtc for 'wtree-qmc'.
             --taxarep1=<path>  If the user wants to replace identifiers by real
             leaf names in the result files, this flag can be used with a path
             to a csv file with two columns, the first with the identifiers in
@@ -1459,7 +1496,7 @@ def helper(command):
     Output:
 
         A triplet matrix file with weights that can be analysed using
-        PAUP* or TNT or a triplet file with weights for WQFM.
+        PAUP* or TNT or a triplet file with weights for WQFM or wTREE-QMC.
               """)
 
     elif command == "fp":

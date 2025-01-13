@@ -101,12 +101,16 @@ def constrict(treelist, prefix=False, silent=False):
 
 def rcc(treelist, prefix=False, verbose=False):
     """
-    Compute the reduced cladistic consensus (Wilkinson, 1994) from a list of
-    rooted trees.
+    Compute the reduced cladistic consensus (Wilkinson, 1994, 1995) from a 
+    list of rooted trees.
 
           Wilkinson, M. (1994). Common cladistic information and its consensus
           representation: reduced Adams and reduced cladistic consensus trees
           and profiles. Systematic Biology, 43(3), 343-368.
+          
+          Wilkinson, M. (1995). More on Reduced Consensus Methods. Systematic 
+          Biology, 44(3). 
+
 
     Parameters
     ----------
@@ -309,7 +313,7 @@ def rcc(treelist, prefix=False, verbose=False):
     def get_len(in_set):
         return len(in_set)
 
-    profile = sorted(profile, key=get_len)
+    profile = sorted(profile, key=get_len, reverse=True)  # sort by size
 
     if verbose:
         if not cardinal_list[0] in [len(profile_tree)
@@ -677,7 +681,7 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
     return RI_char_dict_return
 
 
-def triplet_distance(t1, t2, prefix, method="TMS", weighting="FW", 
+def triplet_distance(t1, t2, prefix=False, method="TMS", weighting="FW", 
                      silent=False, verbose=False):
     """
     Compute several metrics between two hierarchical trees including the 
@@ -746,6 +750,18 @@ def triplet_distance(t1, t2, prefix, method="TMS", weighting="FW",
         precision and recall).
 
     """
+    
+    def triplet_incongruence_detector(triplet, tripdic):
+        "Test if a triplet is incompatible with the triplet set (True), or"
+        "absent but compatible (False). The triplet must not be in the set"
+        
+        for t in tripdic:
+            t1set = t.out_taxa.union(t.in_taxa)
+            t2set = triplet.out_taxa.union(triplet.in_taxa)
+            if t1set == t2set:
+                return True
+            
+        return False
 
     # remove automatically repetitions if detected (user message printed)
     if rep_detector({t1: 0}):
@@ -771,6 +787,9 @@ def triplet_distance(t1, t2, prefix, method="TMS", weighting="FW",
                                       dec_detail=False,
                                       prefix=False,
                                       verbose=False)
+    
+
+            
 
     RI_reconstructed_tree = Fraction(0, 1)  # total reconstruted tree
     RI_true_tree = Fraction(0, 1)  # total true tree
@@ -778,11 +797,19 @@ def triplet_distance(t1, t2, prefix, method="TMS", weighting="FW",
     RI_intersect_true_tree = Fraction(0, 1)
     false_positives = Fraction(0, 1)
     false_negatives = Fraction(0, 1)
-
+    incongruent_triplets_t1 = Fraction(0, 1)
+    incongruent_triplets_t2 = Fraction(0, 1)
+    neutral_triplets_t1 = Fraction(0, 1)
+    neutral_triplets_t2 = Fraction(0, 1)
+    
     for trip, FW in rt_tripdic.items():
         if trip in tt_tripdic:
             RI_intersect_reconstructed_tree += FW
         else:
+            if triplet_incongruence_detector(trip, tt_tripdic):
+                incongruent_triplets_t1 += FW
+            else:
+                neutral_triplets_t1 += FW
             false_positives += FW
         RI_reconstructed_tree += FW
 
@@ -790,6 +817,10 @@ def triplet_distance(t1, t2, prefix, method="TMS", weighting="FW",
         if trip in rt_tripdic:
             RI_intersect_true_tree += FW
         else:
+            if triplet_incongruence_detector(trip, rt_tripdic):
+                incongruent_triplets_t2 += FW
+            else:
+                neutral_triplets_t2 += FW
             false_negatives += FW
         RI_true_tree += FW
 
@@ -801,11 +832,31 @@ def triplet_distance(t1, t2, prefix, method="TMS", weighting="FW",
     except ZeroDivisionError:
         precision  = 0
 
+    # F1-score
     try:
-        tripdistance = (2 * precision * recall) / (precision + recall)
+        F1score = (2 * precision * recall) / (precision + recall)
     except ZeroDivisionError:
-        tripdistance  = 0
+        F1score  = 0
+        
+    #Triplet distance sensu Dobson 1975 Dobson, A.J. (1975). Comparing the 
+    # shapes of trees. In: Street, A.P., Wallis, W.D. (eds) Combinatorial 
+    # Mathematics III. Lecture Notes in Mathematics, vol 452.
+    tripdistance = abs(false_positives + false_negatives) / 2
+    
+    # Triplet congruence / similarity
+    # Amount of common triplets between t1 and t2. It may be a 
+    # different amount in t1 and t2 because of the fractionnal weighting
+    tripcongruence = abs(RI_intersect_true_tree + 
+                         RI_intersect_reconstructed_tree) / 2
+    
+    # Triplet congruence / similarity. Not the same as triplet distance, as
+    # the triplet incongruence takes only into account the incompatible 
+    # triplets, while triplet distance takes also into account triplet that are
+    # different but still compatible (or more exactly, neutral)
+    tripincongruence = incongruent_triplets_t1 + incongruent_triplets_t2
 
+    tripneutral = neutral_triplets_t1 + neutral_triplets_t2
+        
     # results list to display /save
     itristr = []
 
@@ -829,6 +880,22 @@ def triplet_distance(t1, t2, prefix, method="TMS", weighting="FW",
     itristr.append("Number of triplets in t1 but not in t2 " 
                    + "(false negatives) : " 
                    + str(round(float(false_negatives), 3)))
+    
+    itristr.append("Triplet distance ((t2Δt1)/2)) : " 
+                   + str(round(float(tripdistance), 3)))
+    
+    itristr.append("Triplet congruence (amount of triplets present in both" 
+                   + " trees) (t2 in t1 + t1 in t2)/2)) : " 
+                   + str(round(float(tripcongruence), 3)))
+
+    itristr.append("Triplet incongruence (amount of triplets incompatibles " +
+                   "between t1 and t2) : " 
+                   + str(round(float(tripincongruence), 3)))
+
+    itristr.append("Triplet neutral (amount of neutral triplets, i.e. " 
+                   + "triplets compatibles which are not the same between " 
+                   + "t1 and t2) : " 
+                   + str(round(float(tripneutral), 3)))
 
     itristr.append("ITRI(t1,t2) (Precision: (t2 in t1)/t2)) : " 
                    + str(round(precision, 3)))
@@ -836,10 +903,10 @@ def triplet_distance(t1, t2, prefix, method="TMS", weighting="FW",
     itristr.append("ITRI(t2,t1) (Recall: (t1 in t2)/t1)) : " 
                    + str(round(recall, 3)))
     
-    itristr.append("Triplet distance (F1-score: " 
+    itristr.append("Triplet F1-score: " 
                    + "(2 * Precision * Recall) / " 
                    + "(Precision + Recall)) : " 
-                   + str(round(tripdistance, 3)))
+                   + str(round(F1score, 3))) 
 
     # save file
     if prefix:
@@ -853,8 +920,20 @@ def triplet_distance(t1, t2, prefix, method="TMS", weighting="FW",
         for line in itristr:
             print(line)
             
-    return precision, recall, tripdistance  # ITRI(T1,T2), ITRI(T2,T1), tripdst
-
+    return (float(RI_true_tree), 
+           float(RI_reconstructed_tree),
+           float(RI_intersect_true_tree),
+           float(RI_intersect_reconstructed_tree),
+           float(false_positives), 
+           float(false_negatives),
+           float(tripdistance),  #Dobson 1975
+           float(tripcongruence),
+           float(tripincongruence),
+           float(tripneutral),
+           precision,  # ITRI(T1,T2)
+           recall,     # ITRI(T2,T1)
+           F1score)              
+           
 
 def cladogram_label(cladogram, clade_number_option, clade_type_option, 
                     pdf_files=False):
