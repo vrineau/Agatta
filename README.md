@@ -16,7 +16,7 @@ Agatta is user-friendly and offers many specific features to help pre or postpro
 
 Agatta works on Windows, Unix/Linux and macOS.
 
-This package requires Python version 3.7 or higher.
+This package requires Python version 3.8 or higher.
 
 Agatta and all its dependencies can be installed using `pip install Agatta`. Detailed explanations are available in the [tutorial](https://github.com/vrineau/Agatta/wiki/Tutorial).
 
