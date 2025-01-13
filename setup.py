@@ -14,7 +14,7 @@ setup(
 
     version=main_ns['__version__'],
 
-    python_requires='>=3.7.0',
+    python_requires='>=3.8.0',
 
     packages=find_packages(),
 
