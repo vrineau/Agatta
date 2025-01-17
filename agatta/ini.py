@@ -245,7 +245,7 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True,
 
     # non-informative trees are discarded
     if info_tree:
-        character_dict = infotree_checker(character_dict)
+        character_dict, noninfo = infotree_checker(character_dict)
         
     # empty nodes automatically removed
     delnodes = []  # list of nodes to delete
@@ -276,8 +276,10 @@ def infotree_checker(character_dict, verbose=True):
 
     non_info_chars = []
     info_character_dict = dict()
+    non_info_characters = list()
 
     for cladogram, a in character_dict.items():
+        info = False
         lroot = len(cladogram.get_leaf_names())
         non_info_chars.append(a)
         if lroot > 2:
@@ -287,7 +289,10 @@ def infotree_checker(character_dict, verbose=True):
                     if lnode > 1 and lnode < lroot:  # if tree is informative
                         non_info_chars.remove(a)
                         info_character_dict[cladogram] = a
+                        info = True
                         break
+        if not info:
+            non_info_characters.append(a)
 
     if non_info_chars and verbose:
         print("WARNING: the following input trees are non-informative:")
@@ -296,7 +301,7 @@ def infotree_checker(character_dict, verbose=True):
                 character_dict.values()).index(a)].write(format=9)
             print("[{}] {}".format(str(a),non_info_tree))
 
-    return info_character_dict
+    return info_character_dict, non_info_characters
 
 
 def taxa_extraction(character_dict):
@@ -525,11 +530,8 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
     areagram_dict = dict()
     nb_char = len(character_dict)
 
-    if nb_char > 1:
-        print("Standardising {} characters".format(str(nb_char)))
-    else:
-        print("Standardising 1 character")
-
+    print("Character standardisation")
+    
     error_message = ""
 
     # for each tree
@@ -575,7 +577,14 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
         print("Operation aborted.")
         sys.exit(1)
 
-    print("Characters standardised")
+    print("Multiple Area Single Taxa (MAST) removed")
+    print("Characters standardised\n")
+    
+    areagram_dict, noninfo = infotree_checker(areagram_dict)
+    
+    # message when non-informative characters
+    for n in noninfo:
+        print("Character {} non-informative after standardisation".format(n))
 
     return areagram_dict
 
@@ -605,7 +614,8 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
         position of a specific taxon on the character.
         Each cell can be filled by:
 
-            - A question mark "?" if the state for a taxon is unknown.
+            - A question mark "?" or an empty cell if the state for a taxon is 
+              unknown.
 
             - An integer which should be mandatory present in the first line
               of the matrix. For example, if the character is coded as (0,(1))
@@ -657,7 +667,7 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
         with open(infile, 'rt') as f:
             try:
                 dialect = csv.Sniffer().sniff(f.readline(),
-                                              delimiters=[";","\t"," ","|"])
+                                              delimiters=[";","\t","|"])
             except:
                 print("ERROR: The table file '" + infile +
                       "' is not adequately formated.\n Operation aborted.")
@@ -678,6 +688,9 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
                  print("ERROR: the hierarchical matrix '" +
                                 infile + "' is broken.\nOperation aborted.")
                  sys.exit(1)
+                 
+        if path.splitext(infile)[1] != ".hmatrix":
+            print("WARNING: the matrix should have a .hmatrix extension.")
 
         return hmatrix
 
@@ -782,7 +795,7 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
                 ind2 = ind
             charstates = hmatrix[taxalist.index(taxa)+1][int(ind2)].split(",")
 
-            if charstates[0] != "?":  # if not missing data
+            if charstates[0] and charstates[0] != "?":  # if not missing data
 
                 # branching
                 for charstate in charstates:
@@ -830,11 +843,11 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
         print(error_message)
         sys.exit(1)
 
-    character_dict = infotree_checker(character_dict)
+    character_dict, noninfo = infotree_checker(character_dict)
 
     # save resulting tree file
     if prefix:
-        character_dict = infotree_checker(character_dict)
+        character_dict, noninfo = infotree_checker(character_dict)
         with open(prefix+".tre", "w") as treefile:
             for char, charnum in character_dict.items():
                 treefile.write(char.write(format=9) + "\n")
@@ -994,7 +1007,7 @@ def helper(command):
               - A newick file with a single newick tree on each line,
               - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
-            THe following url give more information on how to build input
+            The following url give more information on how to build input
             files: URL.
 
         Optionnal parameters:
@@ -1076,7 +1089,7 @@ def helper(command):
             User should consider to switch the software is the
             analysis time appears to be too long. A prefix.nex file is
             generated if 'paup', a prefix.tnt file for 'tnt', a
-            prefix.wqfm for 'wqfm', and a prefix.wqtc for 'wtree-qmc'.
+            prefix.wqfm for 'wqfm', and a prefix.wtqmc for 'wtree-qmc'.
             --taxarep1=<path>  If the user wants to replace identifiers by real
             leaf names in the result files, this flag can be used with a path
             to a csv file with two columns, the first with the identifiers in
@@ -1462,7 +1475,7 @@ def helper(command):
             terminals. User should consider to switch the software is the
             analysis time appears to be too long. A prefix.nex file is
             generated if 'paup', a prefix.tnt file for 'tnt', a prefix.wqfm
-            for 'wqfm', and a prefix.wqtc for 'wtree-qmc'.
+            for 'wqfm', and a prefix.wtqmc for 'wtree-qmc'.
             --taxarep1=<path>  If the user wants to replace identifiers by real
             leaf names in the result files, this flag can be used with a path
             to a csv file with two columns, the first with the identifiers in

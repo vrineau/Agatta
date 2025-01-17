@@ -412,7 +412,7 @@ def triplet_tmc_file(triplet_dict, character_dict, prefix,
         TMC_file.write(tmcstring)
 
 
-def triplet_wqfm_wqtc_file(triplet_dict, prefix, weighting="FW", precision=7):
+def triplet_wqfm_wtqmc_file(triplet_dict, prefix, weighting="FW", precision=7):
     """
     Outputs a three-item analysis file readable by wqfm (Mahbub et al., 2021)
     and wTREE-QMC (Han & Molloy, 2024) from a dictionary of triplets and their 
@@ -535,10 +535,10 @@ def triplet_to_file(triplet_dict, character_dict, prefix, analysis="heuristic",
     #     triplet_tmc_file(triplet_dict, character_dict, prefix, weighting)
 
     elif software == "wqfm":
-        triplet_wqfm_wqtc_file(triplet_dict, prefix+".wqfm", weighting)
+        triplet_wqfm_wtqmc_file(triplet_dict, prefix+".wqfm", weighting)
         
     elif software == "wtree-qmc":
-        triplet_wqfm_wqtc_file(triplet_dict, prefix+".wqtc", weighting)
+        triplet_wqfm_wtqmc_file(triplet_dict, prefix+".wtqmc", weighting)
 
     end = time.time()
     time_cptr = time.strftime('%H:%M:%S', time.gmtime(end - start))
@@ -981,6 +981,8 @@ def agatta_analysis(file_path, software_path, software="paup",
                 tstreelist = treeswift.read_tree_newick(prefix + ".tre")
             except RuntimeError:
                 print("ERROR: " + software + " failed to find a tree.")
+                if prefix[0] == "_" and software == "paup":
+                    print("PAUP* doesn't like prefix names starting with _")
                 sys.exit(1)
 
         if not isinstance(tstreelist, list):
@@ -1007,10 +1009,10 @@ def agatta_analysis(file_path, software_path, software="paup",
                     tstree.reroot(nodedict["root"])
                 except KeyError:
                     print("ERROR: A problem occurred when rooting. "
-                          + "The problem may be due to old files left in the" 
-                          + " working directory. Please try to delete all "
-                          + "files in the folder other than input files and "
-                          + "restart the analysis. ")
+                          + "The problem may be due to old output files left " 
+                          + "in the working directory. Please try to delete"
+                          + " all files in the folder other than input files "
+                          + "and restart the analysis. ")
                     
                     sys.exit(1)
                 tstree.suppress_unifurcations()

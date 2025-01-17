@@ -30,12 +30,12 @@ setup(
 
     install_requires= ["docopt==0.6.2",
                        "ete3==3.1.3",
-                       "tqdm==4.66.1",
+                       "tqdm==4.66.3",
                        "treeswift==1.1.37",
                        "six==1.16.0",
                        "numpy==1.25.2",
                        "pandas==1.4.4",
-                       "pypdf==3.16.0"],
+                       "pypdf==3.17.0"],
 
     include_package_data=True,
 

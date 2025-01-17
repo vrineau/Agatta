@@ -298,6 +298,27 @@ def rcc(treelist, prefix=False, verbose=False):
             if nts[2] != cardinal and nts[2] >= cardinal and len(
                     nts[0] & set(cardinal)) > 1:
                 nts_groups[cardinal].append(nts[0] & set(cardinal))
+                
+    # for each pair of trees: second step from Wilkinson 1995     
+    for card1, card2 in combinations(nts_groups, 2):
+        
+        # cardinal computation
+        newcard = frozenset(card1 & card2)
+        ntslist = []
+
+        # new nts list computation
+        if len(newcard) > 3 and newcard != card1 and newcard != card2:
+            for nts in nts_groups[card1] + nts_groups[card2]:
+                
+                newnts = set(nts & newcard)
+                
+                if newnts not in ntslist and len(newnts) > 1:
+                    ntslist.append(newnts)
+                    
+        # check redundancy and validate
+        if (len(ntslist) > len(nts_groups[card1])) and (
+                len(ntslist) > len(nts_groups[card2])):
+            nts_groups[newcard] = ntslist
 
     #merging all nts into trees
     profile = []
@@ -480,7 +501,6 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
                                                  prefix=prefix,
                                                  verbose=verbose)
 
-    print(str(len(character_dict)) + " characters loaded")
     print("Computing retention index")
 
     str_character_dict = {}

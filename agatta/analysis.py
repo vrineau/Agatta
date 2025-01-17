@@ -81,7 +81,7 @@ def del_replications(treerep, method="TMS", verbose=False):
         * The original algorithm of Nelson and Ladiges (1996) designed in the
           paradigm of cladistic biogeography: Free-paralogy Subtree analysis.
 
-        * The algorithm of Rineau et al. (in prep) designed to construct
+        * The algorithm of Rineau et al. (2022) designed to construct
           subtrees without repeated leaves while minimising the loss of
           information in terms of triplets: Triplet Maximisation Subtrees.
           This is the default mode.
@@ -90,7 +90,7 @@ def del_replications(treerep, method="TMS", verbose=False):
           biogeography and analysis of paralogy-free subtrees.
           American Museum novitates 3167.
 
-          Rineau, V., Moncel, M-H., & Zeitoun, V. (in prep). Revealing
+          Rineau, V., Moncel, M-H., & Zeitoun, V. (2022). Revealing
           evolutionary patterns behind homogeneity: the case of the Paleolithic
           assemblages from Notarchirico (Southern Italy).
 
@@ -319,7 +319,7 @@ def del_replications(treerep, method="TMS", verbose=False):
                 node.get_children()[0].delete()
 
         # retain tree only if more than one internal node
-        cdict = infotree_checker({infotree:1}, verbose=False)
+        cdict, noninfo = infotree_checker({infotree:1}, verbose=False)
         if cdict.keys():
             infotree = list(cdict.keys())[0]
             infotree.ladderize()
@@ -327,12 +327,13 @@ def del_replications(treerep, method="TMS", verbose=False):
 
     if verbose:  # verbose mode
 
-        print("output subtrees:")
+        print("Output trees:")
         if treelist:
             for l in treelist:
                 print(l.write(format=9))
         else:
             print("No informative tree")
+        print("")
 
     return treelist
 
@@ -347,7 +348,7 @@ def del_replications_forest(character_dict, method="TMS",
         * The original algorithm of Nelson and Ladiges (1996) designed in the
           paradigm of cladistic biogeography.
 
-        * The algorithm of Rineau et al. (in prep) designed to construct
+        * The algorithm of Rineau et al. (2022) designed to construct
           subtrees without repeated leaves while minimising the loss of
           information in terms of triplets. This is the default mode.
 
@@ -355,7 +356,7 @@ def del_replications_forest(character_dict, method="TMS",
           biogeography and analysis of paralogy-free subtrees.
           American Museum novitates 3167.
 
-          Rineau, V., Moncel, M-H., & Zeitoun, V. (in prep). Revealing
+          Rineau, V., Moncel, M-H., & Zeitoun, V. (2022). Revealing
           evolutionary patterns behind homogeneity: the case of the Paleolithic
           assemblages from Notarchirico (Southern Italy).
 
@@ -389,23 +390,40 @@ def del_replications_forest(character_dict, method="TMS",
         loopchar = character_dict.items()
     else:
         loopchar = tqdm(character_dict.items())
+        
+    if prefix:
+        with open(prefix+".poly", "w") as logfile:
+            logfile.write("Polymorphism management: {}\n".format(method))
 
     for treed, treeid in loopchar:
 
         if verbose:
-            print("Tree " + str(treeid))
-            print(treed.write(format=9))
+            print("[" + str(treeid) + "] " + treed.write(format=9))
+        
+        if prefix:
+            with open(prefix+".poly", "a") as logfile:
+                logfile.write("[" + str(treeid) + "] " 
+                              + treed.write(format=9) + "\n")
 
         treelist = del_replications(treed, method, verbose)
 
         if treelist:
+            
+            # if single tree obtained
             if len(treelist) == 1:
                 tree_dict[treelist[0]] = treeid
                 
                 if prefix:
-                    with open(prefix+".poly", "a") as logfile:
-                        logfile.write("[" + str(treeid) + "] " +
-                                      treelist[0].write(format=9) + "\n")
+                    if len(treed) == len(treelist[0]):
+                        with open(prefix+".poly", "a") as logfile:
+                            logfile.write("[" + str(treeid) + "] " +
+                                          "no repeated leaf\n")
+                    else:
+                        with open(prefix+".poly", "a") as logfile:
+                            logfile.write("[" + str(treeid) + "] " +
+                                          treelist[0].write(format=9) + "\n")
+                        
+            # if character cut into several free-paralogy subtrees
             else:
                 
                 # function to sort trees with their minimal state number 
@@ -437,20 +455,32 @@ def del_replications_forest(character_dict, method="TMS",
 
 
                     if prefix:
-                        with open(prefix+".poly", "w") as logfile:
+                        with open(prefix+".poly", "a") as logfile:
                             logfile.write("[" + str(treeid) + "." + str(i) + 
                                           "] " + treel.write(format=9) + "\n")
                     i += 1
         else:
             if prefix:
-                with open(prefix+".poly", "w") as logfile:
+                with open(prefix+".poly", "a") as logfile:
                     logfile.write("[" + str(treeid) + 
                                   "] no informative tree\n")
 
+        if prefix:
+            with open(prefix+".poly", "a") as logfile:
+                logfile.write("\n")
+
+    td, noninfo = infotree_checker(tree_dict)
+    
+    # message when non-informative characters
+    for n in noninfo:
+        print("Character {} non-informative after " 
+              +"polymorphism management".format(n))
+
     if output_trees != 0:
         print("Polymorphism removed: "
-              "{} polymorphism free informative subtrees computed".format(
-                  str(output_trees)))
+              "{} polymorphism free informative characters "
+              "computed from {} character trees".format(
+                  str(output_trees), str(len(character_dict))))
     else:
         print("Polymorphism removed. No polymorphism free "
               "informative subtree remaining.")
