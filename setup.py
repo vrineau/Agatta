@@ -33,7 +33,7 @@ setup(
                        "tqdm==4.66.3",
                        "treeswift==1.1.37",
                        "six==1.16.0",
-                       "numpy==1.25.2",
+                       "numpy==1.24.4",
                        "pandas==1.4.4",
                        "pypdf==3.17.0"],
 
