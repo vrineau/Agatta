@@ -143,8 +143,7 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True,
             print("ERROR: The file " + infile + " is broken. Please check " +
                            "the format. \nNexus files must have the .nex " +
                            "extension.\nNexml files must have the .nexml " +
-                           "extension.\nThe Lisbeth input files must have " +
-                           "the .3ia extension.\nHierarchical matrices have" +
+                           "extension.\nHierarchical matrices have" +
                            " the .hmatrix extension.\nAll other extensions " +
                            "are considered as newick files containing only " +
                            "newick strings (one on each line).")
@@ -400,13 +399,14 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
 
     Parameters
     ----------
-    tree_file : str
-        Path of the file containing a single newick tree on each line.
+    tree_file : list of str or dict
+        Path(s) of the file(s) containing a single newick tree on each line.
         Example:
 
             (a,b,(c,d,(e,f)));
             ((c,e),(a,(b,(d,f))));
-
+        
+        Can be also a character_dict
         The default is False (a selection window appears in this case).
     biogeo_tab : str
         path of table with semicolon separators and two columns, taxa in
@@ -523,10 +523,18 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
         return biogeo_dict, MAST, arearep
 
     biogeo_dict, MAST, arearep = biogeo_table(biogeo_tab, verbose=False)
-    if type(tree_file) == str:
-        character_dict = character_extraction(tree_file)
+    
+    if type(tree_file) == list:
+        taxa_replacement=False
+        chardec=False
+        info_tree=True
+        character_dict = wrapper_character_extraction(tree_file, 
+                                                      taxa_replacement, prefix, 
+                                                      chardec, verbose, 
+                                                      info_tree)
     else:
         character_dict = tree_file
+        
     areagram_dict = dict()
     nb_char = len(character_dict)
 
@@ -589,10 +597,10 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
     return areagram_dict
 
 
-def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
+def hmatrix(infile, prefix=False, chardec=False, verbose=False):
     """
     Function that build ete3 trees from a file containing a hierarchical
-    matrix (or several matrices). The matrix must be a table text
+    matrix. The matrix must be a table text
     (e.g., a csv file). The separator cannot be a comma.
 
     Format of the matrix:
@@ -638,8 +646,8 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
 
     Parameters
     ----------
-    infilelist : list
-        List of paths of files containing hierarchical matrices.
+    infile : str
+        Path of file containing the hierarchical matrix.
     prefix : str, optional
         Prefix of the file to save. If prefix is set to false, no file is
         saved. The default is False.
@@ -702,30 +710,7 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
     error_message = ""
 
     # read first matrix
-    if isinstance(infilelist, list):
-        infilelist = [path.expanduser(l) for l in infilelist]
-        infile = infilelist[0]
-        infilelist.remove(infile)
-    else:
-        infile = infilelist
-        infilelist = False
-
     hmatrix = extracthmatrix(infile)
-
-    # if several matrices
-    if infilelist:
-        for infilesub in infilelist:
-            hmatrixsub = [l[1:] for l in extracthmatrix(infile)]
-
-            for i in range(len(hmatrix)):
-                hmatrix[i] += hmatrixsub[i]
-
-    if infilelist:
-        print(str(len(infilelist) + 1) + " hierarchical matrices loaded")
-        print("Treefication of the hierarchical matrices")
-    else:
-        print("Hierarchical matrix loaded")
-        print("Treefication of the hierarchical matrix")
 
     # construction of character trees backbone
     i = 1
@@ -858,6 +843,107 @@ def hmatrix(infilelist, prefix=False, chardec=False, verbose=False):
     return character_dict
 
 
+def hmatrix_several(infile, prefix=False, chardec=False, verbose=False):
+    """
+    Wrapper of hmatrix for treating several matrices. Use only for hmatrix 
+    Agatta command.
+
+    Parameters
+    ----------
+    infile : list
+        List of paths to hmatrix.
+    prefix : str, optional
+        Prefix of the file to save. If prefix is set to false, no file is
+        saved. The default is False.
+    chardec : bool, optional
+        If true, decompose each tree into components (one tree for each
+        informative node). The default is False.
+    verbose : bool, optional
+        Verbose mode. The default is False.
+
+    Returns
+    -------
+    None.
+
+    """
+    
+    for hfile in infile:
+        hmatrix(hfile, prefix, chardec, verbose)
+
+            
+def wrapper_character_extraction(infilelist=False, taxa_replacement=False, 
+                                 prefix=False, chardec=False, verbose=True, 
+                                 info_tree=True):
+    """
+    extrait hmatrix ou newick et renvoie l'ensemble combiné
+
+    Parameters
+    ----------
+    infilelist : list
+        List of paths of files containing hierarchical matrices.
+
+    taxa_replacement : TYPE, optional
+        DESCRIPTION. The default is False.
+    verbose : TYPE, optional
+        DESCRIPTION. The default is True.
+    info_tree : TYPE, optional
+        DESCRIPTION. The default is True.
+
+    Returns
+    -------
+    None.
+
+    """
+    
+    cptr_file_nb = 0
+    character_dict = dict()
+    maxnb = 0
+    
+    # detect if one or several files
+    if not isinstance(infilelist, list):
+        infilelist = [infilelist]
+    
+    #for each file
+    for infile in infilelist:
+        
+        cptr_file_nb +=1
+        fileName, fileExtension = path.splitext(infile)
+
+        if fileExtension == ".hmatrix":
+            # if hmatrix file
+            sub_chardict = hmatrix(infile, prefix, chardec, verbose)
+                        
+            print("File {}: newick file. {} character(s) loaded".format(
+                str(cptr_file_nb), str(len(sub_chardict))))
+            
+        else:
+            # if newick file
+            sub_chardict = character_extraction(infile, taxa_replacement, 
+                                 verbose, info_tree)
+                        
+            print("File {}: hierarchical matrix. {} character(s) loaded".format(
+                str(cptr_file_nb), str(len(sub_chardict))))
+            
+        # merge dictionaries
+        for key, value in sub_chardict.items():
+            if str(value).isdigit():
+                character_dict[key] = str(int(value) + maxnb)
+            else:  # si le nom du caractère n'est pas un numéro
+                character_dict[key] = value
+        
+        # calculates the maximum number from which to continue numbering
+        # if the character names are their numbers
+        if all([str(x).isdigit() for x in character_dict.values()]):
+            maxnb = max([int(x) for x in character_dict.values()])
+
+           
+    # count number of characters and where does they come from
+    print("\nTreefication of {} characters complete".format(
+        str(len(character_dict))))
+
+    return character_dict
+    
+
 def checkargs(arguments):
     """
     Check parsing and exit if error in flags
@@ -973,10 +1059,10 @@ def helper(command):
     obtained by congruence is the tree that maximises the amount of hypotheses
     of cladistic relationships (i.e., the three-item statements) deduced from
     the input trees (the characters).
-    The analysis can be performed using a text file containing a hierarchical
-    matrix (see section mandatory parameters below for informations about
-    the format) or newick rooted trees encoded in a newick, nexus, or nexml
-    file.
+    The analysis can be performed using one or several text file containing a 
+    hierarchical matrix (see section mandatory parameters below for 
+    informations about the format), newick rooted trees encoded in a newick, 
+    nexus, or nexml file, or a mix of input formats.
     There are no constraints on the input trees excepted that they must
     be rooted to perform the analysis. If they are repeated leaves
     (polymorphism), they are automatically removed (several methods
@@ -991,7 +1077,7 @@ def helper(command):
 
     Usage:
 
-        agatta analysis <file> [-s -v --analysis=<type> --chartest
+        agatta analysis <file>... [-s -v --analysis=<type> --chartest
                                       --consensus=<type> --parallel=<int>
                                       --pdf --prefix=<file>
                                       --repetitions=<type> --replicates=<int>
@@ -1001,14 +1087,15 @@ def helper(command):
 
         Mandatory parameters:
 
-            <file> Path of the file containing the character trees.
+            <file> Path(s) of the file(s) containing the character trees.
             The trees can be encoded for Agatta in a file in several ways:
               - a hierarchical matrix,
               - A newick file with a single newick tree on each line,
               - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
+            Mixing input file format is allowed.
             The following url give more information on how to build input
-            files: URL.
+            files: https://vrineau.github.io/AgattaDocs/Input%20files.html.
 
         Optionnal parameters:
 
@@ -1141,20 +1228,20 @@ def helper(command):
 
     Usage:
 
-        agatta tripdec <file> [-s -v --parallel=<int> --prefix=<file> 
+        agatta tripdec <file>... [-s -v --parallel=<int> --prefix=<file> 
                                      --taxarep1=<path> --weighting=<type>
                                      --repetitions=<type> --detailed_tripdec]
 
         Mandatory parameters:
 
-            <file> Path of the file containing the character trees.
+            <file> Path(s) of the file containing the character trees.
             The trees can be encoded for Agatta in a file in several ways:
               - a hierarchical matrix,
               - A newick file with a single newick tree on each line,
               - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
             The following url give more information on how to build input
-            files: URL.
+            files: https://vrineau.github.io/AgattaDocs/Input%20files.html.
 
         Optionnal parameters:
 
@@ -1233,27 +1320,23 @@ def helper(command):
 
     Usage:
 
-        agatta support <file> <file> [-s -v --index=<type> --prefix=<file>
+        agatta support <file> <file>... [-s -v --index=<type> --prefix=<file>
                                        --taxarep1=<path> --taxarep2=<path>
                                        --weighting=<type> --repetitions=<type>]
 
         Mandatory parameters:
 
-            Two <file> arguments are requested which represents the path of
-            tree files. Both <file> must contain newick tree(s) (excepted in
-            ri mode, see below).
-            The trees can be stored in newick files, nexus files (.nex), or
-            nexml files (.nexml). Hierarchical matrices are not handled by the
-            support command.
+            At least two <file> arguments are requested which represents path 
+            of tree files. The first is the cladogram, the others are 
+            character files.
             The requested files depend of the --index flag:
                 --index=ri: the retention index compares the cladogram to its
                 characters. The first <file> contains one tree considered as
                 the optimal cladogram (or a consensus); the second <file>
                 contains the input character trees used to construct the
-                cladogram and can be a newick file or a hierarchical matrix.
+                cladogram and can be newick files or a hierarchical matrix.
                 --index=tripdistance: compute various measures for comparison 
-                between two trees t1 and t2. Can be used in simulation 
-                studies to compare a reconstructed tree to a true tree.
+                between only two trees t1 and t2 (one in each file). 
 
         Optionnal parameters:
 
@@ -1349,20 +1432,22 @@ def helper(command):
 
     Usage:
 
-        agatta chartest <file> <file> [-s -v --pdf --prefix=<file> 
+        agatta chartest <file> <file>... [-s -v --pdf --prefix=<file> 
                                        --taxarep1=<path> --taxarep2=<path> 
                                        --repetitions=<type>]
 
         Mandatory parameters:
 
-            <file> Path of files containing the character trees.
+            <file> the first <file> contains one tree considered as
+            the optimal cladogram (or a consensus);  the others are the path(s) 
+            of file(s) containing the character trees.
             The trees can be encoded for Agatta in a file in several ways:
               - a hierarchical matrix,
               - A newick file with a single newick tree on each line,
               - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
             The following url give more information on how to build input
-            files: URL.
+            files: https://vrineau.github.io/AgattaDocs/Input%20files.html.
             The first <file> contains only one tree: the optimal cladogram or
             the consensus tree resulting from the analysis of a set of
             character trees. The second <file> contains the set of character
@@ -1417,22 +1502,23 @@ def helper(command):
 
     Usage:
 
-        agatta convert <file> [-s -v --analysis=<type> --filetype=<type> --log
-                                      --parallel=<int> --prefix=<file>
+        agatta convert <file>... [-s -v --analysis=<type> --filetype=<type> 
+                                      --log --parallel=<int> --prefix=<file>
                                       --replicates=<int> --software=<type>
                                       --taxarep1=<path> --weighting=<type>
                                       --repetitions=<type>]
 
         Mandatory parameters:
 
-            <file> Path of the file containing character trees or triplets.
+            <file> Path(s) of the file(s) containing character trees or 
+            triplets.
             The trees can be encoded for Agatta in a file in several ways:
               - a hierarchical matrix,
               - A newick file with a single newick tree on each line,
               - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
             The following url give more information on how to build input
-            files: URL.
+            files: https://vrineau.github.io/AgattaDocs/Input%20files.html.
             The user can also use as input file a triplet file generated from
             the Agatta tripdec command.
 
@@ -1524,19 +1610,19 @@ def helper(command):
 
     Usage:
 
-        agatta fp <file> [-s -v --prefix=<file> --repetitions=<type>
+        agatta fp <file>... [-s -v --prefix=<file> --repetitions=<type>
                                  --taxarep1=<path>]
 
         Mandatory parameters:
 
-            <file> Path of the file containing the character trees.
+            <file> Path(s) of the file containing the character trees.
             The trees can be encoded for Agatta in a file in several ways:
               - a hierarchical matrix,
               - A newick file with a single newick tree on each line,
               - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
             The following url give more information on how to build input
-            files: URL.
+            files: https://vrineau.github.io/AgattaDocs/Input%20files.html.
 
         Optionnal parameters:
 
@@ -1591,7 +1677,7 @@ def helper(command):
               - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
             The following url give more information on how to build input
-            files: URL.
+            files: https://vrineau.github.io/AgattaDocs/Input%20files.html.
 
         Optionnal parameters:
 
@@ -1639,7 +1725,7 @@ def helper(command):
               - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
             THe following url give more information on how to build input
-            files: URL.
+            files: https://vrineau.github.io/AgattaDocs/Input%20files.html.
 
         Optionnal parameters:
 
@@ -1672,25 +1758,28 @@ def helper(command):
 
     Usage:
 
-        agatta standardisation <file> <file> [-s -v --prefix=<file>]
+        agatta standardisation <file> <file>... [-s -v --prefix=<file>]
 
         Mandatory parameters:
 
-            Two <file> arguments are requested with the standardisation
-            command. The first <file> is the path of the file containing the
-            character trees. The trees can be encoded for Agatta in a file in
-            several ways:
+            Two <file> arguments at least are requested with the 
+            standardisation command. 
+            The first <file> argument is the path of a csv table with two
+            columns, the first column corresponds to the leaf names of input
+            trees, and the second column to corresponding names for
+            replacement. For example, in cladistic biogeography, taxa are in
+            the left column and corresponding areas in the right column.
+            
+            The other(s) <file> correspond to the path(s) of the file(s) 
+            containing the character trees. The trees can be encoded for Agatta 
+            in a file in several ways:
               - a hierarchical matrix,
               - A newick file with a single newick tree on each line,
               - A nexus file (extension in .nex),
               - A nexml file (extension in .nexml).
             The following url give more information on how to build input
-            files: URL.
-            The second <file> argument is the path of a csv table with two
-            columns, the first column corresponds to the leaf names of input
-            trees, and the second column to corresponding names for
-            replacement. FOr example, in cladistic biogeography, taxa are in
-            the left column and corresponding areas in the right column.
+            files: https://vrineau.github.io/AgattaDocs/Input%20files.html.
+
 
         Optionnal parameters:
 
@@ -1710,17 +1799,19 @@ def helper(command):
         print("""
     hmatrix
 
-    hmatrix converts a hierarchical matrix into rooted trees. Each column of
-    the matrix corresponds to one tree.
+    hmatrix converts one or several hierarchical matrices into rooted trees. 
+    Each column of the matrix corresponds to one tree.
 
     Usage:
 
-        agatta analysis <file> [-s -v --chardec --prefix=<file>]
+        agatta analysis <file>... [-s -v --chardec --prefix=<file>]
 
         Mandatory parameters:
 
-            <file>  Hierarchical matrix. A complete guide on the hierarchical
-            matrix format is available here: URL.
+            <file>  Hierarchical matrix (one or several). 
+            A complete guide on the hierarchical matrix format is available 
+            here: 
+            https://vrineau.github.io/AgattaDocs/Input%20files.html.
 
         Optionnal parameters:
 

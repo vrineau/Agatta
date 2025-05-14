@@ -47,11 +47,11 @@ setup(
         ],
     },
 
-    license="GNU General Public License v3 (GPLv3)",
+    license="GNU General Public License v3.0+",
 
     classifiers = [
     "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "SPDX-License-Identifier: GPL-3.0-or-later",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS",
     "Operating System :: POSIX :: Linux",

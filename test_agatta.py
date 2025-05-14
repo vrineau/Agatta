@@ -18,6 +18,7 @@ from tqdm import tqdm
 from fractions import Fraction
 from agatta.search import triplet_check
 from agatta.ini import character_extraction
+from agatta.ini import wrapper_character_extraction
 from agatta.ini import hmatrix
 from agatta.ini import standardisation
 from agatta.interpret import constrict
@@ -203,6 +204,59 @@ class Test_analysis:
 
         assert result_tree == self.tree1
 
+    def test_several_input_files_character_extraction(self, tmpdir):
+
+        folder = tmpdir.mkdir("subdir")
+        infile1 = str(folder.join("input1.txt"))
+        infile2 = str(folder.join("input2.txt"))
+
+        with open(infile1, "w") as treefile:
+            treefile.write(self.tree1 + "\n")
+            
+        with open(infile2, "w") as treefile:
+            treefile.write(self.tree2 + "\n")
+            
+        infilelist = [infile1, infile2]
+
+        character_dict = wrapper_character_extraction(infilelist)
+        
+        result_tree1, result_tree2 = list(character_dict.keys())
+        result_tree1.ladderize()
+        result_tree1 = result_tree1.write(format=9)
+        result_tree2.ladderize()
+        result_tree2 = result_tree2.write(format=9)
+
+        assert result_tree1 == self.tree1 and result_tree2 == self.tree2
+
+    def test_several_files_mix_character_extraction(self, tmpdir):
+
+        folder = tmpdir.mkdir("subdir")
+        infile1 = str(folder.join("input1.txt"))
+        infile2 = str(folder.join("input2.hmatrix"))
+
+        with open(infile1, "w") as treefile:
+            treefile.write(self.tree1 + "\n")
+            
+        with open(infile2, "w") as treefile:
+            treefile.write(";(0,(1,(2),(3)))\n")
+            treefile.write("Diceras;0\n")
+            treefile.write("Hippurites;1\n")
+            treefile.write("Radiolites;2\n")
+            treefile.write("Titanosarcolites;2,3\n")
+            treefile.write("Clinocaprina;3\n")
+            treefile.write("Vaccinites;3\n")
+            
+        infilelist = [infile1, infile2]
+
+        character_dict = wrapper_character_extraction(infilelist)
+        
+        result_tree1, result_tree2 = list(character_dict.keys())
+        result_tree1.ladderize()
+        result_tree1 = result_tree1.write(format=9)
+        result_tree2.ladderize()
+        result_tree2 = result_tree2.write(format=9)
+
+        assert result_tree1 == self.tree1 and result_tree2 == self.hmatrix
 
     def test_standard_tripdec_FW(self):
 
@@ -347,7 +401,7 @@ class Test_analysis:
             treefile.write("e;Greece\n")
             treefile.write("f;Spain\n")
 
-        areagram_dict = standardisation(infile,
+        areagram_dict = standardisation([infile],
                                         biogeo_tab,
                                         outfile,
                                         verbose=False)

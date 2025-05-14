@@ -15,10 +15,9 @@
 
 from fractions import Fraction
 from itertools import combinations
-from .ini import hmatrix
 from .ini import taxa_extraction
 from .ini import character_extraction
-from .ini import hmatrix
+from .ini import wrapper_character_extraction
 from .analysis import standard_tripdec
 from .analysis import rep_detector
 from .analysis import del_replications_forest
@@ -367,7 +366,7 @@ def rcc(treelist, prefix=False, verbose=False):
     return profile
 
 
-def RI_path(cladopath, charpath, taxarep1=False, taxarep2=False, 
+def RI_path(cladopath, charpaths, taxarep1=False, taxarep2=False, 
        method="TMS", weighting="FW", prefix=False, verbose=False):
     """
     Compute the retention index for hierarchical characters (Kitching et al., 
@@ -385,8 +384,8 @@ def RI_path(cladopath, charpath, taxarep1=False, taxarep2=False,
         Path to a newick file containing the cladogram. The tree must be the
         optimal cladogram obtained from the cladistic analysis of character
         trees stored in charpath.
-    charpath : str
-        Path to a file containing the initial character trees in newick or 
+    charpaths : list of str
+        List of paths to files containing character trees in newick or 
         hmatrix format.
     taxarep1 : str, optional
         DESCRIPTION. The default is False.
@@ -422,18 +421,17 @@ def RI_path(cladopath, charpath, taxarep1=False, taxarep2=False,
     print("Loading cladogram")
 
     cladopath = path.expanduser(cladopath)
-    charpath = path.expanduser(charpath)
+    charpaths = [path.expanduser(charpath) for charpath in charpaths] 
 
     cladogram_dict = character_extraction(cladopath, taxarep1, verbose=False)
 
     print("Cladogram loaded")
     print("Loading character trees")
 
-    if path.splitext(charpath)[1] == '.hmatrix':
-        character_dict = hmatrix(charpath, prefix=False, chardec=False, 
-                                 verbose=False)
-    else:
-        character_dict = character_extraction(charpath,taxarep2, verbose=False)
+    character_dict = wrapper_character_extraction(charpaths, 
+                                                  taxarep2,
+                                                  prefix,
+                                                  verbose=False)
         
     # Calls RI function
     RI_char_dict = RI(cladogram_dict, character_dict, taxarep1, taxarep2, 
@@ -1013,7 +1011,7 @@ def cladogram_label(cladogram, clade_number_option, clade_type_option,
     return cladogram, syn_dict
 
 
-def NRI(cladopath, charpath, taxarep1=False, taxarep2=False, prefix="rnri", 
+def NRI(cladopath, charpaths, taxarep1=False, taxarep2=False, prefix="rnri", 
         rnri_codes=False, weighting='FW', polymethod='TMS', totaltree=True,
         rescaled=True, pdf_files=False):
     """
@@ -1029,8 +1027,9 @@ def NRI(cladopath, charpath, taxarep1=False, taxarep2=False, prefix="rnri",
     ----------
     cladopath : str
         path of input file containing the cladogram (or consensus).
-    charpath : str
-        path of input file containing characters in hmatrix or newick format.
+    charpaths : list of str
+        list of path of input file containing characters in hmatrix or newick 
+        format.
     taxarep1 : str, optional
         DESCRIPTION. The default is False.
     taxarep2 : str, optional
@@ -1082,13 +1081,9 @@ def NRI(cladopath, charpath, taxarep1=False, taxarep2=False, prefix="rnri",
             sys.exit(1)
     
     # reading matrix cladogram csv
-    fileName, fileExtension = path.splitext(charpath)
-    
-    if fileExtension == ".hmatrix":
-        character_dict = hmatrix(charpath, prefix=False, 
-                                 chardec=False, verbose=False)
-    else:
-        character_dict = character_extraction(charpath, taxarep1)
+        
+    character_dict = wrapper_character_extraction(charpaths, taxarep1, prefix,
+                                                  verbose=False)
         
     cladogram_dict = character_extraction(cladopath, taxarep2, verbose=False)
     
@@ -1997,7 +1992,7 @@ def describe_forest(character_dict, prefix, showtaxanames=False):
     print("Forest described")
 
 
-def chartest(cladopath, charpath, taxarep1=False, taxarep2=False, method="TMS", 
+def chartest(cladopath, charpaths, taxarep1=False, taxarep2=False, method="TMS", 
              prefix="AGATTA_chartest", pdf_files=False, verbose=False):
     """
     Run the character states testing procedure for hierarchical characters
@@ -2022,9 +2017,9 @@ def chartest(cladopath, charpath, taxarep1=False, taxarep2=False, method="TMS",
     cladopath : str
         Path to a newick file containing the cladogram. The tree must be the
         optimal cladogram obtained from the cladistic analysis of character
-        trees stored in charpath.
-    charpath : str
-        Path to a file containing the initial character trees in newick or 
+        trees stored in charpaths.
+    charpaths : list of str
+        Path(s) to file(s) containing the initial character trees in newick or 
         hmatrix format.
     taxarep1 : str, optional
         DESCRIPTION. The default is False.
@@ -2053,19 +2048,16 @@ def chartest(cladopath, charpath, taxarep1=False, taxarep2=False, method="TMS",
     print("Loading cladogram")
 
     cladopath = path.expanduser(cladopath)
-    charpath = path.expanduser(charpath)
+    charpaths = [path.expanduser(charpath) for charpath in charpaths]
 
     cladogram_dict = character_extraction(cladopath, taxarep1, verbose=False)
 
     print("Cladogram loaded")
-    print("Loading character trees")
 
-    if path.splitext(charpath)[1] == '.hmatrix':
-        character_dict = hmatrix(charpath, prefix=False, chardec=False, 
-                                 verbose=False)
-    else:
-        character_dict = character_extraction(
-            charpath, taxarep2, verbose=False)
+    character_dict = wrapper_character_extraction(charpaths, 
+                                                  taxarep2,
+                                                  prefix,
+                                                  verbose)
         
     # remove automatically repetitions if detected (user message printed)
     if rep_detector(character_dict):
@@ -2074,6 +2066,6 @@ def chartest(cladopath, charpath, taxarep1=False, taxarep2=False, method="TMS",
                                                  prefix=prefix,
                                                  verbose=verbose)
 
-    print(str(len(character_dict)) + " characters loaded")
+    # print(str(len(character_dict)) + " characters loaded")
 
     character_states_test(cladogram_dict, character_dict, prefix, pdf_files)

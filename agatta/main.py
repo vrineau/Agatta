@@ -10,17 +10,17 @@ three-item analysis and associated operations in cladistics in python.
 https://github.com/vrineau/agatta
 
 Usage:
-    agatta analysis         <file>        [options]
-    agatta tripdec          <file>        [options]
-    agatta convert          <file>        [options]
-    agatta fp               <file>        [options]
-    agatta consensus        <file>        [options]
-    agatta describetree     <file>        [options]
-    agatta hmatrix          <file>...     [options]
-    agatta support          <file> <file> [options]
-    agatta chartest         <file> <file> [options]
-    agatta nri              <file> <file> [options]
-    agatta standardisation  <file> <file> [options]
+    agatta analysis         <file>...        [options]
+    agatta tripdec          <file>...        [options]
+    agatta convert          <file>...        [options]
+    agatta fp               <file>...        [options]
+    agatta consensus        <file>           [options]
+    agatta describetree     <file>           [options]
+    agatta hmatrix          <file> ...       [options]
+    agatta support          <file> <file>... [options]
+    agatta chartest         <file> <file>... [options]
+    agatta nri              <file> <file>... [options]
+    agatta standardisation  <file> <file>... [options]
     agatta help             <command>
     agatta -h | --help
     agatta --version
@@ -58,10 +58,11 @@ Options:
 """
 
 from .ini import helper
-from .ini import hmatrix
+from .ini import hmatrix_several
 from .ini import checkargs
 from .ini import standardisation
 from .ini import character_extraction
+from .ini import wrapper_character_extraction
 from .analysis import main_tripdec
 from .analysis import del_replications_forest
 from .interpret import RI_path
@@ -97,7 +98,7 @@ def main():
 
         # Complete analysis
         if arguments["analysis"]:
-            agatta_analysis(arguments["<file>"][0],
+            agatta_analysis(arguments["<file>"],  # one or several input files
                             arguments["--softpath"],
                             arguments["--software"],
                             arguments.get("--taxarep1", False),
@@ -117,7 +118,7 @@ def main():
 
         # triplet decomposition
         elif arguments["tripdec"]:
-            main_tripdec(arguments["<file>"][0],
+            main_tripdec(arguments["<file>"],  # one or several input files
                          arguments["--prefix"],
                          arguments.get("--taxarep1", False),
                          arguments["--weighting"],
@@ -132,7 +133,7 @@ def main():
             if arguments["--index"] == "ri":
 
                 RI_path(arguments["<file>"][0],
-                   arguments["<file>"][1],
+                   arguments["<file>"][1:],  # one or several input files
                    arguments.get("--taxarep1", False),
                    arguments.get("--taxarep2", False),
                    arguments["--repetitions"],
@@ -140,7 +141,7 @@ def main():
                    arguments["--prefix"]+".txt")
 
             # inter-tree retention index
-            elif arguments["--index"] == "tripdistance":
+            elif arguments["--index"] == "tripdistance":  # only two trees
 
                 triplet_distance(list(character_extraction(
                     arguments["<file>"][0],
@@ -156,7 +157,7 @@ def main():
         # character states testing procedure
         elif arguments["chartest"]:
             chartest(arguments["<file>"][0],
-                     arguments["<file>"][1],
+                     arguments["<file>"][1:],  # one or several input files
                      arguments.get("--taxarep1", False),
                      arguments.get("--taxarep2", False),
                      arguments["--repetitions"],
@@ -167,7 +168,7 @@ def main():
         # nodal retention index
         elif arguments["nri"]:
             NRI(arguments["<file>"][0],
-                     arguments["<file>"][1],
+                     arguments["<file>"][1:],  # one or several input files
                      arguments.get("--taxarep1", False),
                      arguments.get("--taxarep2", False),
                      arguments["--prefix"],
@@ -180,7 +181,7 @@ def main():
 
         # convert
         elif arguments["convert"]:
-            convert(arguments["<file>"][0],
+            convert(arguments["<file>"],   # one or several input files
                     arguments["--filetype"],
                     arguments["--prefix"],
                     arguments["--parallel"],
@@ -196,9 +197,11 @@ def main():
 
         # free-subtree paralogy analysis
         elif arguments["fp"]:
-            del_replications_forest(character_extraction(
-                             arguments["<file>"][0],
-                             arguments.get("--taxarep1", False)),
+            del_replications_forest(wrapper_character_extraction(
+                             arguments["<file>"],  # one or several input files
+                             arguments.get("--taxarep1", False),
+                             prefix=arguments["--prefix"],
+                             verbose=arguments.get("-v", False)),
                              method=arguments["--repetitions"],
                              prefix=arguments["--prefix"],
                              verbose=arguments.get("-v", False))
@@ -209,19 +212,19 @@ def main():
             if arguments["--consensus"] == "rcc":
 
                 rcc(list(character_extraction(
-                    arguments["<file>"][0],
+                    arguments["<file>"][0],  # only one file
                     arguments.get("--taxarep1", False)).keys()),
                     arguments["--prefix"])
 
             # strict consensus
             else:
                 constrict(list(character_extraction(
-                          arguments["<file>"][0],
+                          arguments["<file>"][0],   # only one file
                           arguments.get("--taxarep1", False)).keys()),
                           arguments["--prefix"])
 
         # describe trees
-        elif arguments["describetree"]:
+        elif arguments["describetree"]:   # only one file
             describe_forest(character_extraction(arguments["<file>"][0], 
                                                  info_tree=False),
                             arguments["--prefix"],
@@ -229,16 +232,14 @@ def main():
 
         # standardisation
         elif arguments["standardisation"]:
-            standardisation(character_extraction(
+            standardisation(arguments["<file>"][1:],  # one or several input
                               arguments["<file>"][0],
-                              arguments.get("--taxarep1", False)),
-                              arguments["<file>"][1],
                               arguments["--prefix"],
                               verbose=arguments.get("-v", False))
 
         # transform hierarchical matrix into a tree list
         elif arguments["hmatrix"]:
-            hmatrix(arguments["<file>"],  # list of paths
+            hmatrix_several(arguments["<file>"],  # one or several input
                     arguments["--prefix"],
                     arguments["--chardec"],
                     arguments["-v"])

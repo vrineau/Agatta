@@ -18,6 +18,7 @@ from .ini import standardisation
 from .ini import taxa_extraction
 from .ini import taxa_to_numbers
 from .ini import character_extraction
+from .ini import wrapper_character_extraction
 from .ini import taxa_triplet_extraction
 from .analysis import main_tripdec
 from .analysis import rep_detector
@@ -545,7 +546,7 @@ def triplet_to_file(triplet_dict, character_dict, prefix, analysis="heuristic",
     print("elapsed time (output file computation): {}".format(time_cptr))
 
 
-def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
+def convert(infilelist, infiletype, prefix, parallel="auto", weighting="FW",
             analysis="heuristic", taxa_replacement=False, nreplicates=1000,
             logfile=True, software="paup", dec_detail=False, method="TMS", 
             verbose=True):
@@ -576,9 +577,9 @@ def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
 
     Parameters
     ----------
-    infile : dict or str
-        Dictionary of ete3.Tree in keys or dictionary of triplets in keys and
-        weights in values or path of a file containing newick trees.
+    infilelist : dict or list of str
+        Dictionary of ete3. Tree in keys or dictionary of triplets in keys and
+        weights in values or list of paths of file(s) containing newick trees.
     infiletype : str
         Type of infile argument. Can be 'triplets' if infile is a dictionary
         of triplets or 'trees' if infile is a path to a tree file or a
@@ -636,17 +637,20 @@ def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
     """
 
     if infiletype == "triplets":
-        triplet_dict = triplet_extraction(infile, taxa_replacement)
+        triplet_dict = triplet_extraction(infilelist, taxa_replacement)
         character_dict = False
 
     elif infiletype == "trees":
-        if type(infile) == str:
-            character_dict = character_extraction(infile, verbose=False)
+        if type(infilelist) == list:
+            character_dict = wrapper_character_extraction(infilelist, 
+                                                          taxa_replacement,
+                                                          prefix,
+                                                          verbose)
 
         else:
-            character_dict = infile
+            character_dict = infilelist
 
-        triplet_dict = main_tripdec(infile, prefix, taxa_replacement,
+        triplet_dict = main_tripdec(infilelist, prefix, taxa_replacement,
                                     weighting, parallel, dec_detail, 
                                     method, verbose)
 
@@ -654,7 +658,7 @@ def convert(infile, infiletype, prefix, parallel="auto", weighting="FW",
                     nreplicates, logfile, software, weighting)
 
 
-def agatta_analysis(file_path, software_path, software="paup",
+def agatta_analysis(infilelist, software_path, software="paup",
                     taxa_replacement=False, method="TMS", weighting="FW",
                     parallel="auto", prefix="agatta_out", analysis="heuristic",
                     nrep=1000, rosetta=False, chartest=False, ri=False,
@@ -667,9 +671,8 @@ def agatta_analysis(file_path, software_path, software="paup",
     cladistic biogeography.
 
     The analysis can be performed using a text file containing a hierarchical
-    matrix (see help of agatta.ini.hmatrix for informations about the format)
-    or newick rooted trees (see help of agatta.ini.character_extraction for
-    informations about the format).
+    matrix (see https://vrineau.github.io/AgattaDocs/Input%20files.html for 
+    informations about the format) or newick rooted trees.
 
     Repetitions (polymorphism) are automatically removed according to:
 
@@ -726,11 +729,12 @@ def agatta_analysis(file_path, software_path, software="paup",
 
     Parameters
     ----------
-    file_path : str
-        Path of the file containing:
+    infilelist : list of str
+        Paths of the file containing:
 
-            * a hierarchical matrix (see help of agatta.ini.hmatrix for
-              informations about the format)
+            * a hierarchical matrix (see 
+              https://vrineau.github.io/AgattaDocs/Input%20files.html
+              for informations about the format)
             * a single newick tree on each line. Example:
 
             (a,b,(c,d,(e,f)));
@@ -840,7 +844,7 @@ def agatta_analysis(file_path, software_path, software="paup",
         now = datetime.datetime.now()
         log_file.write(now.strftime("%Y-%m-%d %H:%M:%S"))
         log_file.write("\n")
-        log_file.write("Input file path: "+os.path.expanduser(file_path)+"\n")
+        log_file.write("Input file paths: "+ ", ".join(infilelist)+"\n")
         log_file.write("Prefix: "+prefix+"\n")
         log_file.write("Taxa replacement file:"+str(taxa_replacement)+"\n")
         log_file.write("Method: "+method+"\n")
@@ -882,17 +886,8 @@ def agatta_analysis(file_path, software_path, software="paup",
         log_file.write("Verbose: "+str(verbose)+"\n")
 
     # if input is a matrix, use hmatrix to convert in a tree list
-    if file_path.endswith(".hmatrix"):
-
-        f_path = os.path.split(file_path)[0]
-
-        character_dict = hmatrix(file_path, os.path.join(f_path,
-                                                         prefix + ".input"))
-
-        file_path = os.path.join(f_path, prefix + ".input.tre")
-
-    else:
-        character_dict = character_extraction(file_path, taxa_replacement)
+    character_dict = wrapper_character_extraction(infilelist, taxa_replacement,
+                                                  prefix, verbose)
 
     # standardisation option
     if rosetta:

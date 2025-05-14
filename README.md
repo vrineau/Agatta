@@ -16,7 +16,7 @@ Agatta is user-friendly and offers many specific features to help pre or postpro
 
 Agatta works on Windows, Unix/Linux and macOS.
 
-This package requires Python version 3.8 or higher. It has been tested for 3.8, 3.9, 3.10, and 3.11 using ubuntu 20.04, macos 13, and windows 11.
+This package requires Python version 3.8 or higher. It has been tested for 3.8 to 3.11 using ubuntu 24.04, macos 13, and windows 11.
 
 Agatta and all its dependencies can be installed using `pip install Agatta`. Detailed explanations are available in the [tutorial](https://vrineau.github.io/AgattaDocs/Tutorial.html).
 
@@ -58,7 +58,7 @@ The code is currently licensed under the GNU General Public License version 3.
 
 When using Agatta, please cite us (temporarily) as
 
-> Rineau, V., Zaharias, P. (2025) Agatta (Version 0.9.1) [Software]. Github. https://github.com/vrineau/Agatta.
+> Rineau, V., Zaharias, P. (2025) Agatta (Version 0.9.2) [Software]. Github. https://github.com/vrineau/Agatta.
 
 ## References
 

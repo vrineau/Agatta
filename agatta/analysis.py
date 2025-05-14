@@ -13,10 +13,9 @@
 
 """
 
-from .ini import character_extraction
+from .ini import wrapper_character_extraction
 from .ini import taxa_to_numbers
 from .ini import infotree_checker
-from .ini import hmatrix
 from fractions import Fraction
 from itertools import combinations
 from itertools import product
@@ -1166,8 +1165,8 @@ def main_tripdec(input_item, prefix, taxa_replacement, weighting, parallel,
     """
     Main function of Agatta for decomposing trees into triplets and compute
     triplet weights using multiprocessing or not. The input trees can be a
-    dictionary containing ete3 trees as keys or the path to a file containing
-    newick strings.
+    dictionary containing ete3 trees as keys or the path(s) to input file(s)
+    (https://vrineau.github.io/AgattaDocs/Input%20files.html).
     Decompose trees into their triplets and compute weights using a weighting
     scheme between:
 
@@ -1193,8 +1192,8 @@ def main_tripdec(input_item, prefix, taxa_replacement, weighting, parallel,
     Parameters
     ----------
     input_item : string or dictionary
-        can be the path of the file (newick, nexus, hmatrix, 
-        or the dictionary of trees.
+        can be a list of file paths (newick, nexus, hmatrix, 
+        or a dictionary of trees.
     prefix : str
         Prefix of the file to save. If prefix is set to false, no file is
         saved. The default is False.
@@ -1240,17 +1239,11 @@ def main_tripdec(input_item, prefix, taxa_replacement, weighting, parallel,
         Dictionary of triplets (keys) and weights (values) without doublons.
     """
 
-    if type(input_item) == str:
-        if input_item.endswith(".hmatrix"):
-
-            f_path = os.path.split(input_item)[0]
-
-            character_dict = hmatrix(input_item, os.path.join(f_path, 
-                                                            prefix + ".input"))
-            
-        else:
-            character_dict = character_extraction(input_item,
-                                          taxa_replacement=taxa_replacement)
+    if type(input_item) == list:
+        character_dict = wrapper_character_extraction(input_item, 
+                                                      taxa_replacement,
+                                                      prefix,
+                                                      verbose)
     
     else:
         character_dict = input_item
