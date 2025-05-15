@@ -1,13 +1,13 @@
 Metadata-Version: 2.4
 Name: Agatta
-Version: 0.9.3
+Version: 0.9.4
 Summary: Three-item analysis python package
 Home-page: https://github.com/vrineau/Agatta
 Author: Valentin Rineau
 Author-email: valentin.rineau@sorbonne-universite.fr
 License: GNU General Public License v3.0+
 Classifier: Development Status :: 4 - Beta
-Classifier: License-Expression :: GPL-3.0-or-later
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
 Classifier: Operating System :: Microsoft :: Windows
 Classifier: Operating System :: MacOS
 Classifier: Operating System :: POSIX :: Linux
@@ -103,7 +103,7 @@ The code is currently licensed under the GNU General Public License version 3.
 
 When using Agatta, please cite us (temporarily) as
 
-> Rineau, V., Zaharias, P. (2025) Agatta (Version 0.9.3) [Software]. Github. https://github.com/vrineau/Agatta.
+> Rineau, V., Zaharias, P. (2025) Agatta (Version 0.9.4) [Software]. Github. https://github.com/vrineau/Agatta.
 
 ## References
 
