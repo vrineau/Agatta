@@ -7,7 +7,7 @@ Author: Valentin Rineau
 Author-email: valentin.rineau@sorbonne-universite.fr
 License: GNU General Public License v3.0+
 Classifier: Development Status :: 4 - Beta
-Classifier: SPDX-License-Identifier: GPL-3.0-or-later
+Classifier: License-Expression :: GPL-3.0-or-later
 Classifier: Operating System :: Microsoft :: Windows
 Classifier: Operating System :: MacOS
 Classifier: Operating System :: POSIX :: Linux

@@ -51,7 +51,7 @@ setup(
 
     classifiers = [
     "Development Status :: 4 - Beta",
-    "SPDX-License-Identifier: GPL-3.0-or-later",
+    "License-Expression :: GPL-3.0-or-later",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS",
     "Operating System :: POSIX :: Linux",
