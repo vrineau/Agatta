@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: Agatta
-Version: 0.9.2
+Version: 0.9.3
 Summary: Three-item analysis python package
 Home-page: https://github.com/vrineau/Agatta
 Author: Valentin Rineau
@@ -103,7 +103,7 @@ The code is currently licensed under the GNU General Public License version 3.
 
 When using Agatta, please cite us (temporarily) as
 
-> Rineau, V., Zaharias, P. (2025) Agatta (Version 0.9.2) [Software]. Github. https://github.com/vrineau/Agatta.
+> Rineau, V., Zaharias, P. (2025) Agatta (Version 0.9.3) [Software]. Github. https://github.com/vrineau/Agatta.
 
 ## References
 
