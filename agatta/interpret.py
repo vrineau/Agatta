@@ -22,6 +22,7 @@ from .analysis import standard_tripdec
 from .analysis import rep_detector
 from .analysis import del_replications_forest
 from .analysis import main_tripdec
+from .analysis import triplet_extraction
 import csv
 from os import path, devnull, remove
 import sys
@@ -2069,3 +2070,61 @@ def chartest(cladopath, charpaths, taxarep1=False, taxarep2=False, method="TMS",
     # print(str(len(character_dict)) + " characters loaded")
 
     character_states_test(cladogram_dict, character_dict, prefix, pdf_files)
+    
+def brlen(prefix, cladogram_dict_list):
+    """
+    Compute node support for each resulting cladogram based 
+    on triplets (amount weighted triplets compatible with each node). 
+
+    Parameters
+    ----------
+    prefix : TYPE
+        Prefix of the triplet file.
+    cladogram_dict_list : dict or list
+        dictionary or list of cladograms computed by the analysis.
+
+    """
+    
+    print("Node support computation")
+    
+    triplet_dict = triplet_extraction(prefix+'.triplet', 
+                                taxa_replacement_file=prefix+'.taxabloc')
+    
+    if type(cladogram_dict_list) == dict:
+        for tree in cladogram_dict_list.keys():
+            for node in tree.traverse():
+                if not node.is_leaf() and not node.is_root():
+                    
+                    node.dist = 0  # set support value to 0
+                    
+                    # for each node, compute support values
+                    for trip, FW in triplet_dict.items():
+                        
+                        in1, in2 = trip.in_taxa    
+                        out, = trip.out_taxa    
+                        
+                        if (in1 in node.get_leaf_names() 
+                            and in2 in node.get_leaf_names() 
+                            and out not in node.get_leaf_names()):
+                            
+                            node.dist += FW
+    
+    elif type(cladogram_dict_list) == list:
+        for tree in cladogram_dict_list:
+            for node in tree.traverse():
+                if not node.is_leaf() and not node.is_root():
+                    
+                    node.dist = 0  # set support value to 0
+                    
+                    # for each node, compute support values
+                    for trip, FW in triplet_dict.items():
+                        
+                        in1, in2 = trip.in_taxa    
+                        out, = trip.out_taxa    
+                        
+                        if (in1 in node.get_leaf_names() 
+                            and in2 in node.get_leaf_names() 
+                            and out not in node.get_leaf_names()):
+                            
+                            node.dist += FW
+                                    

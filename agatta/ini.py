@@ -240,7 +240,7 @@ def character_extraction(infile=False, taxa_replacement=False, verbose=True,
                     sys.exit(1)
 
     if verbose:
-        print("{} characters loaded".format(str(len(character_dict))))
+        print("{} character(s) loaded".format(str(len(character_dict))))
 
     # non-informative trees are discarded
     if info_tree:
@@ -702,8 +702,8 @@ def hmatrix(infile, prefix=False, chardec=False, verbose=False):
 
         return hmatrix
 
-
-    print("Loading hierarchical matrix")
+    if verbose:
+        print("Loading hierarchical matrix")
 
     character_dict = dict()  # trees without polytomies
     temp_character_dict = dict()  # trees with polytomies (raw data)
@@ -913,15 +913,15 @@ def wrapper_character_extraction(infilelist=False, taxa_replacement=False,
             # if hmatrix file
             sub_chardict = hmatrix(infile, prefix, chardec, verbose)
                         
-            print("File {}: newick file. {} character(s) loaded".format(
-                str(cptr_file_nb), str(len(sub_chardict))))
+            print("File " + str(cptr_file_nb) + ": hierarchical matrix. "
+                  + str(len(sub_chardict)) + " character(s) loaded")
             
         else:
             # if newick file
             sub_chardict = character_extraction(infile, taxa_replacement, 
                                  verbose, info_tree)
                         
-            print("File {}: hierarchical matrix. {} character(s) loaded".format(
+            print("File {}: newick file. {} character(s) loaded".format(
                 str(cptr_file_nb), str(len(sub_chardict))))
             
         # merge dictionaries
@@ -1199,6 +1199,10 @@ def helper(command):
             corresponds to one character (same order as <file>). Each line 
             corresponds to a triplet. The last column and line give the sum
             of all weights of the column or line, respectively.
+            --nsupport Compute node support for each resulting cladogram based 
+            on triplets (amount weighted triplets compatible with each node). 
+            When a consensus is computed, node support is also computed for
+            them is nsupport option is activated.
 
     Output:
 

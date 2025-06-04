@@ -30,6 +30,7 @@ Options:
     -s                    Silent mode
     -v                    Verbose mode
     --analysis=<type>     Type of searching method [default: heuristic]
+    --nsupport            Compute triplet node support on reconstructed trees
     --chardec             Decompose trees into components
     --chartest            Compute hierarchical character states test
     --consensus=<type>    Specify type of consensus
@@ -114,6 +115,7 @@ def main():
                             arguments.get("--consensus", False),
                             arguments["--pdf"],
                             arguments.get("--detailed_tripdec", False),
+                            arguments.get("--nsupport", False),
                             arguments.get("-v", False))
 
         # triplet decomposition

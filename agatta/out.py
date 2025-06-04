@@ -28,6 +28,7 @@ from .interpret import RI
 from .interpret import rcc
 from .interpret import constrict
 from .interpret import character_states_test
+from .interpret import brlen
 from .search import search_pipeline
 import os
 import sys
@@ -635,6 +636,11 @@ def convert(infilelist, infiletype, prefix, parallel="auto", weighting="FW",
     None.
 
     """
+    
+    if dec_detail and not parallel == "no":
+        print("WARNING: Detailed csv table (--detailed_tripdec) cannot be "
+              +"constructed in parallel mode. To build the table, please set "
+              +"parallel=no")
 
     if infiletype == "triplets":
         triplet_dict = triplet_extraction(infilelist, taxa_replacement)
@@ -663,7 +669,7 @@ def agatta_analysis(infilelist, software_path, software="paup",
                     parallel="auto", prefix="agatta_out", analysis="heuristic",
                     nrep=1000, rosetta=False, chartest=False, ri=False,
                     consensus=False, pdf_file=False, dec_detail=False, 
-                    verbose=True):
+                    nsupport=False, verbose=True):
     """
     Main function of the Agatta python package. Allow to perform a three-item
     analysis (Nelson & Platnick, 1991), e.g., in the context of systematics
@@ -694,6 +700,9 @@ def agatta_analysis(infilelist, software_path, software="paup",
 
         * Retention index computation for all characters
           (Kitching et al., 1998).
+          
+        * Node support for each resulting cladogram based on triplets (amount 
+          weighted triplets compatible with each node).
 
           Cao, N. (2008). Analyse à trois éléments et anatomie du bois des
           Fagales Engl (Doctoral dissertation, Paris, Muséum national
@@ -1021,27 +1030,9 @@ def agatta_analysis(infilelist, software_path, software="paup",
                 i += 1
 
     # branch length computation
-    triplet_dict = triplet_extraction(prefix+'.triplet', 
-                                      taxa_replacement_file=prefix+'.taxabloc')
-    
-    for tree in cladogram_dict.keys():
-        for node in tree.traverse():
-            if not node.is_leaf() and not node.is_root():
-                
-                node.dist = 0  # set support value to 0
-                
-                # for each node, compute support values
-                for trip, FW in triplet_dict.items():
-                    
-                    in1, in2 = trip.in_taxa    
-                    out, = trip.out_taxa    
-                    
-                    if (in1 in node.get_leaf_names() 
-                        and in2 in node.get_leaf_names() 
-                        and out not in node.get_leaf_names()):
-                        
-                        node.dist += FW
-
+    if nsupport:
+        brlen(prefix, cladogram_dict)
+        
     # output file
     with open(prefix + ".tre", "w") as result_file:
         for tree in cladogram_dict.keys():
@@ -1058,12 +1049,40 @@ def agatta_analysis(infilelist, software_path, software="paup",
         # strict consensus
         if consensus == "strict":
 
-            constrict(list(cladogram_dict.keys()), prefix)
+            consensus = constrict(list(cladogram_dict.keys()), 
+                                       prefix=False)
+            
+            # branch length computation
+            if nsupport:
+                brlen(prefix, consensus)
+                
+            # save consensus
+            with open(prefix+".constrict", "w") as constrictfile:
+                constrictfile.write(consensus.write(format=6)+"\n")
 
         # reduced cladistic consensus (Wilkinson, 1994)
         elif consensus == "rcc":
 
-            rcc(list(cladogram_dict.keys()), prefix)
+            consensus = rcc(list(cladogram_dict.keys()), prefix=False)
+            
+            # branch length computation
+            if nsupport:
+                brlen(prefix, consensus)
+                      
+            # save rcc
+            with open(prefix+".rcc", "w") as rccfile:
+                first_line = True
+                i = 1
+                for profiletree in consensus:
+                    if first_line:
+                        rccfile.write("Strict consensus:    "
+                                      + profiletree.write(format=6)+"\n")
+                        first_line = False
+                    else:
+                        rccfile.write("Profile tree " + str(i) + ":    "
+                                      + profiletree.write(format=6) + "\n")
+                        i += 1
+            
 
     # character states test on the strict consensus
     if chartest:

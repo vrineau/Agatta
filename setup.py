@@ -34,7 +34,7 @@ setup(
                        "treeswift==1.1.37",
                        "six==1.16.0",
                        "numpy==1.24.4",
-                       "pandas==1.4.4",
+                       "pandas==2.2.3",
                        "pypdf==3.17.0"],
 
     include_package_data=True,
