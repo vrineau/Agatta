@@ -83,7 +83,7 @@ def search_pipeline(path_infile, software_path=False, software="paup",
 
     elif software == "wtree-qmc":
         os.system("\"" + software_path + "\" -i \"" +
-                  path_infile + "\" -o \"" + prefix + ".tre\"")
+                  path_infile + "\" --quartets -o \"" + prefix + ".tre\"")
 
     elif software == "paup":
 
