@@ -35,7 +35,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y gfortran libgfortran4
+        sudo apt-get install -y gfortran libgfortran5
         wget https://phylosolutions.com/paup-test/paup4a169_ubuntu64.gz -O /tmp/paup4a169_ubuntu64.gz
         gunzip /tmp/paup4a169_ubuntu64.gz
         chmod a+x /tmp/paup4a169_ubuntu64
