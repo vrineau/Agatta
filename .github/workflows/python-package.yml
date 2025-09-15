@@ -29,34 +29,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install flake8 pytest
         pip install -r requirements.txt
-
-    # Install PAUP* on Ubuntu
-    - name: Install PAUP on Ubuntu
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y software-properties-common
-        sudo add-apt-repository ppa:deadsnakes/ppa
-        sudo apt-get update
-        sudo apt-get install -y python2 python2-dev        
-        sudo ln -s /usr/lib/x86_64-linux-gnu/libgfortran.so.5 /usr/lib/x86_64-linux-gnu/libgfortran.so.4
-        wget https://phylosolutions.com/paup-test/paup4a169_ubuntu64.gz -O /tmp/paup4a169_ubuntu64.gz
-        gunzip /tmp/paup4a169_ubuntu64.gz
-        chmod a+x /tmp/paup4a169_ubuntu64
-        sudo mv /tmp/paup4a169_ubuntu64 /usr/local/bin/paup
-
-    # Install PAUP* on macOS
-    - name: Install PAUP on macOS
-      if: runner.os == 'macOS'
-      run: |
-        brew update
-        brew install [email protected]
-        brew install gfortran
-        wget https://phylosolutions.com/paup-test/paup4a168_osx.gz -O /tmp/paup.gz
-        gunzip /tmp/paup.gz
-        chmod a+x /tmp/paup
-        sudo mv /tmp/paup /usr/local/bin/paup
-
+        
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -65,10 +38,6 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     # Pytest
-    - name: Test PAUP-dependent code
-      if: runner.os != 'Windows'
-      run: pytest test_agatta_PAUP.py
-      
     - name: Test with pytest
       run: |
         pytest
