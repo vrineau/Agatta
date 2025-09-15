@@ -1,13 +1,12 @@
 Metadata-Version: 2.4
 Name: Agatta
-Version: 0.9.7
+Version: 1.0.0
 Summary: Three-item analysis python package
 Home-page: https://github.com/vrineau/Agatta
 Author: Valentin Rineau
 Author-email: valentin.rineau@sorbonne-universite.fr
-License: GNU General Public License v3.0+
+License: GPL-3.0-or-later
 Classifier: Development Status :: 4 - Beta
-Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
 Classifier: Operating System :: Microsoft :: Windows
 Classifier: Operating System :: MacOS
 Classifier: Operating System :: POSIX :: Linux
@@ -23,14 +22,14 @@ Requires-Python: >=3.8.0
 Description-Content-Type: text/markdown
 License-File: LICENSE
 License-File: AUTHORS
-Requires-Dist: docopt==0.6.2
-Requires-Dist: ete3==3.1.3
-Requires-Dist: tqdm==4.66.3
-Requires-Dist: treeswift==1.1.37
-Requires-Dist: six==1.16.0
-Requires-Dist: numpy==1.24.4
-Requires-Dist: pandas==2.2.3
-Requires-Dist: pypdf==3.17.0
+Requires-Dist: docopt<0.7,>=0.6.2
+Requires-Dist: tqdm<5,>=4.66
+Requires-Dist: treeswift<1.2,>=1.1.37
+Requires-Dist: six<2,>=1.16
+Requires-Dist: numpy<2,>=1.23
+Requires-Dist: pandas<3,>=1.5
+Requires-Dist: ete3<3.2,>=3.1.3
+Requires-Dist: pypdf<4,>=3.17
 Dynamic: author
 Dynamic: author-email
 Dynamic: classifier
@@ -57,6 +56,10 @@ Three-item analysis was originally conceived under the cladistic theory, and can
 
 Agatta is user-friendly and offers many specific features to help pre or postprocessing rooted trees. Such features include decomposing trees with duplicated tips into duplication-free subtrees, consensus methods, several triplet-based support metrics, precise tree description, character state test and mapping, and file reformating. 
 
+## Documentation
+
+The [documentation is available here](https://vrineau.github.io/AgattaDocs/intro.html) with the installation procedure and tutorials.
+
 ## Installation
 
 Agatta works on Windows, Unix/Linux and macOS.
@@ -66,16 +69,6 @@ This package requires Python version 3.9 to 3.11. It has been tested for 3.9 to 
 Agatta and all its dependencies can be installed using `pip install Agatta`. Detailed explanations are available in the [tutorial](https://vrineau.github.io/AgattaDocs/Tutorial.html).
 
 The package implements a pipeline for efficient heuristic searches that requires the installation of WQFM (https://github.com/Mahim1997/wQFM-2020), TNT (http://www.lillo.org.ar/phylogeny/tnt/), or a PAUP* command-line binary (http://phylosolutions.com/paup-test).
-
-## Documentation and Support
-
-The official repository is on [GitHub](https://github.com/vrineau/Agatta)
-
-The [documentation is available here](https://vrineau.github.io/AgattaDocs/intro.html) with the installation procedure and tutorials.
-
-An help for all commands is available directly using `agatta help`.
-
-If you have questions, feel free to pull requests on [GitHub Issues](https://github.com/vrineau/Agatta/issues).
 
 ## Usage examples
 
@@ -103,7 +96,7 @@ The code is currently licensed under the GNU General Public License version 3.
 
 When using Agatta, please cite us (temporarily) as
 
-> Rineau, V., Zaharias, P. (2025) Agatta (Version 0.9.7) [Software]. Github. https://github.com/vrineau/Agatta.
+> Rineau, V., Zaharias, P. (2025) Agatta (Version 1.0.0) [Software]. Github. https://github.com/vrineau/Agatta.
 
 ## References
 

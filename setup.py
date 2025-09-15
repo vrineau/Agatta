@@ -28,14 +28,15 @@ setup(
 
     long_description=open('README.md').read(),
 
-    install_requires= ["docopt==0.6.2",
-                       "ete3==3.1.3",
-                       "tqdm==4.66.3",
-                       "treeswift==1.1.37",
-                       "six==1.16.0",
-                       "numpy==1.24.4",
-                       "pandas==2.2.3",
-                       "pypdf==3.17.0"],
+    install_requires=[
+        "docopt>=0.6.2,<0.7",
+        "tqdm>=4.66,<5",
+        "treeswift>=1.1.37,<1.2",
+        "six>=1.16,<2",
+        "numpy>=1.23,<2",
+        "pandas>=1.5,<3",
+        "ete3>=3.1.3,<3.2",
+        "pypdf>=3.17,<4"],
 
     include_package_data=True,
 
@@ -47,11 +48,10 @@ setup(
         ],
     },
 
-    license="GNU General Public License v3.0+",
+    license="GPL-3.0-or-later",
 
     classifiers = [
     "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS",
     "Operating System :: POSIX :: Linux",

@@ -448,6 +448,10 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
     (Kitching et al., 1998) in the three-item analysis framework.
     The function write an output file in which is a global retention index
     of the analysis and a retention index for each hierarchical character tree.
+    The RI is computed using one reference cladogram. If several trees are
+    given in cladogram_dict, the global RI is computed using one tree in the 
+    dictionary, and the RI per character and per state are computed using
+    a strict consensus.
 
           Kitching, I. J., Forey, P., Humphries, C., & Williams, D. (1998).
           Cladistics: the theory and practice of parsimony analysis.
@@ -456,7 +460,7 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
     Parameters
     ----------
     cladogram_dict : dict
-        Dictionary containing one newick tree (ete3 Tree objects) as key.
+        Dictionary containing newick trees (ete3 Tree objects) as key.
         The trees is generally the optimal tree or the strict consensus.
     character_dict : dict
         Dictionary containing newick trees (ete3 Tree objects) in keys.
@@ -514,7 +518,7 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
                                + "leaf set. Operation aborted.")
                 sys.exit(1)
 
-    c_triplet_dict = standard_tripdec(cladogram_dict,
+    c_triplet_dict = standard_tripdec({list(cladogram_dict)[0]: 1},
                                       weighting,
                                       dec_detail=False,
                                       prefix=False,
@@ -523,8 +527,43 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
     RI_char_dict = {}
     RI_char_dict_num = {}
     RI_char_dict_denom = {}
+    
+    # computation of the global RI
+    for chartree, keys in str_character_dict.items():
+        RI_char_dict[keys] = 0
+        RI_char_dict_num[keys] = 0
+        RI_char_dict_denom[keys] = 0
+        triplet_dict = standard_tripdec({chartree: keys},
+                                        weighting,
+                                        dec_detail=False,
+                                        prefix=False,
+                                        verbose=False)
 
-    # computation of the global RI in the same time as RI per character
+        for triplet1, FW in triplet_dict.items():  # for each triplet in a char
+            if triplet1 in c_triplet_dict:  # if triplet is in cladogram, add
+
+                #RI numerator
+                RI_char_dict_num[keys] += FW  # per character
+                RI_tot[0] += FW  # total RI
+
+            #RI denominator
+            RI_char_dict_denom[keys] += FW
+            RI_tot[1] += FW
+
+    # compute strict consensus for RI per character and per state
+    if len(cladogram_dict) > 1:
+        
+        print("WARNING: RI per character/state computed on a consensus of " +
+              str(len(cladogram_dict)) + " trees.")
+        
+        consensus = {constrict(list(cladogram_dict.keys())): 1}
+        c_triplet_dict = standard_tripdec(consensus,
+                                          weighting,
+                                          dec_detail=False,
+                                          prefix=False,
+                                          verbose=False)
+
+    # computation of RI per character
     for chartree, keys in str_character_dict.items():
         RI_char_dict[keys] = 0
         RI_char_dict_num[keys] = 0
@@ -553,14 +592,14 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
     
     for chartree, keys in str_character_dict.items():
         
-        for node in chartree.traverse(strategy="preorder"):
+        for node in chartree.traverse(strategy="postorder"):
             if node.is_leaf() == False and node.is_root() == False:
                 try: 
                     charstate_count = node.charstate_name
 
                     # compute triplets for this single state
                     charstate = chartree.copy('cpickle')
-                    for n in charstate.traverse(strategy="preorder"):
+                    for n in charstate.traverse(strategy="postorder"):
                         if n.is_leaf() == False and n.is_root() == False:
                             try:
                                 if not n.charstate_name == charstate_count:
@@ -573,13 +612,53 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
                     RI_char_dict[keystate] = 0
                     RI_char_dict_num[keystate] = 0
                     RI_char_dict_denom[keystate] = 0
+                    up_state_triplet_dict = dict()
                     
-                    state_triplet_dict = standard_tripdec({charstate: keys},
+                    # computation of standard_tripdec for FW and others
+                    
+                    state_triplet_dict = standard_tripdec(
+                        {charstate: keys},
                                                     weighting,
                                                     dec_detail=False,
                                                     prefix=False,
                                                     verbose=False)
+                    
+                    # triplet weight correction for FW
+                    if weighting == "FW":
 
+                        #set of upper nodes leaf set
+                        upper_nodes = [set(n.get_leaf_names()) for n in 
+                                node.get_children() if (
+                                n.is_leaf() == False and n.is_root() == False)]
+                        
+                        #set of outer leaves
+                        out_taxa = set(chartree.get_leaf_names()) - set(
+                                    node.get_leaf_names())
+                        
+                        # remove redundant triplet and collect their weights
+                        remove_triplet = []
+                        total_redistributed_weights = 0
+                        
+                        for triplet1, FW in state_triplet_dict.items():  
+                            for up in upper_nodes:
+                                if triplet1.in_taxa.issubset(
+                                  up) and triplet1.out_taxa.issubset(out_taxa):
+                                    remove_triplet.append(triplet1)
+                                    total_redistributed_weights += FW
+                                    print("bim!")
+                                break
+                        
+                        for rem_t in remove_triplet:
+                            del state_triplet_dict[rem_t]
+                        
+                        # redistribute weights
+                        redis_weights = Fraction(total_redistributed_weights, 
+                                                 len(state_triplet_dict))
+
+                        for triplet1, FW in state_triplet_dict.items():  
+                            state_triplet_dict[triplet1] += redis_weights
+                            
+                    # add weights here for all weighting schemes
                     for triplet1, FW in state_triplet_dict.items():  
                         if triplet1 in c_triplet_dict:
             
@@ -967,7 +1046,7 @@ def cladogram_label(cladogram, clade_number_option, clade_type_option,
             from ete3 import TextFace, COLOR_SCHEMES, CircleFace
             
         except ImportError:  # issue with ete3 imports
-            print("A manual instal of PyQt5 is requested to use the --pdf "
+            print("A manual install of PyQt5 is requested to use the --pdf "
                   + "functionality\nPlease install using 'pip install" +
                   " PyQt5' and rerun the command line")
             sys.exit(1)
@@ -1578,7 +1657,7 @@ def character_states_test(cladogram_dict, character_dict,
                                            position='branch-right')
 
         except ImportError:  # issue with ete3 imports
-            print("A manual instal of PyQt5 is requested to use the --pdf "
+            print("A manual install of PyQt5 is requested to use the --pdf "
                   + "functionality\nPlease install using 'pip install" +
                   " PyQt5' and rerun the command line")
             sys.exit(1)

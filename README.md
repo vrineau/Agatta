@@ -12,6 +12,10 @@ Three-item analysis was originally conceived under the cladistic theory, and can
 
 Agatta is user-friendly and offers many specific features to help pre or postprocessing rooted trees. Such features include decomposing trees with duplicated tips into duplication-free subtrees, consensus methods, several triplet-based support metrics, precise tree description, character state test and mapping, and file reformating. 
 
+## Documentation
+
+The [documentation is available here](https://vrineau.github.io/AgattaDocs/intro.html) with the installation procedure and tutorials.
+
 ## Installation
 
 Agatta works on Windows, Unix/Linux and macOS.
@@ -21,16 +25,6 @@ This package requires Python version 3.9 to 3.11. It has been tested for 3.9 to 
 Agatta and all its dependencies can be installed using `pip install Agatta`. Detailed explanations are available in the [tutorial](https://vrineau.github.io/AgattaDocs/Tutorial.html).
 
 The package implements a pipeline for efficient heuristic searches that requires the installation of WQFM (https://github.com/Mahim1997/wQFM-2020), TNT (http://www.lillo.org.ar/phylogeny/tnt/), or a PAUP* command-line binary (http://phylosolutions.com/paup-test).
-
-## Documentation and Support
-
-The official repository is on [GitHub](https://github.com/vrineau/Agatta)
-
-The [documentation is available here](https://vrineau.github.io/AgattaDocs/intro.html) with the installation procedure and tutorials.
-
-An help for all commands is available directly using `agatta help`.
-
-If you have questions, feel free to pull requests on [GitHub Issues](https://github.com/vrineau/Agatta/issues).
 
 ## Usage examples
 
@@ -58,7 +52,7 @@ The code is currently licensed under the GNU General Public License version 3.
 
 When using Agatta, please cite us (temporarily) as
 
-> Rineau, V., Zaharias, P. (2025) Agatta (Version 0.9.7) [Software]. Github. https://github.com/vrineau/Agatta.
+> Rineau, V., Zaharias, P. (2025) Agatta (Version 1.0.0) [Software]. Github. https://github.com/vrineau/Agatta.
 
 ## References
 
