@@ -39,12 +39,27 @@ jobs:
         chmod a+x /tmp/paup4a169_ubuntu64
         sudo mv /tmp/paup4a169_ubuntu64 /usr/local/bin/paup
 
+    # Install PAUP* on macOS
+    - name: Install PAUP on macOS
+      if: runner.os == 'macOS'
+      run: |
+        wget https://phylosolutions.com/paup-test/paup4a168_osx.gz -O /tmp/paup.gz
+        gunzip /tmp/paup.gz
+        chmod a+x /tmp/paup
+        sudo mv /tmp/paup /usr/local/bin/paup
+
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    # Pytest
+    - name: Test PAUP-dependent code
+      if: runner.os != 'Windows'
+      run: pytest test_agatta_PAUP*.py
+      
     - name: Test with pytest
       run: |
         pytest
