@@ -58,7 +58,7 @@ jobs:
     # Pytest
     - name: Test PAUP-dependent code
       if: runner.os != 'Windows'
-      run: pytest test_agatta_PAUP*.py
+      run: pytest test_agatta_PAUP.py
       
     - name: Test with pytest
       run: |
