@@ -29,6 +29,16 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install flake8 pytest
         pip install -r requirements.txt
+
+    # Install PAUP* on Ubuntu
+    - name: Install PAUP on Ubuntu
+      if: runner.os == 'Linux'
+      run: |
+        wget https://phylosolutions.com/paup-test/paup4a169_ubuntu64.gz -O /tmp/paup4a169_ubuntu64.gz
+        gunzip /tmp/paup4a169_ubuntu64.gz
+        chmod a+x /tmp/paup4a169_ubuntu64
+        sudo mv /tmp/paup4a169_ubuntu64 /usr/local/bin/paup
+
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
