@@ -82,177 +82,178 @@ import time
 import docopt
 
 
+def coremain(arguments):
+
+    start_time = time.time()
+
+    print("Agatta {}".center(80).format(__version__))
+    print("Three-item analysis Python package".center(80))
+    print()
+
+    # check parsing
+    checkargs(arguments)
+
+    # Complete analysis
+    if arguments["analysis"]:
+        agatta_analysis(arguments["<file>"],  # one or several input files
+                        arguments["--softpath"],
+                        arguments["--software"],
+                        arguments.get("--taxarep1", False),
+                        arguments["--repetitions"],
+                        arguments["--weighting"],
+                        arguments["--parallel"],
+                        arguments["--prefix"],
+                        arguments["--analysis"],
+                        arguments["--replicates"],
+                        arguments.get("--rosetta", False),
+                        arguments["--chartest"],
+                        arguments["--ri"],
+                        arguments.get("--consensus", False),
+                        arguments["--pdf"],
+                        arguments.get("--detailed_tripdec", False),
+                        arguments.get("--nsupport", False),
+                        arguments.get("-v", False))
+
+    # triplet decomposition
+    elif arguments["tripdec"]:
+        main_tripdec(arguments["<file>"],  # one or several input files
+                     arguments["--prefix"],
+                     arguments.get("--taxarep1", False),
+                     arguments["--weighting"],
+                     arguments["--parallel"],
+                     arguments.get("--detailed_tripdec", False),
+                     arguments["--repetitions"],
+                     arguments.get("-v", False))
+
+    # retention index calculation
+    elif arguments["support"]:
+        # retention index
+        if arguments["--index"] == "ri":
+
+            RI_path(arguments["<file>"][0],
+               arguments["<file>"][1:],  # one or several input files
+               arguments.get("--taxarep1", False),
+               arguments.get("--taxarep2", False),
+               arguments["--repetitions"],
+               arguments["--weighting"],
+               arguments["--prefix"]+".txt")
+
+        # inter-tree retention index
+        elif arguments["--index"] == "tripdistance":  # only two trees
+
+            triplet_distance(list(character_extraction(
+                arguments["<file>"][0],
+                arguments.get("--taxarep1", False),
+                verbose=False).keys())[0],
+                list(character_extraction(
+                    arguments["<file>"][1],
+                    arguments.get("--taxarep2", False),
+                    verbose=False).keys())[0],
+                arguments["--prefix"],
+                arguments["--weighting"])
+
+    # character states testing procedure
+    elif arguments["chartest"]:
+        chartest(arguments["<file>"][0],
+                 arguments["<file>"][1:],  # one or several input files
+                 arguments.get("--taxarep1", False),
+                 arguments.get("--taxarep2", False),
+                 arguments["--repetitions"],
+                 arguments["--prefix"],
+                 arguments["--pdf"],
+                 arguments.get("-v", False))
+
+    # nodal retention index
+    elif arguments["nri"]:
+        NRI(arguments["<file>"][0],
+                 arguments["<file>"][1:],  # one or several input files
+                 arguments.get("--taxarep1", False),
+                 arguments.get("--taxarep2", False),
+                 arguments["--prefix"],
+                 arguments.get("--rnri_codes", False),
+                 arguments["--weighting"],
+                 arguments["--repetitions"],
+                 arguments.get("--rnri_totaltree", True),
+                 arguments.get("--rescaling", False),
+                 arguments["--pdf"])
+
+    # convert
+    elif arguments["convert"]:
+        convert(arguments["<file>"],   # one or several input files
+                arguments["--filetype"],
+                arguments["--prefix"],
+                arguments["--parallel"],
+                arguments["--weighting"],
+                arguments["--analysis"],
+                arguments.get("--taxarep1", False),
+                arguments["--replicates"],
+                arguments.get("--log", False),
+                arguments["--software"],
+                False,
+                arguments["--repetitions"],
+                arguments.get("-v", False))
+
+    # free-subtree paralogy analysis
+    elif arguments["fp"]:
+        del_replications_forest(wrapper_character_extraction(
+                         arguments["<file>"],  # one or several input files
+                         arguments.get("--taxarep1", False),
+                         prefix=arguments["--prefix"],
+                         verbose=arguments.get("-v", False)),
+                         method=arguments["--repetitions"],
+                         prefix=arguments["--prefix"],
+                         verbose=arguments.get("-v", False))
+
+    # consensus
+    elif arguments["consensus"]:
+        # reduced cladistic consensus
+        if arguments["--consensus"] == "rcc":
+
+            rcc(list(character_extraction(
+                arguments["<file>"][0],  # only one file
+                arguments.get("--taxarep1", False)).keys()),
+                arguments["--prefix"])
+
+        # strict consensus
+        else:
+            constrict(list(character_extraction(
+                      arguments["<file>"][0],   # only one file
+                      arguments.get("--taxarep1", False)).keys()),
+                      arguments["--prefix"])
+
+    # describe trees
+    elif arguments["describetree"]:   # only one file
+        describe_forest(character_extraction(arguments["<file>"][0], 
+                                             info_tree=False),
+                        arguments["--prefix"],
+                        arguments.get("--showtaxanames", False))
+
+    # standardisation
+    elif arguments["standardisation"]:
+        standardisation(arguments["<file>"][1:],  # one or several input
+                          arguments["<file>"][0],
+                          arguments["--prefix"],
+                          verbose=arguments.get("-v", False))
+
+    # transform hierarchical matrix into a tree list
+    elif arguments["hmatrix"]:
+        hmatrix_several(arguments["<file>"],  # one or several input
+                arguments["--prefix"],
+                arguments["--chardec"],
+                arguments["-v"])
+
+    elif arguments["help"]:
+        helper(arguments["<command>"])
+
+    # display elapsed time
+    elapsed_time = time.time() - start_time
+    time_cptr = time.strftime("%H:%M:%S", time.gmtime(elapsed_time))
+    print("elapsed time (total): {}".format(time_cptr))
+
+
 def main():
     # docopt flags parsing
     arguments = docopt.docopt(__doc__, version=__version__)
-
-    def coremain():
-
-        start_time = time.time()
-
-        print("Agatta {}".center(80).format(__version__))
-        print("Three-item analysis Python package".center(80))
-        print()
-
-        # check parsing
-        checkargs(arguments)
-
-        # Complete analysis
-        if arguments["analysis"]:
-            agatta_analysis(arguments["<file>"],  # one or several input files
-                            arguments["--softpath"],
-                            arguments["--software"],
-                            arguments.get("--taxarep1", False),
-                            arguments["--repetitions"],
-                            arguments["--weighting"],
-                            arguments["--parallel"],
-                            arguments["--prefix"],
-                            arguments["--analysis"],
-                            arguments["--replicates"],
-                            arguments.get("--rosetta", False),
-                            arguments["--chartest"],
-                            arguments["--ri"],
-                            arguments.get("--consensus", False),
-                            arguments["--pdf"],
-                            arguments.get("--detailed_tripdec", False),
-                            arguments.get("--nsupport", False),
-                            arguments.get("-v", False))
-
-        # triplet decomposition
-        elif arguments["tripdec"]:
-            main_tripdec(arguments["<file>"],  # one or several input files
-                         arguments["--prefix"],
-                         arguments.get("--taxarep1", False),
-                         arguments["--weighting"],
-                         arguments["--parallel"],
-                         arguments.get("--detailed_tripdec", False),
-                         arguments["--repetitions"],
-                         arguments.get("-v", False))
-
-        # retention index calculation
-        elif arguments["support"]:
-            # retention index
-            if arguments["--index"] == "ri":
-
-                RI_path(arguments["<file>"][0],
-                   arguments["<file>"][1:],  # one or several input files
-                   arguments.get("--taxarep1", False),
-                   arguments.get("--taxarep2", False),
-                   arguments["--repetitions"],
-                   arguments["--weighting"],
-                   arguments["--prefix"]+".txt")
-
-            # inter-tree retention index
-            elif arguments["--index"] == "tripdistance":  # only two trees
-
-                triplet_distance(list(character_extraction(
-                    arguments["<file>"][0],
-                    arguments.get("--taxarep1", False),
-                    verbose=False).keys())[0],
-                    list(character_extraction(
-                        arguments["<file>"][1],
-                        arguments.get("--taxarep2", False),
-                        verbose=False).keys())[0],
-                    arguments["--prefix"],
-                    arguments["--weighting"])
-
-        # character states testing procedure
-        elif arguments["chartest"]:
-            chartest(arguments["<file>"][0],
-                     arguments["<file>"][1:],  # one or several input files
-                     arguments.get("--taxarep1", False),
-                     arguments.get("--taxarep2", False),
-                     arguments["--repetitions"],
-                     arguments["--prefix"],
-                     arguments["--pdf"],
-                     arguments.get("-v", False))
-
-        # nodal retention index
-        elif arguments["nri"]:
-            NRI(arguments["<file>"][0],
-                     arguments["<file>"][1:],  # one or several input files
-                     arguments.get("--taxarep1", False),
-                     arguments.get("--taxarep2", False),
-                     arguments["--prefix"],
-                     arguments.get("--rnri_codes", False),
-                     arguments["--weighting"],
-                     arguments["--repetitions"],
-                     arguments.get("--rnri_totaltree", True),
-                     arguments.get("--rescaling", False),
-                     arguments["--pdf"])
-
-        # convert
-        elif arguments["convert"]:
-            convert(arguments["<file>"],   # one or several input files
-                    arguments["--filetype"],
-                    arguments["--prefix"],
-                    arguments["--parallel"],
-                    arguments["--weighting"],
-                    arguments["--analysis"],
-                    arguments.get("--taxarep1", False),
-                    arguments["--replicates"],
-                    arguments.get("--log", False),
-                    arguments["--software"],
-                    False,
-                    arguments["--repetitions"],
-                    arguments.get("-v", False))
-
-        # free-subtree paralogy analysis
-        elif arguments["fp"]:
-            del_replications_forest(wrapper_character_extraction(
-                             arguments["<file>"],  # one or several input files
-                             arguments.get("--taxarep1", False),
-                             prefix=arguments["--prefix"],
-                             verbose=arguments.get("-v", False)),
-                             method=arguments["--repetitions"],
-                             prefix=arguments["--prefix"],
-                             verbose=arguments.get("-v", False))
-
-        # consensus
-        elif arguments["consensus"]:
-            # reduced cladistic consensus
-            if arguments["--consensus"] == "rcc":
-
-                rcc(list(character_extraction(
-                    arguments["<file>"][0],  # only one file
-                    arguments.get("--taxarep1", False)).keys()),
-                    arguments["--prefix"])
-
-            # strict consensus
-            else:
-                constrict(list(character_extraction(
-                          arguments["<file>"][0],   # only one file
-                          arguments.get("--taxarep1", False)).keys()),
-                          arguments["--prefix"])
-
-        # describe trees
-        elif arguments["describetree"]:   # only one file
-            describe_forest(character_extraction(arguments["<file>"][0], 
-                                                 info_tree=False),
-                            arguments["--prefix"],
-                            arguments.get("--showtaxanames", False))
-
-        # standardisation
-        elif arguments["standardisation"]:
-            standardisation(arguments["<file>"][1:],  # one or several input
-                              arguments["<file>"][0],
-                              arguments["--prefix"],
-                              verbose=arguments.get("-v", False))
-
-        # transform hierarchical matrix into a tree list
-        elif arguments["hmatrix"]:
-            hmatrix_several(arguments["<file>"],  # one or several input
-                    arguments["--prefix"],
-                    arguments["--chardec"],
-                    arguments["-v"])
-
-        elif arguments["help"]:
-            helper(arguments["<command>"])
-
-        # display elapsed time
-        elapsed_time = time.time() - start_time
-        time_cptr = time.strftime("%H:%M:%S", time.gmtime(elapsed_time))
-        print("elapsed time (total): {}".format(time_cptr))
 
     # class silent mode
     class HiddenPrints:
@@ -267,6 +268,6 @@ def main():
     # choice silent mode or not
     if arguments["-s"]:
         with HiddenPrints():
-            coremain()
+            coremain(arguments)
     else:
-        coremain()
+        coremain(arguments)

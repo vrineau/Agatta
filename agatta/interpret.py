@@ -645,7 +645,6 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
                                   up) and triplet1.out_taxa.issubset(out_taxa):
                                     remove_triplet.append(triplet1)
                                     total_redistributed_weights += FW
-                                    print("bim!")
                                 break
                         
                         for rem_t in remove_triplet:
