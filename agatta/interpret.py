@@ -781,13 +781,16 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
                 info_string = "NA\n"
                 print(info_string)
                 RI_file.write(info_string)
+            else:
+                print("")
+                RI_file.write("\n")
 
             # print newick trees with new labels for states
             if newick_char_dict:
                 print(
-                    "State labels (for characters in newick format):")
+                    "State labels (for non-labelled character states):")
                 RI_file.write(
-                    "State labels (for characters in newick format):")
+                    "State labels (for non-labelled character states):")
                 
                 for char, value in newick_char_dict.items():
                     print("[" + str(value) + "] " + char.write(
@@ -1692,7 +1695,7 @@ def character_states_test(cladogram_dict, character_dict,
         except ImportError:  # issue with ete3 imports
             print("A manual install of PyQt5 is requested to use the --pdf "
                   + "functionality\nPlease install using 'pip install" +
-                  " PyQt5' and rerun the command line")
+                  " PyQt5' and rerun the command line. Process ended.")
             sys.exit(1)
 
     print("Initiating character state test procedure")

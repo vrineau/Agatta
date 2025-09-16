@@ -1104,9 +1104,10 @@ def helper(command):
             --analysis=<type>  Type of tree search analysis between an exact
             branch and bound ('bandb') or an heuristic tree search
             ('heuristic'). The heuristic search is only available through
-            PAUP*, TNT, WQFM, or wTREE-QMC thus it is mandatory to add the flag
-            --software=tnt, --software=paup, --software=wqfm, or 
-            software=wtree-qmc (and the flag --softpath accordingly).
+            PAUP*, TNT, WQFM, or wTREE-QMC (new-feature-quartet-input branch)
+            thus it is mandatory to add the flag --software=tnt, 
+            --software=paup, --software=wqfm, or software=wtree-qmc 
+            (and the flag --softpath accordingly).
             By default the analysis is in branch and bound below 15 terminals
             and heuristic otherwise.
             --chartest  Test and locates all character states on the cladogram.

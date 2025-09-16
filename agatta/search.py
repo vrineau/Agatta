@@ -26,8 +26,8 @@ def search_pipeline(path_infile, software_path=False, software="paup",
                     prefix=False):
     """
     Function to run automatically a nexus file, a tnt file, or a text file on
-    PAUP, TNT, WQFM, or wTREE-QMC respectivelly. The software to be used must 
-    be installed and accessible.
+    PAUP, TNT, WQFM, or wTREE-QMC (new-feature-quartet-input branch) 
+    respectivelly. The software to be used must be installed and accessible.
 
     Parameters
     ----------

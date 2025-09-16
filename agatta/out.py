@@ -420,6 +420,8 @@ def triplet_wqfm_wtqmc_file(triplet_dict, prefix, weighting="FW", precision=7):
     and wTREE-QMC (Han & Molloy, 2024) from a dictionary of triplets and their 
     corresponding weights. To allow a three-item analysis with quartets, 
     each quartet possesses a leaf which is the root.
+    Note that Agatta pipeline only works with the new-feature-quartet-input 
+    branchof wTREE-QMC.
 
     Han and Molloy, 2024, Improved robustness to gene tree incompleteness, 
     estimation errors, and systematic homology errors with weighted TREE-QMC, 
