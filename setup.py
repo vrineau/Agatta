@@ -37,7 +37,7 @@ setup(
         "pandas>=1.5,<3",
         "ete3>=3.1.3,<3.2",
         "pypdf>=3.17,<4"],
-
+        
     include_package_data=True,
 
     url='https://github.com/vrineau/Agatta',
