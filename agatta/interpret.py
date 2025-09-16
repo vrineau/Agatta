@@ -590,52 +590,65 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
     # This functionality is only able when using hmatrix, which gives specific 
     # codes for each character state.
     
+    newick_char_dict = dict()
+    
     for chartree, keys in str_character_dict.items():
+        
+        cptr_charstate_name = 1
+        newick_char = False
         
         for node in chartree.traverse(strategy="postorder"):
             if node.is_leaf() == False and node.is_root() == False:
                 try: 
                     charstate_count = node.charstate_name
-
-                    # compute triplets for this single state
-                    charstate = chartree.copy('cpickle')
-                    for n in charstate.traverse(strategy="postorder"):
-                        if n.is_leaf() == False and n.is_root() == False:
-                            try:
-                                if not n.charstate_name == charstate_count:
-                                    n.delete()
-                            except AttributeError:
+                except AttributeError:
+                    newick_char = True
+                    node.name = str(cptr_charstate_name)
+                    cptr_charstate_name += 1
+                    node.add_feature("charstate_name", node.name)
+                    charstate_count = node.name
+                
+                # compute triplets for this single state
+                charstate = chartree.copy('cpickle')
+                for n in charstate.traverse(strategy="postorder"):
+                    if n.is_leaf() == False and n.is_root() == False:
+                        try:
+                            if not n.charstate_name == charstate_count:
                                 n.delete()
-                                
-                    keystate = str(keys.split('.')[0]) + "_" + str(
-                                                            charstate_count)
-                    RI_char_dict[keystate] = 0
-                    RI_char_dict_num[keystate] = 0
-                    RI_char_dict_denom[keystate] = 0
-                    up_state_triplet_dict = dict()
-                    
-                    # computation of standard_tripdec for FW and others
-                    
-                    state_triplet_dict = standard_tripdec(
-                        {charstate: keys},
-                                                    weighting,
-                                                    dec_detail=False,
-                                                    prefix=False,
-                                                    verbose=False)
-                    
-                    # triplet weight correction for FW
-                    if weighting == "FW":
+                        except AttributeError:
+                            n.delete()
+                            
+                keystate = str(keys.split('.')[0]) + "_" + str(
+                                                        charstate_count)
+                RI_char_dict[keystate] = 0
+                RI_char_dict_num[keystate] = 0
+                RI_char_dict_denom[keystate] = 0
+                up_state_triplet_dict = dict()
+                
+                # computation of standard_tripdec for FW and others
+                
+                state_triplet_dict = standard_tripdec(
+                    {charstate: keys},
+                                                weighting,
+                                                dec_detail=False,
+                                                prefix=False,
+                                                verbose=False)
+                
+                # triplet weight correction for FW
+                if weighting == "FW":
 
-                        #set of upper nodes leaf set
-                        upper_nodes = [set(n.get_leaf_names()) for n in 
-                                node.get_children() if (
-                                n.is_leaf() == False and n.is_root() == False)]
+                    #set of upper nodes leaf set
+                    upper_nodes = [set(n.get_leaf_names()) for n in 
+                            node.get_children() if (
+                            n.is_leaf() == False and n.is_root() == False)]
+                    
+                    #set of outer leaves
+                    out_taxa = set(chartree.get_leaf_names()) - set(
+                                node.get_leaf_names())
+                    
+                    # remove redundant triplet and collect their weights
+                    if upper_nodes:
                         
-                        #set of outer leaves
-                        out_taxa = set(chartree.get_leaf_names()) - set(
-                                    node.get_leaf_names())
-                        
-                        # remove redundant triplet and collect their weights
                         remove_triplet = []
                         total_redistributed_weights = 0
                         
@@ -653,23 +666,24 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
                         # redistribute weights
                         redis_weights = Fraction(total_redistributed_weights, 
                                                  len(state_triplet_dict))
-
+    
                         for triplet1, FW in state_triplet_dict.items():  
                             state_triplet_dict[triplet1] += redis_weights
                             
-                    # add weights here for all weighting schemes
-                    for triplet1, FW in state_triplet_dict.items():  
-                        if triplet1 in c_triplet_dict:
-            
-                            #RI numerator
-                            RI_char_dict_num[keystate] += FW  # per state
-            
-                        #RI denominator
-                        RI_char_dict_denom[keystate] += FW
-            
-                except AttributeError:
-                    pass
-    
+                # add weights here for all weighting schemes
+                for triplet1, FW in state_triplet_dict.items():  
+                    if triplet1 in c_triplet_dict:
+        
+                        #RI numerator
+                        RI_char_dict_num[keystate] += FW  # per state
+        
+                    #RI denominator
+                    RI_char_dict_denom[keystate] += FW
+                    
+        # save newick characters with new state labels
+        if newick_char:
+            newick_char_dict[chartree] = keys
+
     # merge all in RI_char_dict fractions dict and remove zero fractions
     for keys, values in RI_char_dict_num.items():
         if RI_char_dict_denom[keys] == 0:
@@ -712,11 +726,15 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
                     return num
 
             def writeri(keys, values):
+                round_val = 4
+                percentage = 1 # or 100 if percentage 
                 RI_string0 = "[" + str(keys) + "]"
                 RI_string1 = str(formatNumber(round((float(Fraction(values[0],
-                                                       values[1]))*100), 2)))
-                RI_string2 = str(formatNumber(round((float(values[0])), 2)))
-                RI_string3 = str(formatNumber(round((float(values[1])), 2)))
+                                          values[1]))*percentage), round_val)))
+                RI_string2 = str(formatNumber(round((float(
+                    values[0])), round_val)))
+                RI_string3 = str(formatNumber(round((float(
+                    values[1])), round_val)))
                 
                 RI_string = [RI_string0, RI_string1, RI_string2, RI_string3]
                 
@@ -752,7 +770,7 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
             
             print('\t'.join(RI_string).expandtabs(10))
             RI_file.write((' '.join(RI_string) + "\n").expandtabs(10))
-
+            
             polypresence = False
             for keys, values in RI_char_dict.items():  # IR subtrees
                 if '.' in keys and not '_' in keys:
@@ -763,13 +781,27 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
                 info_string = "NA\n"
                 print(info_string)
                 RI_file.write(info_string)
+
+            # print newick trees with new labels for states
+            if newick_char_dict:
+                print(
+                    "State labels (for characters in newick format):")
+                RI_file.write(
+                    "State labels (for characters in newick format):")
                 
+                for char, value in newick_char_dict.items():
+                    print("[" + str(value) + "] " + char.write(
+                        format=8))
+                    RI_file.write("[" + str(value) + "]" + char.write(
+                        format=8))
+    
+            print("")
+
     # Codes for RI_char_dict
     #
     # 1 -   character
     # 1.1 - character subtree coming from FPLSA
     # 1_1 - character 1, state 1
-    #
     
     RI_char_dict_return = {}
     for keys, values in RI_char_dict.items():
@@ -1518,9 +1550,11 @@ def character_states_test(cladogram_dict, character_dict,
 
         # assignation of the state to a node
         # if no incongruence or no symmetric node implied
-        if potential_synapo.get_leaf_names() == taxa_in_state or not (
-                potential_synapo.search_nodes(clade_type="paralog")):
+        if set(potential_synapo.get_leaf_names()) == set(
+                taxa_in_state) or not (potential_synapo.search_nodes(
+                clade_type="paralog")):
             synapomorphies_set.add(potential_synapo)
+
 
         # if ambiguous interpretation, check leaves in the symmetric nodes
         else:
