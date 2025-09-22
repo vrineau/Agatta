@@ -579,11 +579,11 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
 
                 #RI numerator
                 RI_char_dict_num[keys] += FW  # per character
-                RI_tot[0] += FW  # total RI
+                #RI_tot[0] += FW  # total RI
 
             #RI denominator
             RI_char_dict_denom[keys] += FW
-            RI_tot[1] += FW
+            #RI_tot[1] += FW
 
 
     # computation of RI per character state
