@@ -552,7 +552,11 @@ def standardisation(tree_file, biogeo_tab, prefix, verbose=False):
             for leaf in phylogeny.get_leaves():
                 if leaf.name in MAST:
                     leaveswmast = list(set(phylogeny2.get_leaf_names()) - MAST)
-                    phylogeny2.prune(leaveswmast)
+                    if leaveswmast:
+                        phylogeny2.prune(leaveswmast)
+                    else:
+                        #print("Non informative tree after MAST deletion")
+                        phylogeny2 = Tree()
 
             # for each terminal taxa, replacement by its corresponding area
             # MAST excepted
