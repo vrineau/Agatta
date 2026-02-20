@@ -60,7 +60,8 @@ def search_pipeline(path_infile, software_path=False, software="paup",
 
     if ostype == "Windows":
         beginline = "paup"
-        #endline = ">NUL"
+        endline = ">NUL"  # may cause some issues?
+        
     else:
         beginline = software_path
         endline = "> /dev/null"

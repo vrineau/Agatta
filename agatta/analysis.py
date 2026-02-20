@@ -383,6 +383,7 @@ def del_replications_forest(character_dict, method="TMS",
     print("Managing polymorphism")
     tree_dict = dict()
     output_trees = 0
+    output_trees_no_subtrees = 0
 
 
     if verbose:
@@ -410,6 +411,7 @@ def del_replications_forest(character_dict, method="TMS",
             
             # if single tree obtained
             if len(treelist) == 1:
+                output_trees_no_subtrees += 1  # add 1 to cptr
                 tree_dict[treelist[0]] = treeid
                 
                 if prefix:
@@ -479,7 +481,13 @@ def del_replications_forest(character_dict, method="TMS",
         print("Polymorphism removed: "
               "{} polymorphism free informative characters "
               "computed from {} character trees".format(
-                  str(output_trees), str(len(character_dict))))
+                  str(output_trees + output_trees_no_subtrees), 
+                  str(len(character_dict))))
+        print("{} free-paralogy original trees".format(
+                  str(output_trees_no_subtrees)))
+        print("{} free-paralogy subtrees".format(
+                  str(output_trees)))
+        
     else:
         print("Polymorphism removed. No polymorphism free "
               "informative subtree remaining.")

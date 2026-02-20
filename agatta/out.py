@@ -264,7 +264,7 @@ def triplet_tnt_file(triplet_dict, character_dict, weighting, analysis,
 
                 itrip += 1
 
-        triplet_list_FW += "*;"  # end of the ccode line
+        triplet_list_FW += "*;"  # end of the ccode line - issue with *?
         for trip in deltriplets.keys():
             triplet_dict.pop(trip)
 
@@ -324,7 +324,7 @@ def triplet_tnt_file(triplet_dict, character_dict, weighting, analysis,
         tntstring += "\nienum;"
 
     elif analysis == "heuristic":
-        tntstring += "\nhold 10000;"  # max trees
+        tntstring += "\nhold 1000;"  # max trees
         tntstring += "\nmult=replic {};".format(str(nrep))  # heuristic
         tntstring += "\nbbreak=tbr;"  # swapping method
         tntstring += "\ncollapse [; collapse 1;"  # collapse null branches
