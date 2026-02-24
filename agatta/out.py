@@ -29,6 +29,7 @@ from .interpret import rcc
 from .interpret import constrict
 from .interpret import character_states_test
 from .interpret import brlen
+from .interpret import RI_global_from_triplet_file
 from .search import search_pipeline
 import os
 import sys
@@ -1031,6 +1032,18 @@ def agatta_analysis(infilelist, software_path, software="paup",
                     cladogram_dict[Tree(newickstring)] = i
                 i += 1
 
+    # score optimal tree
+    RI_tot = RI_global_from_triplet_file(cladogram_dict, prefix+".triplet", 
+           taxarep1=False, taxarep2=prefix+".taxabloc", method="TMS", 
+           weighting="FW", verbose=False)
+    
+    ristr = str(round(float(RI_tot[0]/RI_tot[1]), 4))
+    
+    with open(prefix+".log", "a") as log_file:
+        log_file.write("Retention index {}\n\n".format(ristr))
+    
+    print("Score of the optimal tree(s) : " + ristr)
+    
     # branch length computation
     if nsupport:
         brlen(prefix, cladogram_dict)

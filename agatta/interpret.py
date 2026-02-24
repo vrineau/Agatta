@@ -813,6 +813,102 @@ def RI(cladogram_dict, character_dict, taxarep1=False, taxarep2=False,
     return RI_char_dict_return
 
 
+def RI_global_from_triplet_file(cladogram_dict, triplet_file, taxarep1=False, 
+       taxarep2=False, method="TMS", weighting="FW", verbose=False):
+    """
+    Compute the retention index for hierarchical characters
+    (Kitching et al., 1998) in the three-item analysis framework.
+    The function write an output file in which is a global retention index
+    of the analysis and a retention index for each hierarchical character tree.
+    The RI is computed using one reference cladogram. If several trees are
+    given in cladogram_dict, the global RI is computed using one tree in the 
+    dictionary, and the RI per character and per state are computed using
+    a strict consensus.
+
+          Kitching, I. J., Forey, P., Humphries, C., & Williams, D. (1998).
+          Cladistics: the theory and practice of parsimony analysis.
+          Oxford University Press.
+
+    Parameters
+    ----------
+    cladogram_dict : dict
+        Dictionary containing newick trees (ete3 Tree objects) as key.
+        The trees is generally the optimal tree or the strict consensus.
+    character_dict : dict
+        Dictionary containing newick trees (ete3 Tree objects) in keys.
+        The trees are generally the initial characters.
+    taxarep1 : str, optional
+        DESCRIPTION. The default is False.
+    taxarep2 : str, optional
+        DESCRIPTION. The default is False.
+    method : str, optional
+        One of the two implemented algorithms of free-paralogy subtree
+        analysis between "TMS" and "FPS" for removing polymorphism. 
+        The default is "TMS".
+    weighting : str, optional
+        Weighting scheme to use between:
+                                 * FW (Fractional weighting from
+                                       Rineau et al. 2021)
+                                 * FWNL (Fractional weighting from
+                                       Nelson and Ladiges),
+                                 * UW (Uniform weighting from
+                                       Nelson and Ladiges 1992),
+                                 * MW (Minimal Weighting),
+                                 * AW (Additive Weighting),
+                                 * NW (No Weighting).
+        The default is "FW". Note that retention index by character state 
+        in FW mode is equivalent to FWNL.
+    prefix : str, optional
+        Prefix of the saving file. The complete path can be
+        used. The default is False (no file saved).
+
+    Returns
+    -------
+    RI_char_dict : dict.
+        Dictionary with character identifiers and global and per character RI.
+
+    """
+
+    # print("Computing score")
+
+    triplet_dict = triplet_extraction(triplet_file, 
+                                      taxa_replacement_file=taxarep2,
+                                      verbose=False)
+
+    RI_tot = [0, 0]
+    RI_char_dict = {}
+    RI_char_dict_num = {}
+    RI_char_dict_denom = {}
+    
+    # computation of optimal tree triplet list
+    for chartree, keys in cladogram_dict.items():
+        RI_char_dict[keys] = 0
+        RI_char_dict_num[keys] = 0
+        RI_char_dict_denom[keys] = 0
+        opti_triplet_dict = standard_tripdec({chartree: keys},
+                                        weighting,
+                                        dec_detail=False,
+                                        prefix=False,
+                                        verbose=False)
+        break  # one random optimal tree, the value will be the same for each
+
+    # check for each triplet
+    for triplet1, FW in triplet_dict.items():  # for each triplet in a char    
+        if triplet1 in opti_triplet_dict:  # if triplet is in cladogram, add
+
+            #RI numerator
+            RI_char_dict_num[keys] += FW  # per character
+            RI_tot[0] += FW  # total RI
+
+        #RI denominator
+        RI_char_dict_denom[keys] += FW
+        RI_tot[1] += FW
+
+    # print("Score computed")
+    
+    return RI_tot
+
+
 def triplet_distance(t1, t2, prefix=False, method="TMS", weighting="FW", 
                      silent=False, verbose=False):
     """
