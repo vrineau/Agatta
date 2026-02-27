@@ -1035,7 +1035,7 @@ def agatta_analysis(infilelist, software_path, software="paup",
     # score optimal tree
     RI_tot = RI_global_from_triplet_file(cladogram_dict, prefix+".triplet", 
            taxarep1=False, taxarep2=prefix+".taxabloc", method="TMS", 
-           weighting="FW", verbose=False)
+           weighting=weighting, verbose=False)
     
     ristr = str(round(float(RI_tot[0]/RI_tot[1]), 4))
     
