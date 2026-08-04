@@ -23,12 +23,13 @@ from .analysis import rep_detector
 from .analysis import del_replications_forest
 from .analysis import main_tripdec
 from .analysis import triplet_extraction
-import csv
+from contextlib import redirect_stdout
 from os import path, devnull, remove
-import sys
 from pypdf import PdfMerger
 from fractions import Fraction
 from ete3 import Tree
+import csv, copy, sys
+
 
 def constrict(treelist, prefix=False, silent=False):
     """
@@ -1221,25 +1222,47 @@ def cladogram_label(cladogram, clade_number_option, clade_type_option,
     return cladogram, syn_dict
 
 
-def NRI(cladopath, charpaths, taxarep1=False, taxarep2=False, prefix="rnri", 
-        rnri_codes=False, weighting='FW', polymethod='TMS', totaltree=True,
-        rescaled=True, pdf_files=False):
-    """
-    Compute the Nodal Retention Index and return a pdf with percentages of NRI
-    for each character (or for each set of characters if rnri_codes=True) 
-    plus a csv file and with the total amount of triplet weights by node.
+
+def NRI(cladogram_dict, character_dict, taxarep1=False, 
+        taxarep2=False, prefix=False, NRI_codes=False, weighting='FW', 
+        polymethod='TMS', pdf_files=False):
     
-    Nodal retention index: given a set of characters and a cladogram, gives the 
-    amount of triplet from each character in agreement with each node. Allows 
-    to see easily the relative support for each clade.
+    """
+    Creates a table containing the accepted, rejected and neutral triplets for 
+    each character and for each node, as well as the nodal retention 
+    index (NRI) and the nodal conflict index (NCI). If the --pdf option is 
+    enabled, it also generates: 
+        1) a PDF showing the NRI values for each node and for each character, 
+           as well as the NRI total for all characters, 
+        2) a PDF allowing comparison of the NRI values for all characters 
+           (or sets of characters if the --nri_codes is enabled) using pie 
+           charts (each segment of the pie chart corresponds to the respective 
+           proportion of accepted triplets for a given character and node), and 
+        3) a PDF showing, for each node and for each character (as well as for 
+           all characters), the proportion of accepted, neutral and rejected 
+           triplets.
+           
+    The nri_codes option must be used if the pie charts are illegible due to 
+    there being too many characters. This option uses a CSV file to group 
+    characters into sets so that character sets can be compared rather than 
+    individual characters. For example
+         1;1
+         2;1
+         3;2
+         4;2
+    This csv needs two columns with integers, the first column correpond
+    to the numbers of all characters, and the second column indicates the
+    corresponding character set.
 
     Parameters
     ----------
-    cladopath : str
-        path of input file containing the cladogram (or consensus).
-    charpaths : list of str
-        list of path of input file containing characters in hmatrix or newick 
-        format.
+    cladogram_dict : dict
+        Dictionary containing one newick tree (ete3 Tree objects) as key.
+        The tree must be the optimal cladogram obtained from the cladistic
+        analysis of character trees stored in the character_dict argument.
+    character_dict : dict
+        Dictionary containing newick trees (ete3 Tree objects) in keys.
+        The trees must be the initial characters.
     taxarep1 : str, optional
         DESCRIPTION. The default is False.
     taxarep2 : str, optional
@@ -1248,28 +1271,31 @@ def NRI(cladopath, charpaths, taxarep1=False, taxarep2=False, prefix="rnri",
         Prefix of the files prefix.nri (csv file + a newick tree with node 
         names), prefix.pdf (percentages) and prefix.total.pdf (total triplet
         weights) to be saved. 
-        The default is 'rnri'.
-    rnri_codes : bool
+        The default is 'NRI'.
+    NRI_codes : bool, optionnal
         By default, the prefix.pdf file will display a tree with a piechart for 
         each node representing the relative proportion of support from each 
-        character. The user can 
+        character. The user can use a csv file showing correspondence between
+        characters and set in order to compare sets when the visual comparison 
+        of characters is complicated by their high number.
     weighting : str, optional
         Weighting scheme to use between FW, FWNL, MW, AW, NW. 
         The default is 'FW'.
     polymethod : str, optional
         One of the two implemented algorithms of free-paralogy subtree
         analysis between "TMS" and "FPS". The default is "TMS".
-    totaltree : bool, optional
-        If set to True, computes the prefix.total.pdf showing the support of 
-        each node given the relative amounts of character triplets in 
-        agreement. The default is True.
-    rescaled : bool, optional
-        If True, for prefix.total.pdf the absolute values will be be rescaled 
-        to avoid the symetry effect inherent to triplet decomposition. 
-        Because of this effect, a balanced character has a heavier weight
-        than an inbalanced character.
-        The default is True.
-
+    pdf_files: bool, optionnal
+        Computes various pdf with triplet measurements comprisong NRI and NCI:
+        1) a PDF showing the NRI values for each node and for each character, 
+           as well as the NRI total for all characters, 
+        2) a PDF allowing comparison of the NRI values for all characters 
+           (or sets of characters if the --nri_codes is enabled) using pie 
+           charts (each segment of the pie chart corresponds to the respective 
+           proportion of accepted triplets for a given character and node), and 
+        3) a PDF showing, for each node and for each character (as well as for 
+           all characters), the proportion of accepted, neutral and rejected 
+           triplets.
+        
     Returns
     -------
     pie_percentages1 : dict
@@ -1277,7 +1303,9 @@ def NRI(cladopath, charpaths, taxarep1=False, taxarep2=False, prefix="rnri",
         The list correspond all percentages displayed in the piechart tree.
 
     """
-
+    
+    print("Initiating triplet support computation (NRI and NCI)")
+    
     #sometimes issues with pyqt installation
     if pdf_files:
         try:
@@ -1289,24 +1317,17 @@ def NRI(cladopath, charpaths, taxarep1=False, taxarep2=False, prefix="rnri",
                   + "functionality\nPlease install using 'pip install" +
                   " PyQt5' and rerun the command line")
             sys.exit(1)
-    
-    # reading matrix cladogram csv
+            
+    if NRI_codes:
         
-    character_dict = wrapper_character_extraction(charpaths, taxarep1, prefix,
-                                                  verbose=False)
+        NRI_codes = path.expanduser(NRI_codes)
         
-    cladogram_dict = character_extraction(cladopath, taxarep2, verbose=False)
-    
-    if rnri_codes:
-        
-        rnri_codes = path.expanduser(rnri_codes)
-        
-        with open(rnri_codes, "r") as rnri_file:
+        with open(NRI_codes, "r") as NRI_file:
             try:
-                dialect = csv.Sniffer().sniff(rnri_file.readline(),
+                dialect = csv.Sniffer().sniff(NRI_file.readline(),
                                               delimiters=[";","\t"," ","|"])
             except:
-                print("ERROR: The table file '" + rnri_codes +
+                print("ERROR: The table file '" + NRI_codes +
                                   "' is not adequately formated." +
                                   "\n Operation aborted.")
             else:
@@ -1314,42 +1335,39 @@ def NRI(cladopath, charpaths, taxarep1=False, taxarep2=False, prefix="rnri",
             if not 'no_exception' in locals():
                 sys.exit(1)
         
-        with open(rnri_codes, "r") as rnri_file:
+        with open(NRI_codes, "r") as NRI_file:
         
-            char_list_raw = csv.reader(rnri_file, delimiter=dialect.delimiter)
-            rnri_codes = list(char_list_raw)
+            char_list_raw = csv.reader(NRI_file, delimiter=dialect.delimiter)
+            NRI_codes = list(char_list_raw)
         
-            if not len({len(l) for l in rnri_codes}) == 1:
-                 print("ERROR: The table file '" + rnri_codes +
+            if not len({len(l) for l in NRI_codes}) == 1:
+                 print("ERROR: The table file '" + NRI_codes +
                                   "' is broken.\n Operation aborted.")
                  sys.exit(1)
     
     # default function use : each character is represented in the piechart
     else:
-        rnri_codes = []
+        NRI_codes = []
         for charname in character_dict.values():
-            rnri_codes.append(['', 'character ' + str(charname)])
+            NRI_codes.append(['', 'character ' + str(charname)])
             
-    # add names to internal nodes
+    # add names to internal nodes, create all dictionaries
+    
     cladogram = list(cladogram_dict.keys())[0]
     cladogram.ladderize()
     pie_percentages = dict() # dict int node name / percentage list for piech.
-    Node_weight = dict() # dict internal node name / percentage list for piech.
-    Node_weight_rescaled = dict() # dict with rescaling denominator
+    pie_percentages_each_char = dict()
+    Node_weight_c = dict() #dict containing all dict ARN for each char
+    Node_weight_A = dict() # dict internal node name / percentage list for piech.
+    Node_weight_R = dict() # dict internal node name / percentage list for piech.
+    Node_weight_N = dict() # dict internal node name / percentage list for piech.
     
-    categories_rnri = []
-    n = [categories_rnri.append(x) for x in [x[1] for x in rnri_codes] 
-     if x not in categories_rnri]
+    categories_NRI = []
+    n = [categories_NRI.append(x) for x in [x[1] for x in NRI_codes] 
+     if x not in categories_NRI]
     
     node_style_num_count = 1
     
-    card = len(cladogram.get_leaf_names())
-    rescaledtot = 0
-    for node in cladogram.traverse(strategy="preorder"):
-        if node.is_leaf() == False  and node.is_root() == False:
-            cardn = len(node.get_leaf_names())
-            rescaledtot += (cardn - 1)*(card - cardn)
-        
     for node in cladogram.traverse(strategy="preorder"):
         if node.is_leaf() == False  and node.is_root() == False:
             node_style_num_countstr = str(node_style_num_count)
@@ -1362,19 +1380,30 @@ def NRI(cladopath, charpaths, taxarep1=False, taxarep2=False, prefix="rnri",
             node.add_feature("clade_label", node_style_num_countstr)
             node.name = node_style_num_countstr
             pie_percentages[node_style_num_countstr] = [
-                Fraction(0,1)] * len(set([x[1] for x in rnri_codes]))
-            Node_weight[node_style_num_countstr] = Fraction(0,1)
-            node_style_num_count += 1
+                Fraction(0,1)] * len(set([x[1] for x in NRI_codes]))
             
-            # rescaling factor computation
-            cardn = len(node.get_leaf_names())
-            Node_weight_rescaled[
-                node.name] = ((cardn - 1)*(card - cardn)) / rescaledtot
+            Node_weight_A[node_style_num_countstr] = Fraction(0,1)  # accepted
+            Node_weight_R[node_style_num_countstr] = Fraction(0,1)  # rejected
+            Node_weight_N[node_style_num_countstr] = Fraction(0,1)  # neuter
+            
+            node_style_num_count += 1
             
         else:
             node.add_feature("clade_label", False)
+            
+    cladogram.name = "root"
+    Node_weight_A["root"] = Fraction(0,1)  # accepted
+    Node_weight_R["root"] = Fraction(0,1)  # rejected
+    Node_weight_N["root"] = Fraction(0,1)  # neutral
+    pie_percentages["root"] = [Fraction(0,1)] * len(
+        set([x[1] for x in NRI_codes]))
     
-    # RNRI computation : decompose each character in triplets with weights
+    for character, carnb in character_dict.items():
+        Node_weight_c[carnb] = [copy.deepcopy(Node_weight_A), 
+                                copy.deepcopy(Node_weight_R),
+                                copy.deepcopy(Node_weight_N)]
+    
+    # NRI computation : decompose each character in triplets with weights
     # for each triplet : traverse the tree and check if agreement tree/triplet
     # if yes add value to pie_percentages
     
@@ -1382,61 +1411,116 @@ def NRI(cladopath, charpaths, taxarep1=False, taxarep2=False, prefix="rnri",
     
     for character, carnb in character_dict.items():  # for each character
     
-        print("Decomposition: character " + str(carnb))
+        # dict between accepted-neuter-rejected triplets for each character
+        pie_percentages_each_char[carnb] = dict()
+        node_style_num_count = 1
         
-        #blockPrint()
-        triplist = main_tripdec({character : 1}, prefix=False, 
-                                taxa_replacement=False, weighting=weighting, 
-                                parallel='no', dec_detail=False, 
-                                method=polymethod, verbose=False)
-        #enablePrint()
-            
-        for triplet_rnri, FW in triplist.items():  # check if triplet is true
-            
-            in1name, in2name = list(triplet_rnri.in_taxa)
-            
-            in1 = cladogram.get_leaves_by_name(str(in1name))[0]
-            in2 = cladogram.get_leaves_by_name(str(in2name))[0] 
-            out = cladogram.get_leaves_by_name(list(
-                triplet_rnri.out_taxa)[0])[0]
-            
-            in_node = set(Tree.get_leaf_names(in1.get_common_ancestor(in2)))
-            nodeout1 = set(Tree.get_leaf_names(out.get_common_ancestor(in1)))
-            nodeout2 = set(Tree.get_leaf_names(out.get_common_ancestor(in2)))
-            
-            # check if triplet is valid
-            if (in_node.issubset(nodeout1) and in_node.issubset(nodeout2) and 
-                in_node != nodeout1 and in_node != nodeout2):
+        for node in cladogram.traverse(strategy="preorder"):
+            if node.is_leaf() == False and node.is_root() == False:
+                node_style_num_countstr = str(node_style_num_count)
+                pie_percentages_each_char[carnb][node_style_num_countstr] = [
+                    Fraction(0,1)] * 3
+                node_style_num_count += 1
+                node.add_feature("support_num", 0)
+                node.add_feature("support_denom", 0)
                 
-                # add value in result list
-                pie_percentages[in1.get_common_ancestor(in2).name][
-                    categories_rnri.index(rnri_codes[int(carnb)-1][1])] += FW
-                Node_weight[in1.get_common_ancestor(in2).name] += FW
+        #print("Decomposition: character " + str(carnb))
+                
+        # mute main_tripdec
+        with open(devnull, 'w') as f:
+            with redirect_stdout(f):
+                triplist = main_tripdec({character : 1}, prefix=False, 
+                                        taxa_replacement=False, 
+                                        weighting=weighting, 
+                                        parallel='no', dec_detail=False, 
+                                        method=polymethod, verbose=False)
+                
+        if triplist:
+            for triplet_NRI, FW in triplist.items():  # check if triplet is true by n
+        
+                in1name, in2name = list(triplet_NRI.in_taxa)
+                outname = list(triplet_NRI.out_taxa)[0]
+                
+                in1 = cladogram.get_leaves_by_name(str(in1name))[0]
+                in2 = cladogram.get_leaves_by_name(str(in2name))[0] 
+                out = cladogram.get_leaves_by_name(list(
+                    triplet_NRI.out_taxa)[0])[0]
+                
+                in_node = set(Tree.get_leaf_names(in1.get_common_ancestor(in2)))
+                nodeout1 = set(Tree.get_leaf_names(out.get_common_ancestor(in1)))
+                nodeout2 = set(Tree.get_leaf_names(out.get_common_ancestor(in2)))
+                        
+                for node in cladogram.traverse(strategy="preorder"):
+                    if node.is_leaf() == False  and node.is_root() == False:
+                        
+                        # check if triplet is valid
+                        node_in = set(Tree.get_leaf_names(node))
+                        
+                        if (in1name in node_in) and (in1name in node_in) and (
+                                outname not in node_in):
+                            
+                            # add value in result list
+                            pie_percentages[node.name][categories_NRI.index(
+                                NRI_codes[int(carnb)-1][1])] += FW
+                            Node_weight_A[node.name] += FW
+                            Node_weight_c[carnb][0][node.name] += FW
+                            node.support_num += FW #brlen numerator - NRI    
+                
+                        # triplets rejected
+                        elif ((in1name in node_in) and (outname in node_in) and (
+                                in2name not in node_in)):
+                            Node_weight_R[node.name] += FW
+                            Node_weight_c[carnb][1][node.name] += FW
+                            
+                        elif ((in2name in node_in) and (outname in node_in) and (
+                                in1name not in node_in)):
+                            Node_weight_R[node.name] += FW
+                            Node_weight_c[carnb][1][node.name] += FW
+                            
+                        # neutral triplets
+                        else:
+                            Node_weight_N[node.name] += FW
+                            Node_weight_c[carnb][2][node.name] += FW
+                        
+                        node.support_denom += FW  # brlen denominator
     
+    # node support newick computation
+    for node in cladogram.traverse(strategy="preorder"):
+        if node.is_leaf() == False and node.is_root() == False:
+            if node.support_denom == 0:
+                node.support = 0
+            else:
+                node.support = node.support_num / node.support_denom
+                    
     print("Triplet decomposition and FW computation completed")
     
     # round and compute percentages
     
     pie_percentages1 = dict()
-    Node_weight2 = dict()
+    # Node_weight2 = dict()
     
     for node_name, values_list in pie_percentages.items():
         
         total = sum(pie_percentages[node_name])
-        pie_percentages1[node_name] = [
-            round((x / total) * 100) for x in values_list]
+        pie_percentages1[node_name] = []
+        
+        for x in values_list:
+            if total == 0:
+                pie_percentages1[node_name].append(0)
+            else:
+                pie_percentages1[node_name].append(round((x / total) * 100))
+        
         pie_percentages1[node_name].pop()
         totalsub = sum(pie_percentages1[node_name])
         pie_percentages1[node_name].append(100 - totalsub)
     
-    for node_name, frac in Node_weight.items():
-        Node_weight2[node_name] = round((float(frac)), 5)
+    # for node_name, frac in Node_weight_A.items():
+    #     Node_weight2[node_name] = round((float(frac)), 5)
     
-    # display pie-percentages
-    
-    # Basic tree style
+    # generate pdf for tree visualization
     if pdf_files:
     
+        # display pie-percentages
         ts = TreeStyle()
         ts.show_leaf_name = True
         ts.margin_top = 10
@@ -1444,38 +1528,39 @@ def NRI(cladopath, charpaths, taxarep1=False, taxarep2=False, prefix="rnri",
         ts.margin_left = 10
         ts.margin_bottom = 10
         ts.show_scale = False
-        colors=["#a6cee3",
-                "#b2df8a",
-                "#fb9a99",
-                "#fdbf6f",
-                "#cab2d6",
-                "#ffff99",
-                "#1f78b4",
-                "#33a02c",
-                "#e31a1c",
-                "#ff7f00",
-                "#6a3d9a",
-                "#b15928",
-                "#001b17",
-                "#9dff47",
-                "#794ffd",
-                "#009243",
-                "#01168f",
-                "#a6ffb7",
-                "#c2008e",
-                "#044a00",
-                "#af7eff",
-                "#ce6500",
-                "#0091b6",
-                "#c71b00",
-                "#000c2f",
-                "#f7ffde",
-                "#3e0012",
-                "#ffcdc4",
-                "#b40021",
-                "#4b4800",
-                "#a60052",
-                "#986400"]
+        
+        colors = ["#6faecc",
+                  "#7fc85c",
+                  "#e35f5b",
+                  "#e58b2e",
+                  "#9e7cc2",
+                  "#d9cf3f",
+                  "#156fb0",
+                  "#238a24",
+                  "#c81418",
+                  "#d96500",
+                  "#512a82",
+                  "#8c4216",
+                  "#001b17",
+                  "#74d92e",
+                  "#6034e0",
+                  "#007437",
+                  "#00106e",
+                  "#73db90",
+                  "#98006d",
+                  "#023500",
+                  "#8757de",
+                  "#a94f00",
+                  "#007799",
+                  "#a91500",
+                  "#00081f",
+                  "#dfeeb0",
+                  "#2d000d",
+                  "#e8a89a",
+                  "#870018",
+                  "#353200",
+                  "#820040",
+                  "#744a00"]
         
         #remove display nodes
         for n in cladogram.traverse():
@@ -1492,24 +1577,33 @@ def NRI(cladopath, charpaths, taxarep1=False, taxarep2=False, prefix="rnri",
                                       colors=colors, 
                                       width=50, height=50)
                 F.border.width = None
-                F.opacity = 0.6
+                F.opacity = 0.9
                 faces.add_face_to_node(F,node, 0, position="branch-right")
         
         ts.layout_fn = pie_nodes
         
         i = 0
-        for cat in categories_rnri:
-            if i > len(colors):
+        for cat in categories_NRI:
+            if i >= len(colors):
                 print("WARNING: too many categories, "
-                      +"piechart will be unreadable.")
+                      +"piechart might be unreadable. Consider grouping " 
+                      +"characters using --nri_codes")
             else:
                 ts.legend.add_face(CircleFace(10, colors[i]), column=0)
                 ts.legend.add_face(TextFace(cat, fsize=7), column=1)    
             
                 i += 1 
+
+        # save size-bubble tree in pdf
+        cladogram.render(prefix + ".NRI_comparisons.pdf", tree_style=ts)    
+        
+        # pdf with node size reflecting triplet support for each char + total
+        pdfs_char_abs = []
+        pdfs_char_pie = []
+        
+        for carnb in list(character_dict.values()) + ["total"]:
             
-        # if yes, save a pdf with node size reflecting overall triplet support
-        if totaltree:
+            # pdfs : bubble by size
             
             ts2 = TreeStyle()
             ts2.show_leaf_name = True
@@ -1518,6 +1612,12 @@ def NRI(cladopath, charpaths, taxarep1=False, taxarep2=False, prefix="rnri",
             ts2.margin_left = 10
             ts2.margin_bottom = 10
             ts2.show_scale = False
+            if carnb == "total":
+                ts2.title.add_face(TextFace(
+                "Total support (all characters)", fsize=7), column=0) # pdf title
+            else:
+                ts2.title.add_face(TextFace(
+                "Character #" + str(carnb), fsize=7), column=0) # pdf title
             
             bubble_cladogram = cladogram.copy()
             
@@ -1525,59 +1625,347 @@ def NRI(cladopath, charpaths, taxarep1=False, taxarep2=False, prefix="rnri",
                 if not node.is_leaf() and not node.is_root():
                     # Creates a sphere face whose size is proportion. to weight
                     C = CircleFace(radius=radius[node.name], 
-                                   color="#6d87ed", style="sphere")
+                                   color="#ED2B00", style="sphere")
+                                   #, label=str(radius[node.name]))
                     C.opacity = 0.6
                     faces.add_face_to_node(C, node, 0, position="float")
                     
             #réechelonner
             radius = dict()
-            if rescaled:
-                radiusr = dict()
-                for nodename, val in Node_weight2.items():
-                    radiusr[nodename] = (Node_weight2[nodename] / 
-                                         Node_weight_rescaled[nodename])
-                for nodename, val in radiusr.items():
-                    radius[nodename] = (radiusr[nodename] / 
-                                        max(radiusr.values()))*20
-                    
-            else:
-                for nodename, val in Node_weight2.items():
-                    radius[nodename] = (Node_weight2[nodename] / 
-                                        max(Node_weight2.values()))*20
-                    
+            
+            for nodename in Node_weight_A.keys():  # for each node
+                if nodename != "root":
+                    if carnb == "total":
+                        radius[nodename] = (round(float(
+                    Node_weight_A[nodename]),5) / round(float(max(
+                    Node_weight_A.values())),5))*20
+                    else:
+    
+                        if round(float(max(
+                        Node_weight_c[carnb][0].values())),5) == 0:
+                            radius[nodename] = 0
+                        else:
+      
+                            radius[nodename] = (round(float(
+                        Node_weight_c[carnb][0][nodename]),5) / round(float(max(
+                        Node_weight_c[carnb][0].values())),5))*20
+
             ts2.layout_fn = bubble_layout
-            
-            bubble_cladogram.render(prefix + ".total.pdf", tree_style=ts2)
-        
-        # save results
-        cladogram.render(prefix + ".pdf", tree_style=ts)
-    
-    with open(prefix+".nri", "w") as results_file:
-        
-        results_file.write(' ')
-        for e in categories_rnri:
-            results_file.write(',' + e)
-        results_file.write(",total,total_rescaled\n")  
-        
-        for carname, percentage_list in pie_percentages1.items():
-            results_file.write('Node_' + carname)
-            for p in percentage_list: 
-                results_file.write(',' + str(p))
-    
-            radius = Node_weight2[carname]        
-            radius_rescaled = Node_weight2[carname] / Node_weight_rescaled[
-                carname]
                 
-            results_file.write("," + str(radius) + "," + 
-                               str(radius_rescaled) + "\n")  
+            # save
+            if carnb == "total":
+                bubble_cladogram.render(prefix + ".total.pdf", 
+                                        tree_style=ts2)
+                
+                pdfs_char_abs.append(prefix + ".total.pdf")
+                
+            else:
+                bubble_cladogram.render(
+                    prefix + ".character_" + str(carnb) + ".pdf", tree_style=ts2)
     
+                pdfs_char_abs.append(prefix + ".character_" + str(carnb) + ".pdf")
+                
+            # pdfs: pie chart accepted/rejected/neutral
             
+            # display pie-percentages    
+            pie_percentages_node = dict()
+            
+            for key in pie_percentages1.keys():
+                if carnb == "total":
+                    a = round(float(Node_weight_A[key]))
+                    r = round(float(Node_weight_R[key]))
+                    n = round(float(Node_weight_N[key]))
+                    tot = (a + r + n)
+                    if tot == 0:
+                        pie_percentages_node[key] = [0,0,0,100]
+                    else:
+                        pie_percentages_node[key] = [a*100/tot,
+                                                     r*100/tot,
+                                                     n*100/tot,
+                                                     0]
+                
+                else:
+                    a = round(float(Node_weight_c[carnb][0][key]))
+                    r = round(float(Node_weight_c[carnb][1][key]))
+                    n = round(float(Node_weight_c[carnb][2][key]))
+                    tot = (a + r + n)
+                    if tot == 0:
+                        pie_percentages_node[key] = [0,0,0,100]
+                    else:
+                        pie_percentages_node[key] = [a*100/tot,
+                                                     r*100/tot,
+                                                     n*100/tot,
+                                                     0]
+                
+            ts = TreeStyle()
+            ts.show_leaf_name = True
+            ts.margin_top = 10
+            ts.margin_right = 10
+            ts.margin_left = 10
+            ts.margin_bottom = 10
+            ts.show_scale = False
+            
+            if carnb == "total":
+                ts.title.add_face(TextFace(
+                    "Total support (all characters)", fsize=13), column=0) 
+            else:
+                ts.title.add_face(TextFace(
+                    "Character #" + str(carnb), fsize=13), column=0) # pdf title
+                
+            colors = ["#00E35B",
+                      "#E32600",
+                      "#525BFF",
+                      "E0E0E0"]
+            
+            #remove display nodes
+            for n in cladogram.traverse():
+               nstyle = NodeStyle()
+               nstyle["fgcolor"] = "black"
+               nstyle["size"] = 0
+               n.set_style(nstyle)
+               
+            #Associate the PieChartFace only with internal nodes
+            def pie_nodes(node):
+                if not node.is_leaf() and not node.is_root():
+                    
+                    F= faces.PieChartFace(pie_percentages_node[node.name],
+                                          colors=colors, 
+                                          width=50, height=50)
+                    F.border.width = None
+                    F.opacity = 0.6
+                    faces.add_face_to_node(F,node, 0, position="branch-right")
+            
+            ts.layout_fn = pie_nodes
+            
+            i = 0
+            for cat in ["accepted","rejected","neutral","unsupported node"]:
+                ts.legend.add_face(CircleFace(10, colors[i]), column=0)
+                ts.legend.add_face(TextFace(cat, fsize=7), column=1)    
+            
+                i += 1 
+            
+            # save size-bubble tree in pdf
+            if carnb != "total":
+                cladogram.render(prefix + ".character_pie_" + str(
+                    carnb) + ".pdf", tree_style=ts)   
+            
+                pdfs_char_pie.append(prefix + ".character_pie_" + str(
+                    carnb) + ".pdf")
+            else:
+                cladogram.render(prefix + ".character_pie_total.pdf", 
+                                 tree_style=ts)   
+            
+                pdfs_char_pie.append(prefix + ".character_pie_total.pdf")
+    
+        # NRI and NCI values
+        ts = TreeStyle()
+        ts.show_leaf_name = True
+        ts.margin_top = 10
+        ts.margin_right = 10
+        ts.margin_left = 10
+        ts.margin_bottom = 10
+        ts.show_scale = False
+        
+        #remove display nodes
+        for node in cladogram.traverse():
+            nstyle = NodeStyle()
+            nstyle["fgcolor"] = "black"
+            nstyle["size"] = 0
+            node.set_style(nstyle)
+            
+            if not node.is_leaf() and not node.is_root():
+                
+                x = str(round((float(Node_weight_A[node.name]/(  # NRI
+                 Node_weight_A[node.name] + Node_weight_R[
+                 node.name] + Node_weight_N[node.name]))), 5))
+
+                y = str(round((float(Node_weight_R[node.name]/(  # NCI
+                   Node_weight_A[node.name] + Node_weight_R[
+                   node.name]))),5))
+                
+                node_text = TextFace("NRI: " + x + "\n" + 
+                                      "NCI: " + y, fsize=6)
+                node_text.margin_left = 2
+                node.add_face(node_text, column=0, position="branch-right")
+           
+        # save size-bubble tree in pdf
+        cladogram.render(prefix + ".NRI.NCI.pdf", tree_style=ts)    
+    
+        # merge all pdfs
+        # bubble
+        merger = PdfMerger()
+    
+        for pdf in pdfs_char_abs:
+            merger.append(pdf)
+    
+        merger.write(prefix + ".NRI.pdf")
+        merger.close()
+    
+        for pdf in pdfs_char_abs:
+            remove(pdf)
+            
+        # pie
+        merger = PdfMerger()
+    
+        for pdf in pdfs_char_pie:
+            merger.append(pdf)
+    
+        merger.write(prefix + ".triplets_pie.pdf")
+        merger.close()
+    
+        for pdf in pdfs_char_pie:
+            remove(pdf)
+    
+    # save results in csv table
+    with open(prefix+".node_support.csv", "w") as results_file:
+        
+        # col labels
+        for n in Node_weight_c.keys():        
+            results_file.write((',character_' + str(n))*3)
+    
+        results_file.write(",total" *3 + 
+                           ",nodal retention index,nodal conflict index\n")
+        results_file.write(",accepted,rejected,neutral"*(
+            len(Node_weight_c.keys())+1) +",,\n")  
+    
+        # values
+        for node_name in Node_weight_A.keys():
+            if node_name != "root":
+        
+                results_file.write('Node_' + node_name)
+                
+                for carnb in character_dict.values():  # for each character
+                    results_file.write(',' + str(round((
+                        float(Node_weight_c[carnb][0][node_name])),5)))
+                    results_file.write(',' + str(round((
+                        float(Node_weight_c[carnb][1][node_name])),5)))
+                    results_file.write(',' + str(round((
+                        float(Node_weight_c[carnb][2][node_name])),5)))
+        
+                # total
+                results_file.write(
+                    "," + str(round((float(Node_weight_A[node_name])), 
+              5)) + "," + str(round((float(Node_weight_R[node_name])), 
+              5)) + "," + str(round((float(Node_weight_N[node_name])), 
+              5)) + "," + str(round((float(Node_weight_A[node_name]/(  # NRI
+                 Node_weight_A[node_name] + Node_weight_R[
+                 node_name] + Node_weight_N[node_name]))),
+              5)) + "," + str(round((float(Node_weight_R[node_name]/(  # NCI
+                 Node_weight_A[node_name] + Node_weight_R[
+                 node_name]))),5)) + "\n")  
+                
         results_file.write("\n" + cladogram.write(format=8) + "\n")
             
-    print("Nodal Retention Index computation ended successfully")
-        
-    return pie_percentages1
+    print("Triplet support computation ended successfully")
     
+    # NRI values by node
+    with open(prefix+".NRI.tre", "w") as node_supportfile:
+        node_supportfile.write(cladogram.write(format=2))
+            
+    return pie_percentages1
+
+
+def NRI_wrapper(cladopath, charpaths, taxarep1=False, taxarep2=False, 
+                prefix=False, NRI_codes=False, weighting='FW', 
+                polymethod='TMS', pdf_files=False):
+    """
+        
+    Creates a table containing the accepted, rejected and neutral triplets for 
+    each character and for each node, as well as the nodal retention 
+    index (NRI) and the nodal conflict index (NCI). If the --pdf option is 
+    enabled, it also generates: 
+        1) a PDF showing the NRI values for each node and for each character, 
+           as well as the NRI total for all characters, 
+        2) a PDF allowing comparison of the NRI values for all characters 
+           (or sets of characters if the --nri_codes is enabled) using pie 
+           charts (each segment of the pie chart corresponds to the respective 
+           proportion of accepted triplets for a given character and node), and 
+        3) a PDF showing, for each node and for each character (as well as for 
+           all characters), the proportion of accepted, neutral and rejected 
+           triplets.
+           
+    The nri_codes option must be used if the pie charts are illegible due to 
+    there being too many characters. This option uses a CSV file to group 
+    characters into sets so that character sets can be compared rather than 
+    individual characters. For example
+         1;1
+         2;1
+         3;2
+         4;2
+    This csv needs two columns with integers, the first column correpond
+    to the numbers of all characters, and the second column indicates the
+    corresponding character set.
+    
+    This function is made for giving trees directly to NRI() from newick files
+
+    Parameters
+    ----------
+    cladopath : str
+        path of input file containing the cladogram (if severak trees are 
+        provided, a strict consensus is built).
+    charpaths : list of str
+        list of path of input file containing characters in hmatrix or newick 
+        format.
+    taxarep1 : str, optional
+        DESCRIPTION. The default is False.
+    taxarep2 : str, optional
+        DESCRIPTION. The default is False.
+    prefix : str
+        Prefix of the files prefix.nri (csv file + a newick tree with node 
+        names), prefix.pdf (percentages) and prefix.total.pdf (total triplet
+        weights) to be saved. 
+        The default is 'NRI'.
+    NRI_codes : bool, optionnal
+        By default, the prefix.pdf file will display a tree with a piechart for 
+        each node representing the relative proportion of support from each 
+        character. The user can use a csv file showing correspondence between
+        characters and set in order to compare sets when the visual comparison 
+        of characters is complicated by their high number.
+    weighting : str, optional
+        Weighting scheme to use between FW, FWNL, MW, AW, NW. 
+        The default is 'FW'.
+    polymethod : str, optional
+        One of the two implemented algorithms of free-paralogy subtree
+        analysis between "TMS" and "FPS". The default is "TMS".
+    pdf_files: bool, optionnal
+        Computes various pdf with triplet measurements comprisong NRI and NCI:
+        1) a PDF showing the NRI values for each node and for each character, 
+           as well as the NRI total for all characters, 
+        2) a PDF allowing comparison of the NRI values for all characters 
+           (or sets of characters if the --nri_codes is enabled) using pie 
+           charts (each segment of the pie chart corresponds to the respective 
+           proportion of accepted triplets for a given character and node), and 
+        3) a PDF showing, for each node and for each character (as well as for 
+           all characters), the proportion of accepted, neutral and rejected 
+           triplets.
+        
+    Returns
+    -------
+    None
+
+    """
+
+    print("Loading cladogram")
+        
+    cladogram_dict = character_extraction(cladopath, taxarep2, verbose=False)
+    
+    print("Cladogram loaded")
+    
+    character_dict = wrapper_character_extraction(charpaths, taxarep1, prefix,
+                                                  verbose=False)
+      
+    pie_percentages1 = NRI(cladogram_dict,
+        character_dict,
+        taxarep1=False, 
+        taxarep2=False, 
+        prefix=prefix, 
+        NRI_codes=NRI_codes,
+        weighting=weighting, 
+        polymethod=polymethod, 
+        pdf_files=pdf_files)
+    
+    return pie_percentages1
+
 
 def character_states_test(cladogram_dict, character_dict,
                           prefix, pdf_files=False):
@@ -2077,6 +2465,86 @@ def character_states_test(cladogram_dict, character_dict,
     return results_test_dict, syn_dict
 
 
+def chartest_wrapper(cladopath, charpaths, taxarep1=False, taxarep2=False, 
+                     method="TMS", prefix="AGATTA_chartest", pdf_files=False, 
+                     verbose=False):
+    """
+    Run the character states testing procedure for hierarchical characters
+    defined by Cao (2008) and corrected by Rineau (2017). This procedure tests
+    at each symmetric node (paralog) of the cladogram the presence of
+    instances of the derived state.
+
+          Cao, N. (2008). Analyse à trois éléments et anatomie du bois des
+          Fagales Engl (Doctoral dissertation, Paris, Muséum national
+          d'histoire naturelle).
+
+          Rineau, V. (2017). Un nouveau regard cladistique sur l'anatomie
+          comparée, la phylogénie, la systématique et la paléoécologie des
+          rudistes (Bivalvia, Hippuritida) (Doctoral dissertation,
+          Université Pierre et Marie Curie).
+
+    This function is made for giving trees directly to character_states_test
+    from newick files
+
+    Parameters
+    ----------
+    cladopath : str
+        Path to a newick file containing the cladogram. The tree must be the
+        optimal cladogram obtained from the cladistic analysis of character
+        trees stored in charpaths.
+    charpaths : list of str
+        Path(s) to file(s) containing the initial character trees in newick or 
+        hmatrix format.
+    taxarep1 : str, optional
+        DESCRIPTION. The default is False.
+    taxarep2 : str, optional
+        DESCRIPTION. The default is False.
+    method : str, optional
+        One of the two implemented algorithms of free-paralogy subtree
+        analysis between "TMS" and "FPS" for removing polymorphism. 
+        The default is "TMS".
+    prefix : str
+        Prefix of the files to be computed.
+    pdf_files : str or bool, optional
+        This argument can be the path stating the location where to save one
+        pdf file for each character state for visualizing the results of the
+        character state procedure.
+        The default is False (no pdf files computed).
+    verbose : bool, optional
+        Verbose mode if True. The default is True.
+        
+    Returns
+    -------
+    None.
+
+    """
+
+    print("Loading cladogram")
+
+    cladopath = path.expanduser(cladopath)
+    charpaths = [path.expanduser(charpath) for charpath in charpaths]
+
+    cladogram_dict = character_extraction(cladopath, taxarep1, verbose=False)
+
+    print("Cladogram loaded")
+
+    character_dict = wrapper_character_extraction(charpaths, 
+                                                  taxarep2,
+                                                  prefix,
+                                                  verbose)
+        
+    # remove automatically repetitions if detected (user message printed)
+    if rep_detector(character_dict):
+        character_dict = del_replications_forest(character_dict,
+                                                 method=method,
+                                                 prefix=prefix,
+                                                 verbose=verbose)
+
+    # print(str(len(character_dict)) + " characters loaded")
+
+    character_states_test(cladogram_dict, character_dict, prefix, pdf_files)
+
+
 def describe_forest(character_dict, prefix, showtaxanames=False):
     """
     Write on a text file basic informations about rooted trees: number of
@@ -2204,84 +2672,6 @@ def describe_forest(character_dict, prefix, showtaxanames=False):
     print("Forest described")
 
 
-def chartest(cladopath, charpaths, taxarep1=False, taxarep2=False, method="TMS", 
-             prefix="AGATTA_chartest", pdf_files=False, verbose=False):
-    """
-    Run the character states testing procedure for hierarchical characters
-    defined by Cao (2008) and corrected by Rineau (2017). This procedure tests
-    at each symmetric node (paralog) of the cladogram the presence of
-    instances of the derived state.
-
-          Cao, N. (2008). Analyse à trois éléments et anatomie du bois des
-          Fagales Engl (Doctoral dissertation, Paris, Muséum national
-          d'histoire naturelle).
-
-          Rineau, V. (2017). Un nouveau regard cladistique sur l'anatomie
-          comparée, la phylogénie, la systématique et la paléoécologie des
-          rudistes (Bivalvia, Hippuritida) (Doctoral dissertation,
-          Université Pierre et Marie Curie).
-
-    This function is made for giving trees directly to character_states_test
-    from newick files
-
-    Parameters
-    ----------
-    cladopath : str
-        Path to a newick file containing the cladogram. The tree must be the
-        optimal cladogram obtained from the cladistic analysis of character
-        trees stored in charpaths.
-    charpaths : list of str
-        Path(s) to file(s) containing the initial character trees in newick or 
-        hmatrix format.
-    taxarep1 : str, optional
-        DESCRIPTION. The default is False.
-    taxarep2 : str, optional
-        DESCRIPTION. The default is False.
-    method : str, optional
-        One of the two implemented algorithms of free-paralogy subtree
-        analysis between "TMS" and "FPS" for removing polymorphism. 
-        The default is "TMS".
-    prefix : str
-        Prefix of the files to be computed.
-    pdf_files : str or bool, optional
-        This argument can be the path stating the location where to save one
-        pdf file for each character state for visualizing the results of the
-        character state procedure.
-        The default is False (no pdf files computed).
-    verbose : bool, optional
-        Verbose mode if True. The default is True.
-        
-    Returns
-    -------
-    None.
-
-    """
-
-    print("Loading cladogram")
-
-    cladopath = path.expanduser(cladopath)
-    charpaths = [path.expanduser(charpath) for charpath in charpaths]
-
-    cladogram_dict = character_extraction(cladopath, taxarep1, verbose=False)
-
-    print("Cladogram loaded")
-
-    character_dict = wrapper_character_extraction(charpaths, 
-                                                  taxarep2,
-                                                  prefix,
-                                                  verbose)
-        
-    # remove automatically repetitions if detected (user message printed)
-    if rep_detector(character_dict):
-        character_dict = del_replications_forest(character_dict,
-                                                 method=method,
-                                                 prefix=prefix,
-                                                 verbose=verbose)
-
-    # print(str(len(character_dict)) + " characters loaded")
-
-    character_states_test(cladogram_dict, character_dict, prefix, pdf_files)
-    
 def brlen(prefix, cladogram_dict_list):
     """
     Compute node support for each resulting cladogram based 
@@ -2306,7 +2696,7 @@ def brlen(prefix, cladogram_dict_list):
             for node in tree.traverse():
                 if not node.is_leaf() and not node.is_root():
                     
-                    node.dist = 0  # set support value to 0
+                    node.support = 0  # set support value to 0
                     
                     # for each node, compute support values
                     for trip, FW in triplet_dict.items():
@@ -2318,14 +2708,14 @@ def brlen(prefix, cladogram_dict_list):
                             and in2 in node.get_leaf_names() 
                             and out not in node.get_leaf_names()):
                             
-                            node.dist += FW
+                            node.support += FW
     
     elif type(cladogram_dict_list) == list:
         for tree in cladogram_dict_list:
             for node in tree.traverse():
                 if not node.is_leaf() and not node.is_root():
                     
-                    node.dist = 0  # set support value to 0
+                    node.support = 0  # set support value to 0
                     
                     # for each node, compute support values
                     for trip, FW in triplet_dict.items():
@@ -2337,5 +2727,5 @@ def brlen(prefix, cladogram_dict_list):
                             and in2 in node.get_leaf_names() 
                             and out not in node.get_leaf_names()):
                             
-                            node.dist += FW
+                            node.support += FW
                                     

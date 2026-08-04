@@ -942,7 +942,7 @@ def wrapper_character_extraction(infilelist=False, taxa_replacement=False,
 
            
     # count number of characters and where does they come from
-    print("\nTreefication of {} characters complete".format(
+    print("Treefication of {} characters complete".format(
         str(len(character_dict))))
 
     return character_dict
@@ -964,9 +964,10 @@ def checkargs(arguments):
     """
     if arguments["analysis"]:
 
-        if arguments["--pdf"] and not arguments["--chartest"]:
+        if arguments["--pdf"] and not (
+                arguments["--chartest"] or arguments["--nri"]):
             sys.exit(print("ERROR: --pdf flag cannot be used without " +
-                           "--chartest"))
+                           "--chartest or --nri"))
 
         if (arguments["--software"] == "paup" or
             arguments["--software"] == "tnt" or
@@ -1207,7 +1208,23 @@ def helper(command):
             --nsupport Compute node support for each resulting cladogram based 
             on triplets (amount weighted triplets compatible with each node). 
             When a consensus is computed, node support is also computed for
-            them is nsupport option is activated.
+            them is nsupport option is activated. If NRI = Accepted triplets /
+            all triplets, the node support is only the sum of accepted 
+            triplets. A bit faster than --nri.
+            --nri Compute NRI and NCI, and the sum of accepted, rejected and 
+            neutral triplets for each character and each node. Uses the NRI 
+            function. The default is False.
+            --nri_codes The nri_codes option must be used if the pie charts are 
+            illegible due to there being too many characters. This option uses 
+            a CSV file to group characters into sets so that character sets can
+            be compared rather than individual characters. For example
+                     1;1
+                     2;1
+                     3;2
+                     4;2
+            This csv needs two columns with integers, the first column 
+            correpond to the numbers of all characters, and the second column 
+            indicates the corresponding character set.
 
     Output:
 
@@ -1222,6 +1239,7 @@ def helper(command):
             leaf identifiers and names given in the input.
           - prefix.tre is a newick file recording all the optimal cladograms
             found during the analysis.
+        Other output files can be seen in the corresponding option pages.
               """)
 
     elif command == "tripdec":
@@ -1425,6 +1443,111 @@ def helper(command):
 
         All calculations are made using a specific weighting scheme
         (option --weighting).
+              """)
+
+    elif command == "nri":
+        print("""
+    nri
+              
+    Creates a table containing the accepted, rejected and neutral triplets for 
+    each character and for each node, as well as the nodal retention 
+    index (NRI) and the nodal conflict index (NCI). If the --pdf option is 
+    enabled, it also generates: 
+        1) a PDF showing the NRI values for each node and for each character, 
+           as well as the NRI total for all characters, 
+        2) a PDF allowing comparison of the NRI values for all characters 
+           (or sets of characters if the --nri_codes is enabled) using pie 
+           charts (each segment of the pie chart corresponds to the respective 
+           proportion of accepted triplets for a given character and node), and 
+        3) a PDF showing, for each node and for each character (as well as for 
+           all characters), the proportion of accepted, neutral and rejected 
+           triplets.
+    
+    Usage:
+
+        agatta nri <file> <file>... [--pdf --prefix=<file> --weighting=<type>
+                                       --taxarep1=<path> --taxarep2=<path> 
+                                       --repetitions=<type> --nri_codes=<path>]
+        
+        Mandatory parameters:
+            
+        --cladopath path of input file containing the cladogram (or consensus).
+        --charpaths list of path of input file containing characters in hmatrix 
+        and/or newick format.
+        --prefix Prefix of the output files (csv file + a newick tree with 
+        node names + pdf filesif --pdf is activated). 
+
+    Optionnal parameters:
+        
+        --taxarep1=<path> If the user wants to replace identifiers by real
+        leaf names in the result files, this flag can be used with a path
+        to a csv file with two columns, the first with the identifiers in
+        the actual newick strings and the other with the names the user
+        wants.
+        --taxarep2=<path> Idem as --taxarep1 for the second <file>.
+        --weighting=<type>  Weighting scheme to use on triplets. The
+        type of weighting will change the results of the analysis.
+        The following schemes can be used:
+            - FW: Fractional weighting from Rineau et al. (2021),
+            - FWNL: Fractional weighting from Nelson and Ladiges (1992),
+            - UW: Uniform weighting from Nelson and Ladiges (1992),
+            - MW: Minimal weighting from Wilkinson et al. (2004),
+            - AW: Additive weighting : the weight of a triplet in additive
+              weighting corresponds to the number of trees in which the
+              triplet is present,
+            - NW: No weighting (all triplets have a weight of 1).
+        By default 'FW' is used.
+        --NRI_codes : bool, optionnal
+        By default, the prefix.pdf file will display a tree with a piechart for 
+        each node representing the relative proportion of support from each 
+        character. The user can use a csv file showing correspondence between
+        characters and set in order to compare sets when the visual comparison 
+        of characters is complicated by their high number. For example
+             1;1
+             2;1
+             3;2
+             4;2
+        This csv needs two columns with integers, the first column correpond
+        to the numbers of all characters, and the second column indicates the
+        corresponding character set.
+        --polymethod One of the two implemented algorithms of free-paralogy 
+        subtree analysis between "TMS" and "FPS". The default is "TMS".
+        --pdf_files Computes various pdf with triplet measurements comprisong 
+        NRI and NCI:
+        1) a PDF showing the NRI values for each node and for each character, 
+           as well as the NRI total for all characters, 
+        2) a PDF allowing comparison of the NRI values for all characters 
+           (or sets of characters if the --nri_codes is enabled) using pie 
+           charts (each segment of the pie chart corresponds to the respective 
+           proportion of accepted triplets for a given character and node), and 
+        3) a PDF showing, for each node and for each character (as well as for 
+           all characters), the proportion of accepted, neutral and rejected 
+           triplets.
+
+    Output:
+
+        Three output files are writen: 
+            - prefix.support.csv is the main output. It shows the amount of
+            rejected, accepted and neutral triplets for each character and
+            each node. The last two columns display the NRI and the NCI.
+            A last line shows the tree in newick format with a label for each 
+            node that corresponds to the node names (first column).
+            - prefix.node_support.tre shows the optimal tree in newick format 
+            with node support (NRI) for each node.
+            - prefix.character_trees.tre is the list of characters in newick 
+            format (only if one of the input files is a hmatrix).
+            
+        Using --pdf, additionnal outputs are generated;
+            - prefix.NRI.pdf displays the NRI values among the 
+            tree nodes for each character and globally.
+            - prefix.triplets_pie.pdf displays for each character the 
+            repartition of all accepted, rejected and neutral triplets among
+            the nodes (one character on each pdf page). The last page display
+            the summ of all triplets.
+            - prefix.NRI_comparisons.pdf displays using pie charts the sum of 
+            accepted triplets for each character 
+            (or set of characters if nri_code is provided).
+            - prefix.NRI.NCI.pdf showS NRI and NCI values for each node.
               """)
 
     elif command == "chartest":

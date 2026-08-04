@@ -27,7 +27,7 @@ from agatta.interpret import RI
 from agatta.interpret import triplet_distance
 from agatta.interpret import character_states_test
 from agatta.interpret import describe_forest
-from agatta.interpret import NRI
+from agatta.interpret import NRI_wrapper
 from agatta.out import triplet_nexus_file
 from agatta.out import triplet_tnt_file
 from agatta.analysis import triplet
@@ -187,7 +187,7 @@ class Test_analysis:
                                       triplet({"d","e"},{"b"}): 1,
                                       triplet({"d","f"},{"b"}): 1}
 
-        self.pie_percentages1 = {'1': [100], '2': [100], '3': [100]}
+        self.pie_percentages1 = {'1': [100], '2': [100], '3': [100], 'root': [100]}
 
     def test_character_extraction(self, tmpdir):
 
@@ -614,15 +614,13 @@ class Test_analysis:
         with open(cladogramfile, "w") as treefile2:
             treefile2.write("(Diceras,(Hippurites,(Radiolites,Vaccinites),(Titanosarcolites,Clinocaprina)));\n")
 
-        pie_percentages1 = NRI(cladogramfile, infile, 
+        pie_percentages1 = NRI_wrapper(cladogramfile, infile, 
             taxarep1=False, 
             taxarep2=False, 
-            prefix=str(folder.join("rnri")), 
-            rnri_codes=False, 
+            prefix=str(folder.join("nri")), 
+            NRI_codes=False, 
             weighting='FW', 
             polymethod='TMS', 
-            totaltree=True, 
-            rescaled=True,
             pdf_files=False)
 
         assert pie_percentages1 == self.pie_percentages1

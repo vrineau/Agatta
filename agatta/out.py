@@ -25,6 +25,7 @@ from .analysis import rep_detector
 from .analysis import triplet_extraction
 from .analysis import del_replications_forest
 from .interpret import RI
+from .interpret import NRI
 from .interpret import rcc
 from .interpret import constrict
 from .interpret import character_states_test
@@ -643,7 +644,7 @@ def convert(infilelist, infiletype, prefix, parallel="auto", weighting="FW",
     if dec_detail and not parallel == "no":
         print("WARNING: Detailed csv table (--detailed_tripdec) cannot be "
               +"constructed in parallel mode. To build the table, please set "
-              +"parallel=no")
+              +"--parallel=no")
 
     if infiletype == "triplets":
         triplet_dict = triplet_extraction(infilelist, taxa_replacement)
@@ -672,7 +673,7 @@ def agatta_analysis(infilelist, software_path, software="paup",
                     parallel="auto", prefix="agatta_out", analysis="heuristic",
                     nrep=1000, rosetta=False, chartest=False, ri=False,
                     consensus=False, pdf_file=False, dec_detail=False, 
-                    nsupport=False, verbose=True):
+                    nsupport=False, nri=False, nri_codes=False, verbose=True):
     """
     Main function of the Agatta python package. Allow to perform a three-item
     analysis (Nelson & Platnick, 1991), e.g., in the context of systematics
@@ -839,6 +840,8 @@ def agatta_analysis(infilelist, software_path, software="paup",
         If true, save a detailed output table in csv format named 
         prefix.triplet_table.csv of triplet weights per character in addition 
         to the .triplet file. 
+    nri : bool, optional
+        Compute NRI and NCI using the NRI function. The default is False.
     verbose : bool, optional
         Verbose mode if True. The default is True.
 
@@ -900,6 +903,7 @@ def agatta_analysis(infilelist, software_path, software="paup",
     # if input is a matrix, use hmatrix to convert in a tree list
     character_dict = wrapper_character_extraction(infilelist, taxa_replacement,
                                                   prefix, verbose)
+    character_dict_native = character_dict.copy()
 
     # standardisation option
     if rosetta:
@@ -912,15 +916,17 @@ def agatta_analysis(infilelist, software_path, software="paup",
 
     # remove automatically repetitions if detected (user message printed)
     if rep_detector(character_dict):
-        character_dict = del_replications_forest(character_dict,
+        character_dict_norep = del_replications_forest(character_dict,
                                                  method=method,
                                                  prefix=prefix,
                                                  verbose=verbose)
+    else:
+        character_dict_norep = character_dict
 
     prefix_path = os.path.join(os.getcwd(), prefix)
 
     # compute triplets and weights from the tree list and save a nex/tnt file
-    convert(character_dict,
+    convert(character_dict_norep,
             "trees",
             prefix,
             parallel,
@@ -1103,14 +1109,26 @@ def agatta_analysis(infilelist, software_path, software="paup",
     if chartest:
         character_states_test({constrict(list(cladogram_dict.keys()),
                                          silent=True): 1},
-                              character_dict,
+                              character_dict_norep,
                               prefix,
                               pdf_file)
-
+        
+    # NRI and NCI. Note that pdf_files is the same flag than for chartest
+    if nri:
+        NRI({constrict(list(cladogram_dict.keys()), silent=True): 1},
+            character_dict,
+            taxarep1=False, 
+            taxarep2=False, 
+            prefix=prefix, 
+            NRI_codes=nri_codes,
+            weighting=weighting, 
+            polymethod=method, 
+            pdf_files=pdf_file)
+        
     # retention index
     if ri:
         RI(cladogram_dict,
-           character_dict,
+           character_dict_norep,
            weighting=weighting,
            prefix=prefix)
 

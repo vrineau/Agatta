@@ -387,9 +387,9 @@ def del_replications_forest(character_dict, method="TMS",
 
 
     if verbose:
-        loopchar = character_dict.items()
-    else:
         loopchar = tqdm(character_dict.items())
+    else:
+        loopchar = character_dict.items()
         
     if prefix:
         with open(prefix+".poly", "w") as logfile:
@@ -491,7 +491,7 @@ def del_replications_forest(character_dict, method="TMS",
     else:
         print("Polymorphism removed. No polymorphism free "
               "informative subtree remaining.")
-        sys.exit(1)
+        #sys.exit(1)
 
     return tree_dict
 
@@ -1036,8 +1036,10 @@ def standard_tripdec(character_dict, weighting, dec_detail=False,
                  for trip, FW in triplet_output.items():
 
                     in_taxa = list(trip.in_taxa)
-                    tdfile.write("(" + list(trip.out_taxa)[0] + ",("
-                                 + in_taxa[0] + "," + in_taxa[1] + "));    "
+                    tdfile.write("(" + str(taxa_dict[list(trip.out_taxa)[0]])
+                                 + ",("
+                                 + str(taxa_dict[in_taxa[0]]) + ","
+                                 + str(taxa_dict[in_taxa[1]]) + ")):    "
                                  + str(FW) + "\n")
 
         with open(prefix+".taxabloc", "w") as taxa_bloc_file:
@@ -1159,8 +1161,10 @@ def parallel_tripdec(character_dict, weighting, prefix=False, ncpu="auto"):
                  for trip, FW in shared_dict.items():
 
                     in_taxa = list(trip.in_taxa)
-                    tdfile.write("(" + list(trip.out_taxa)[0] + ",("
-                                 + in_taxa[0] + "," + in_taxa[1] + "));    "
+                    tdfile.write("(" + str(taxa_dict[list(trip.out_taxa)[0]])
+                                 + ",("
+                                 + str(taxa_dict[in_taxa[0]]) + ","
+                                 + str(taxa_dict[in_taxa[1]]) + ")):    "
                                  + str(FW) + "\n")
 
         with open(prefix+".taxabloc", "w") as taxa_bloc_file:
@@ -1264,6 +1268,8 @@ def main_tripdec(input_item, prefix, taxa_replacement, weighting, parallel,
                                                      method=method,
                                                      prefix=prefix,
                                                      verbose=verbose)
+        if not character_dict:
+            return None
 
 
     if not character_dict:

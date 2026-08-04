@@ -52,9 +52,8 @@ Options:
     --taxarep1=<path>     Table for leaves replacement for file 1
     --taxarep2=<path>     Table for leaves replacement for file 2
     --weighting=<type>    Specify the type of triplet weighting [default: FW]
-    --rnri_codes=<path>   Compute NRI with a split of characters given in csv       
-    --rnri_totaltree      Compute a pdf with absolute triplet support by node
-    --rnri_rescaling      Rescale values in rnri_totaltree
+    --nri_codes=<path>    Compute NRI for character sets
+    --nri                 Compte NRI and NCI during analysis
 
 """
 
@@ -71,8 +70,8 @@ from .interpret import triplet_distance
 from .interpret import rcc
 from .interpret import constrict
 from .interpret import describe_forest
-from .interpret import chartest
-from .interpret import NRI
+from .interpret import chartest_wrapper
+from .interpret import NRI_wrapper
 from .out import agatta_analysis
 from .out import convert
 from .__version__ import __version__
@@ -112,6 +111,8 @@ def coremain(arguments):
                         arguments["--pdf"],
                         arguments.get("--detailed_tripdec", False),
                         arguments.get("--nsupport", False),
+                        arguments.get("--nri", False),
+                        arguments.get("--nri_codes", False),
                         arguments.get("-v", False))
 
     # triplet decomposition
@@ -154,27 +155,25 @@ def coremain(arguments):
 
     # character states testing procedure
     elif arguments["chartest"]:
-        chartest(arguments["<file>"][0],
+        chartest_wrapper(arguments["<file>"][0],
                  arguments["<file>"][1:],  # one or several input files
                  arguments.get("--taxarep1", False),
                  arguments.get("--taxarep2", False),
-                 arguments["--repetitions"],
                  arguments["--prefix"],
-                 arguments["--pdf"],
-                 arguments.get("-v", False))
+                 arguments["--weighting"],
+                 arguments["--repetitions"],
+                 arguments["--pdf"])
 
     # nodal retention index
     elif arguments["nri"]:
-        NRI(arguments["<file>"][0],
+        NRI_wrapper(arguments["<file>"][0],
                  arguments["<file>"][1:],  # one or several input files
                  arguments.get("--taxarep1", False),
                  arguments.get("--taxarep2", False),
                  arguments["--prefix"],
-                 arguments.get("--rnri_codes", False),
+                 arguments.get("--nri_codes", False),
                  arguments["--weighting"],
                  arguments["--repetitions"],
-                 arguments.get("--rnri_totaltree", True),
-                 arguments.get("--rescaling", False),
                  arguments["--pdf"])
 
     # convert

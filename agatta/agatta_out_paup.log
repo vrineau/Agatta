@@ -1,0 +1,50 @@
+
+P A U P *
+Version 4.0a (build 168) for Unix/Linux (built on Aug  2 2020 at 07:23:11)
+Mon Aug  3 12:30:48 2026
+
+
+Maxtrees reset to 1000
+
+Heuristic search settings:
+  Optimality criterion = parsimony
+    Character-status summary:
+      Of 3154 total characters:
+        All characters are of type 'unord'
+        Character weights in effect:
+          1572 characters have weight 1
+          1582 characters have weights other than 1
+        All characters are parsimony-informative
+  Starting tree(s) obtained via stepwise addition
+    Addition sequence: random
+    Number of replicates = 10
+    Starting seed = generated automatically
+    Number of trees held at each step = 1
+  Branch-swapping algorithm: tree-bisection-reconnection (TBR) with reconnection limit = 8
+    Steepest descent option not in effect
+  Initial 'Maxtrees' setting = 1000 (will be auto-increased by 100)
+  Branches collapsed (creating polytomies) if maximum branch length is zero
+  'MulTrees' option in effect
+  No topological constraints in effect
+  Trees are unrooted
+
+Do you really want to stop the search? (Y/n)y
+
+Rearrangements have already been recorded (n=164) that may represent additional distinct, optimal trees.  Do you want to check these rearrangements
+now? (y/N)n
+
+Heuristic search aborted during replicate #1
+  Total number of rearrangements tried = 20015577
+  Score of best tree(s) found = 2374.999877
+  Number of trees retained = 676701
+  Time used = 00:33:33 (CPU time = 00:33:33.6)
+
+Tree-island profile:
+                     First      Last                        First    Times
+Island      Size      tree      tree           Score    replicate      hit
+--------------------------------------------------------------------------
+     1    676701         1    676701     2374.999877            1       1
+
+Processing of input file "agatta_out.nex" aborted by user.
+
+Execution terminated.
