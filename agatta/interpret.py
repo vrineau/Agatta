@@ -25,7 +25,7 @@ from .analysis import main_tripdec
 from .analysis import triplet_extraction
 from contextlib import redirect_stdout
 from os import path, devnull, remove
-from pypdf import PdfMerger
+from pypdf import PdfWriter
 from fractions import Fraction
 from ete3 import Tree
 import csv, copy, sys
@@ -1793,7 +1793,7 @@ def NRI(cladogram_dict, character_dict, taxarep1=False,
     
         # merge all pdfs
         # bubble
-        merger = PdfMerger()
+        merger = PdfWriter()
     
         for pdf in pdfs_char_abs:
             merger.append(pdf)
@@ -1805,7 +1805,7 @@ def NRI(cladogram_dict, character_dict, taxarep1=False,
             remove(pdf)
             
         # pie
-        merger = PdfMerger()
+        merger = PdfWriter()
     
         for pdf in pdfs_char_pie:
             merger.append(pdf)
@@ -2449,7 +2449,7 @@ def character_states_test(cladogram_dict, character_dict,
 
     if pdf_files:  # merge all pdfs
 
-        merger = PdfMerger()
+        merger = PdfWriter()
 
         for pdf in pdfs:
             merger.append(pdf)

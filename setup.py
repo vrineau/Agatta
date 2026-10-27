@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
-from distutils.util import convert_path
+from pathlib import Path
 
 main_ns = {}
-ver_path = convert_path('agatta/__version__.py')
+ver_path = Path(__file__).parent / "agatta" / "__version__.py"
 with open(ver_path) as ver_file:
     exec(ver_file.read(), main_ns)
 
@@ -14,7 +14,7 @@ setup(
 
     version=main_ns['__version__'],
 
-    python_requires='>=3.8.0',
+    python_requires='>=3.9.0',
 
     packages=find_packages(),
 
@@ -33,10 +33,10 @@ setup(
         "tqdm>=4.66,<5",
         "treeswift>=1.1.37,<1.2",
         "six>=1.16,<2",
-        "numpy>=1.23,<2",
+        "numpy>=1.26.4,<2",
         "pandas>=1.5,<3",
         "ete3>=3.1.3,<3.2",
-        "pypdf>=3.17,<4"],
+        "pypdf>=6.0.0"],
         
     include_package_data=True,
 
