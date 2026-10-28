@@ -36,7 +36,8 @@ setup(
         "numpy>=1.26.4,<2",
         "pandas>=1.5,<3",
         "ete3>=3.1.3,<3.2",
-        "pypdf>=6.0.0"],
+        "pypdf>=6.0.0",
+        "legacy-cgi; python_version >= '3.13'"],
         
     include_package_data=True,
 
