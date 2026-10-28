@@ -6,3 +6,4 @@ tqdm==4.66.3
 treeswift==1.1.37
 six==1.16.0
 pypdf==6.0.0
+legacy-cgi; python_version >= '3.13'
