@@ -20,7 +20,7 @@ The [documentation is available here](https://vrineau.github.io/AgattaDocs/intro
 
 Agatta works on Windows, Unix/Linux and macOS.
 
-This package requires Python version 3.9 to 3.11. It has been tested for 3.9 to 3.11 using ubuntu 24.04, macos 14, and windows 11.
+This package requires Python version 3.9 to 3.15. It has been tested for 3.9 to 3.15 using ubuntu 24.04, macos 14, and windows 11.
 
 Agatta and all its dependencies can be installed using `pip install Agatta`. Detailed explanations are available in the [tutorial](https://vrineau.github.io/AgattaDocs/Tutorial.html).
 
